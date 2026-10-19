@@ -4151,7 +4151,8 @@ async function buscarPedidosPOS(){
   if(texto.length < 2){ posBusqueda = null; if(posTab === 'pedidos') pintarCatalogoPOS(); return; }
   const { data, error } = await sb.rpc('buscar_pedidos_pos', { q: texto });
   if(document.getElementById('pos-buscar').value.trim() !== texto) return;
-  posBusqueda = error ? { error: error.message } : (data || []);
+  // Solo pedidos que se recogen en el local
+  posBusqueda = error ? { error: error.message } : (data || []).filter(p=> !p.entrega || p.entrega === 'recoger' || p.entrega === 'local');
   if(posTab === 'pedidos') pintarCatalogoPOS();
 }
 function filaPedidoPOS(p, conFecha){
@@ -4171,8 +4172,8 @@ function filaPedidoPOS(p, conFecha){
   row.innerHTML = `<div><b>${fecha ? escHtml(fecha) : hora}</b>${fecha ? `<small>${hora}</small>` : ''}</div>
     <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${escHtml(p.telefono || '')}</small></div>
     <div>${escHtml(detallePedidoPOS(p))}<small>${escHtml(sub)}</small></div>
-    <div class="m">${fmtDinero(tot)}<small>Total</small></div>
-    <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--jam-deep)' : 'var(--sage)'};">${fmtDinero(p.entregado ? 0 : falta)}<small>${falta > 0 && !p.entregado ? 'Falta' : 'Pagado'}</small></div>
+    <div class="m">${fmtDinero(tot)}<small>Total · pagó ${fmtDinero(pagadoDe(p))}</small></div>
+    <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--rojo)' : 'var(--sage)'};">${falta > 0 && !p.entregado ? fmtDinero(falta) + '<small>Falta</small>' : '✓ Pagado<small>Falta $0</small>'}</div>
     ${est}`;
   if(!p.entregado) row.onclick = ()=> alternarPedidoEnVenta(p);
   return row;

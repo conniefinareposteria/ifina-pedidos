@@ -2313,7 +2313,7 @@ function pintarPedidosPorDia(data, cont){
 
       pedidosPorId[p.id] = p;
       filas += `
-        <tr class="click" onclick="abrirEditarPedido(${Number(p.id)})" title="Toca para ver o editar">
+        <tr>
           ${rolActual === 'director' ? `<td class="c"><button type="button" class="btn-editar-fila" onclick="event.stopPropagation(); elegirAccionPedido(${Number(p.id)})">Editar</button></td>` : ''}
           <td class="num">${idx+1}</td>
           <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
@@ -3916,7 +3916,8 @@ async function cargarPedidosCliente(){
     const entrega = p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoge en local';
     const tot = Number(p.precio)||0, pag = pagadoDe(p), fal = Math.max(0, tot-pag);
     const metodo = pag > 0 && p.metodo_pago ? `<span class="sub">${escHtml(formatNombre(p.metodo_pago))}</span>` : '';
-    filas += `<tr class="click" onclick="abrirEditarPedido(${Number(p.id)})" title="Toca para ver o editar">
+    filas += `<tr>
+      <td class="c"><button type="button" class="btn-editar-fila" onclick="elegirAccionPedido(${Number(p.id)})">Editar</button></td>
       <td class="nowrap">${escHtml(fecha)}</td><td class="nowrap">${hora}</td><td class="nowrap">${producto}</td>
       <td class="nowrap">${escHtml(tamano)}</td><td class="det">${escHtml(sabor)}</td><td class="nowrap">${entrega}</td>
       <td class="dinero">${fmtDinero(tot)}</td><td class="dinero">${fmtDinero(pag)}${metodo}</td>
@@ -3925,7 +3926,7 @@ async function cargarPedidosCliente(){
   });
   cont.className = '';
   cont.innerHTML = `<div class="tabla-wrap"><table class="tabla-pedidos"><thead><tr>
-    <th>Fecha</th><th>Hora</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th><th>Entrega</th>
+    <th></th><th>Fecha</th><th>Hora</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th><th>Entrega</th>
     <th class="dinero">Total</th><th class="dinero">Pagó</th><th class="dinero">Falta</th><th>Comentarios</th>
     </tr></thead><tbody>${filas}</tbody></table></div>`;
 }

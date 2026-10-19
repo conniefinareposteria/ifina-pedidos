@@ -2,7 +2,9 @@
 -- Se puede correr completo varias veces sin riesgo.
 -- ANTES: crea el usuario produccion@conniereposteria.com en Authentication → Users → Add user.
 
--- 1) Rol Producción para ese correo
+-- 1) Rol Producción para ese correo (se permite el rol 'produccion')
+alter table perfiles drop constraint if exists rol_valido;
+alter table perfiles add constraint rol_valido check (rol in ('director','colaborador','produccion'));
 insert into perfiles (user_id, rol)
 select id, 'produccion' from auth.users where email = 'produccion@conniereposteria.com'
 on conflict (user_id) do update set rol = excluded.rol;

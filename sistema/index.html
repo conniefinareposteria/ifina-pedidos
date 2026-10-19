@@ -1048,6 +1048,7 @@
       <div class="solo-director" style="display:flex; gap:8px;">
         <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('pasteles')">Metas de pasteles</button>
         <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('cupcakes')">Metas de cupcakes</button>
+        <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('coronas')">Metas de coronas</button>
       </div>
     </div>
     <div class="hint" style="margin:0 0 14px;">Por hacer = lo que debe haber hoy − lo que sobró del último día.</div>
@@ -1127,6 +1128,10 @@
         <div class="cart-row-name">Panqués <span id="check-panques"></span></div>
         <div>›</div>
       </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('coronas')">
+        <div class="cart-row-name">Coronas <span id="check-coronas"></span></div>
+        <div>›</div>
+      </div>
       <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('caja')">
         <div class="cart-row-name">Corte de caja <span id="check-caja"></span></div>
         <div>›</div>
@@ -1181,6 +1186,13 @@
 
 </div><!-- cierre app-contenido -->
 
+<div class="ep-velo" id="cor-velo" onclick="cerrarPreguntaCorona()"></div>
+<div class="ep-hoja" id="cor-hoja" role="dialog" aria-modal="true" style="width:min(460px,94vw);">
+  <h2 id="cor-titulo">¿Lleva corona?</h2>
+  <div class="ep-sub" id="cor-sub"></div>
+  <div style="display:flex; flex-direction:column; gap:10px;" id="cor-opciones"></div>
+  <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarPreguntaCorona()">Cancelar</button></div>
+</div>
 <div class="ep-velo" id="ep-velo" onclick="cerrarEditarPedido()"></div>
 <div class="ep-hoja" id="ep-hoja" role="dialog" aria-modal="true" aria-labelledby="ep-titulo">
   <h2 id="ep-titulo">Pedido</h2>
@@ -2134,7 +2146,8 @@ async function cargarPedidos(){
 
   const rango = document.getElementById('filtro-rango').value;
   if(rango === 'proximos'){
-    q = q.gte('fecha_entrega', new Date().toISOString());
+    const h = new Date();
+    q = q.gte('fecha_entrega', new Date(h.getFullYear(), h.getMonth(), h.getDate()).toISOString());
   } else if(rango === 'personalizado'){
     const desde = document.getElementById('filtro-desde').value;
     const hasta = document.getElementById('filtro-hasta').value;
@@ -2403,8 +2416,10 @@ const PASTEL_SABORES = ["White velvet","Bi-cajeta","Bi-especial","Bi-chocolate",
 
 let cierreDiaActual = null;
 
+const CORONA_TIPOS = ['Mini','Normal'];
 function itemsDeSeccion(sec){
   if(sec === 'cupcakes') return CUPCAKE_SABORES;
+  if(sec === 'coronas') return CORONA_TIPOS;
   if(sec === 'panques') return PANQUE_PRODUCTOS;
   return INDIVIDUAL_PRODUCTOS;
 }
@@ -2433,7 +2448,7 @@ async function abrirProductosDia(){
     document.getElementById('productos-dia-msg').textContent = 'Error al cargar: ' + error.message;
     return;
   }
-  cierreDiaActual = data || { fecha, cupcakes:{}, individuales:{}, pasteles:{}, panques:{}, corte_caja:{}, cupcakes_listo:false, individuales_listo:false, pasteles_listo:false, panques_listo:false, caja_listo:false, cerrado:false };
+  cierreDiaActual = data || { fecha, cupcakes:{}, individuales:{}, pasteles:{}, panques:{}, coronas:{}, corte_caja:{}, cupcakes_listo:false, individuales_listo:false, pasteles_listo:false, panques_listo:false, caja_listo:false, cerrado:false };
   actualizarChecksHub();
 }
 
@@ -2442,6 +2457,7 @@ function actualizarChecksHub(){
   document.getElementById('check-individuales').innerHTML = cierreDiaActual.individuales_listo ? '<span class="check-ok">✓</span>' : '';
   document.getElementById('check-pasteles').innerHTML = cierreDiaActual.pasteles_listo ? '<span class="check-ok">✓</span>' : '';
   document.getElementById('check-panques').innerHTML = cierreDiaActual.panques_listo ? '<span class="check-ok">✓</span>' : '';
+  document.getElementById('check-coronas').innerHTML = cierreDiaActual.coronas_listo ? '<span class="check-ok">✓</span>' : '';
   document.getElementById('check-caja').innerHTML = cierreDiaActual.caja_listo ? '<span class="check-ok">✓</span>' : '';
   const msg = document.getElementById('productos-dia-msg');
   if(cierreDiaActual.cerrado){
@@ -2487,7 +2503,7 @@ function abrirSeccion(tipo){
   }
   seccionActual = tipo;
   nivelSeccion = 'chooser';
-  const nombres = {cupcakes:'Cupcakes', individuales:'Individuales', pasteles:'Pasteles', panques:'Panqués'};
+  const nombres = {cupcakes:'Cupcakes', individuales:'Individuales', pasteles:'Pasteles', panques:'Panqués', coronas:'Coronas'};
   document.getElementById('seccion-titulo').textContent = nombres[tipo];
   document.getElementById('btn-guardar-seccion').style.display = 'none';
   document.getElementById('btn-finalizar-seccion').style.display = 'none';
@@ -2511,8 +2527,8 @@ function abrirSeccion(tipo){
 // ---------- Existencias que se arrastran de un día a otro ----------
 // Lo que queda al cierre = Exis + IN − vendido en el punto de venta − merma − cortesía.
 // El Exis de un día es lo que quedó en el último día registrado (no importa qué día de la semana sea).
-const INV_CATS = ['cupcakes','individuales','panques','pasteles'];
-function invItems(cat){ return cat==='cupcakes' ? CUPCAKE_SABORES : cat==='individuales' ? INDIVIDUAL_PRODUCTOS : cat==='panques' ? PANQUE_PRODUCTOS : PASTEL_SABORES; }
+const INV_CATS = ['cupcakes','individuales','panques','pasteles','coronas'];
+function invItems(cat){ return cat==='cupcakes' ? CUPCAKE_SABORES : cat==='individuales' ? INDIVIDUAL_PRODUCTOS : cat==='panques' ? PANQUE_PRODUCTOS : cat==='coronas' ? CORONA_TIPOS : PASTEL_SABORES; }
 function invKeys(cat){
   const out = [];
   invItems(cat).forEach(n=>{ if(cat==='pasteles'){ out.push([n,'mini']); out.push([n,'chico']); } else out.push([n,'']); });
@@ -2536,7 +2552,7 @@ function vendidosPorDia(ventas){
 }
 async function existenciaInicial(fecha){
   const { data: dias, error } = await sb.from('cierres_dia')
-    .select('fecha,cupcakes,individuales,panques,pasteles,cupcakes_listo,individuales_listo,panques_listo,pasteles_listo')
+    .select('fecha,cupcakes,individuales,panques,pasteles,coronas,cupcakes_listo,individuales_listo,panques_listo,pasteles_listo,coronas_listo')
     .lt('fecha', fecha).order('fecha', {ascending:false}).limit(21);
   if(error) throw error;
   const lista = (dias||[]).slice().reverse();
@@ -2605,7 +2621,7 @@ async function abrirModoSeccion(modo){
   catch(e){ cont.innerHTML = `<div class="empty">No se pudieron calcular las existencias: ${escHtml(e.message)}</div>`; return; }
 
   document.getElementById('seccion-titulo').textContent =
-    ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
+    ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués', coronas:'Coronas'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
   cont.innerHTML = '';
   const gris = 'background:var(--cream-deep); color:var(--muted);';
 
@@ -3862,7 +3878,8 @@ const POS_CATS = {
   cupcakes:     { titulo:'Cupcakes',     tipo:'cupcake' },
   individuales: { titulo:'Cuchareables', tipo:'individual' },
   panques:      { titulo:'Panqués',      tipo:'panque' },
-  pasteles:     { titulo:'Pasteles',     tipo:'pastel' }
+  pasteles:     { titulo:'Pasteles',     tipo:'pastel' },
+  coronas:      { titulo:'Coronas',      tipo:'corona' }
 };
 let posTab = 'cupcakes';
 let posVenta = [];          // [{tipo:'local', cat, clave, tam, nombre, precio, cantidad} | {tipo:'pedido', pedido_id, nombre, detalle, total, falta}]
@@ -3882,14 +3899,15 @@ function posPrecio(cat, nombre, tam){
   return null;
 }
 function posItemsCat(cat){
+  if(cat === 'coronas') return CORONA_TIPOS;
   if(cat === 'cupcakes') return CUPCAKE_SABORES;
   if(cat === 'individuales') return INDIVIDUAL_PRODUCTOS;
   if(cat === 'panques') return PANQUE_PRODUCTOS;
   return PASTEL_SABORES;
 }
 function posEnVenta(cat, clave, tam){
-  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===clave && (x.tam||'')===(tam||''));
-  return it ? it.cantidad : 0;
+  return posVenta.filter(x=>x.tipo==='local' && x.cat===cat && x.clave===clave && (x.tam||'')===(tam||''))
+    .reduce((a, x)=> a + x.cantidad, 0);
 }
 function posDisponible(cat, clave, tam){
   const base = ((posStock[cat]||{})[clave + '|' + (tam||'')]) || 0;
@@ -3991,7 +4009,7 @@ function pintarCatalogoPOS(){
         if(en) btn.className = 'en';
         btn.disabled = disp <= 0;
         btn.innerHTML = `${lbl}<b>${precio == null ? 'Sin precio' : fmtDinero(precio)}</b><small>${disp <= 0 ? (en ? 'Ya no quedan' : 'Sin existencia') : (disp === 1 ? 'Queda 1' : 'Quedan ' + disp)}${en ? ' · ' + en + ' en venta' : ''}</small>`;
-        btn.onclick = ()=> agregarAVenta(cat, nombre, tam);
+        btn.onclick = ()=> preguntarCorona(nombre, tam);
         wrap.appendChild(btn);
       });
       cont.appendChild(card);
@@ -4011,6 +4029,14 @@ function pintarCatalogoPOS(){
     }
   });
   if(!hay){ cont.className = 'empty'; cont.textContent = 'No hay ' + POS_CATS[cat].titulo.toLowerCase() + ' en existencia hoy.'; }
+  if(cat === 'pasteles'){
+    const info = document.createElement('div');
+    info.className = 'hint';
+    info.style.gridColumn = '1/-1';
+    const cm = posDisponible('coronas','Mini',''), cn = posDisponible('coronas','Normal','');
+    info.textContent = `Coronas disponibles: mini ${cm} · normal ${cn}`;
+    cont.prepend(info);
+  }
 }
 
 function detallePedidoPOS(p){
@@ -4060,7 +4086,7 @@ function alternarPedidoEnVenta(p){
 
 function agregarAVenta(cat, nombre, tam){
   if(posDisponible(cat, nombre, tam) <= 0) return;
-  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===nombre && (x.tam||'')===(tam||''));
+  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===nombre && (x.tam||'')===(tam||'') && !x.variante);
   if(it) it.cantidad++;
   else {
     const precio = posPrecio(cat, nombre, tam);
@@ -4102,7 +4128,7 @@ function pintarVenta(){
         div.querySelector('.pos-x').onclick = ()=> quitarDeVentaPOS(idx);
       } else {
         div.className = 'pos-it';
-        div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small></div>
+        div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.incluida ? 'Incluida con el pastel' : it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small></div>
           <div class="pos-qty"><button type="button" class="pos-qb">−</button><b>${it.cantidad}</b><button type="button" class="pos-qb">+</button></div>
           <div class="p">${fmtDinero(it.precio * it.cantidad)}</div>`;
         const [menos, mas] = div.querySelectorAll('.pos-qb');
@@ -4173,7 +4199,7 @@ async function cobrarVenta(){
   let restante = Math.round((total - montoLocal) * 100) / 100;
   const pedidos = posVenta.filter(x=>x.tipo==='pedido');
   const items = posVenta.map(it=>{
-    if(it.tipo === 'local') return { tipo:'local', cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad };
+    if(it.tipo === 'local') return { tipo:'local', cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad };
     const esUltimo = it === pedidos[pedidos.length-1];
     const cobrado = esUltimo ? restante : Math.round(it.falta * factor * 100) / 100;
     if(!esUltimo) restante = Math.round((restante - cobrado) * 100) / 100;
@@ -4195,6 +4221,7 @@ async function cobrarVenta(){
 
 // ---------- Productos por hacer (producción) ----------
 const DIAS_METAS = [[2,'Martes'],[3,'Miércoles'],[4,'Jueves'],[5,'Viernes'],[6,'Sábado']];
+const METAS_GENERAL = 7;  // fila general (coronas): no depende del día
 let metasData = {};       // dia -> {pasteles:{}, cupcakes:{}}
 let metasCat = 'pasteles';
 let metasDia = 2;
@@ -4203,7 +4230,7 @@ async function cargarMetas(){
   const { data, error } = await sb.from('metas_produccion').select('*');
   if(error) throw error;
   metasData = {};
-  (data||[]).forEach(r=> metasData[r.dia] = { pasteles: r.pasteles || {}, cupcakes: r.cupcakes || {} });
+  (data||[]).forEach(r=> metasData[r.dia] = { pasteles: r.pasteles || {}, cupcakes: r.cupcakes || {}, coronas: r.coronas || {} });
 }
 
 async function abrirPorHacer(){
@@ -4218,12 +4245,31 @@ async function abrirPorHacer(){
   const cont = document.getElementById('ph-contenido');
   cont.className = 'loading'; cont.textContent = 'Cargando...';
   if(catalogosListos) await catalogosListos;
-  let base;
-  try { [base] = await Promise.all([existenciaInicial(fechaHoyStr()), cargarMetas()]); }
+  let base, vendHoy, cierreHoy;
+  try {
+    let r;
+    [base, vendHoy, r] = await Promise.all([existenciaInicial(fechaHoyStr()), vendidosHoy(), sb.from('cierres_dia').select('coronas').eq('fecha', fechaHoyStr()).maybeSingle(), cargarMetas()]);
+    if(r.error) throw r.error;
+    cierreHoy = r.data || {};
+  }
   catch(e){ cont.className = 'empty'; cont.textContent = 'No se pudo cargar: ' + e.message + ' (revisa que ya se haya corrido el SQL de producción).'; return; }
+  // Coronas: meta general vs. lo que hay en este momento
+  const metaCor = (metasData[METAS_GENERAL] || {}).coronas || {};
+  let filasCor = '';
+  CORONA_TIPOS.forEach(t=>{
+    const d = ((cierreHoy.coronas)||{})[t] || {};
+    const hay = Math.max(0, (base.coronas[t + '|']||0) + (Number(d.in)||0) - (((vendHoy.coronas)||{})[t + '|']||0) - (Number(d.merma)||0) - (Number(d.cortesia)||0));
+    const m = Number(metaCor[t]) || 0;
+    const h = Math.max(0, m - hay);
+    filasCor += `<tr><td class="nombre">${t}</td><td class="n">${m}</td><td class="n">${hay}</td><td class="n"><span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span></td></tr>`;
+  });
+  const bloqueCor = `<div><div style="font-family:'Tinos',Georgia,serif; font-size:21px; margin-bottom:8px;">Coronas</div>
+    <div class="tabla-wrap"><table class="tabla-pedidos"><thead><tr><th>Tipo</th><th class="n">Debe haber</th><th class="n">Hay</th><th class="n">Hacer</th></tr></thead>
+    <tbody>${filasCor}</tbody></table></div></div>`;
   const meta = metasData[hoy.getDay()];
-  if(!DIAS_METAS.some(d=>d[0] === hoy.getDay())){ cont.className = 'empty'; cont.textContent = 'Hoy no hay producción programada (solo de martes a sábado).'; return; }
-  if(!meta){ cont.className = 'empty'; cont.textContent = 'Todavía no se capturan las metas de este día.'; return; }
+  const avisoDia = !DIAS_METAS.some(d=>d[0] === hoy.getDay()) ? 'Hoy no hay producción de pasteles y cupcakes programada (solo de martes a sábado).'
+    : (!meta ? 'Todavía no se capturan las metas de pasteles y cupcakes de este día.' : '');
+  if(avisoDia){ cont.className = 'ph-grid'; cont.innerHTML = `<div class="empty" style="padding:20px;">${avisoDia}</div>${bloqueCor}`; return; }
 
   const hacer = (m, sobro) => { const h = Math.max(0, (Number(m)||0) - sobro); return `<span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span>`; };
   // Pasteles
@@ -4256,6 +4302,7 @@ async function abrirPorHacer(){
       ${filasC ? `<div class="tabla-wrap"><table class="tabla-pedidos">
         <thead><tr><th>Sabor</th><th class="n">Debe haber</th><th class="n">Sobró</th><th class="n">Hacer</th></tr></thead>
         <tbody>${filasC}</tbody></table></div>` : '<div class="empty" style="padding:20px;">Sin metas de cupcakes para hoy.</div>'}
+      <div style="margin-top:18px;">${bloqueCor}</div>
     </div>`;
 }
 
@@ -4264,19 +4311,20 @@ async function abrirMetas(cat){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-metas').classList.add('active');
   window.scrollTo(0,0);
-  document.getElementById('metas-titulo').textContent = cat === 'pasteles' ? 'Metas de pasteles' : 'Metas de cupcakes';
+  document.getElementById('metas-titulo').textContent = cat === 'pasteles' ? 'Metas de pasteles' : cat === 'coronas' ? 'Metas de coronas' : 'Metas de cupcakes';
   document.getElementById('metas-msg').className = 'msg';
   try { await cargarMetas(); }
   catch(e){ document.getElementById('metas-contenido').innerHTML = `<div class="empty">No se pudo cargar: ${escHtml(e.message)}</div>`; return; }
   const hoy = new Date().getDay();
-  metasDia = DIAS_METAS.some(d=>d[0] === hoy) ? hoy : 2;
+  metasDia = cat === 'coronas' ? METAS_GENERAL : (DIAS_METAS.some(d=>d[0] === hoy) ? hoy : 2);
   pintarMetas();
 }
 
 function pintarMetas(){
   const dias = document.getElementById('metas-dias');
   dias.innerHTML = '';
-  DIAS_METAS.forEach(([d, nombre])=>{
+  dias.style.display = metasCat === 'coronas' ? 'none' : 'flex';
+  if(metasCat !== 'coronas') DIAS_METAS.forEach(([d, nombre])=>{
     const c = document.createElement('div');
     c.className = 'chip' + (d === metasDia ? ' selected' : '');
     c.textContent = nombre;
@@ -4295,6 +4343,12 @@ function pintarMetas(){
     });
     document.getElementById('metas-contenido').innerHTML = `<div class="tabla-wrap metas-tabla" style="max-width:560px; margin-bottom:14px;"><table class="tabla-pedidos">
       <thead><tr><th>Sabor</th><th class="c">Mini</th><th class="c">Chico</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+  } else if(metasCat === 'coronas'){
+    CORONA_TIPOS.forEach((n, i)=>{
+      filas += `<tr><td class="nombre">${n}</td><td class="c"><input type="number" inputmode="numeric" id="mt_${i}_c" value="${v(m[n])}"></td></tr>`;
+    });
+    document.getElementById('metas-contenido').innerHTML = `<div class="hint" style="margin:0 0 10px;">Esta meta es general: aplica todos los días.</div><div class="tabla-wrap metas-tabla" style="max-width:420px; margin-bottom:14px;"><table class="tabla-pedidos">
+      <thead><tr><th>Corona</th><th class="c">Debe haber</th></tr></thead><tbody>${filas}</tbody></table></div>`;
   } else {
     CUPCAKE_SABORES.forEach((n, i)=>{
       filas += `<tr><td class="nombre">${escHtml(n)}</td><td class="c"><input type="number" inputmode="numeric" id="mt_${i}_c" value="${v(m[n])}"></td></tr>`;
@@ -4305,12 +4359,16 @@ function pintarMetas(){
 }
 
 function leerMetasPantalla(){
-  const fila = metasData[metasDia] = metasData[metasDia] || { pasteles:{}, cupcakes:{} };
+  const fila = metasData[metasDia] = metasData[metasDia] || { pasteles:{}, cupcakes:{}, coronas:{} };
   const num = id => { const el = document.getElementById(id); return el ? (parseInt(el.value, 10) || 0) : 0; };
   if(metasCat === 'pasteles'){
     const out = {};
     PASTEL_SABORES.forEach((n, i)=>{ const mi = num(`mt_${i}_mini`), ch = num(`mt_${i}_chico`); if(mi || ch) out[n] = { mini: mi, chico: ch }; });
     fila.pasteles = out;
+  } else if(metasCat === 'coronas'){
+    const out = {};
+    CORONA_TIPOS.forEach((n, i)=>{ const c = num(`mt_${i}_c`); if(c) out[n] = c; });
+    fila.coronas = out;
   } else {
     const out = {};
     CUPCAKE_SABORES.forEach((n, i)=>{ const c = num(`mt_${i}_c`); if(c) out[n] = c; });
@@ -4322,12 +4380,57 @@ async function guardarMetas(){
   leerMetasPantalla();
   const msg = document.getElementById('metas-msg'); msg.className = 'msg';
   const btn = document.getElementById('btn-guardar-metas'); btn.disabled = true; btn.textContent = 'Guardando...';
-  const filas = DIAS_METAS.filter(([d])=> metasData[d]).map(([d])=>({ dia:d, pasteles: metasData[d].pasteles || {}, cupcakes: metasData[d].cupcakes || {} }));
+  const filas = [...DIAS_METAS.map(([d])=>d), METAS_GENERAL].filter(d=> metasData[d]).map(d=>({ dia:d, pasteles: metasData[d].pasteles || {}, cupcakes: metasData[d].cupcakes || {}, coronas: metasData[d].coronas || {} }));
   const { data, error } = await sb.from('metas_produccion').upsert(filas, { onConflict: 'dia' }).select();
   btn.disabled = false; btn.textContent = 'Guardar';
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message; return; }
   if(!data || data.length !== filas.length){ msg.className = 'msg err'; msg.textContent = 'No se guardó. Revisa que ya se haya corrido el SQL de producción.'; return; }
   msg.className = 'msg ok'; msg.textContent = 'Metas guardadas.';
+}
+
+// ---------- Coronas en el punto de venta ----------
+function claveSabor(t){ return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+function saborTraeCorona(nombre){
+  const s = saboresPastelesData.find(x => claveSabor(x.nombre) === claveSabor(nombre));
+  return !!(s && s.incluye_corona);
+}
+function cerrarPreguntaCorona(){
+  document.getElementById('cor-velo').classList.remove('on');
+  document.getElementById('cor-hoja').classList.remove('on');
+}
+function preguntarCorona(nombre, tam){
+  if(posDisponible('pasteles', nombre, tam) <= 0) return;
+  const tipoCor = tam === 'mini' ? 'Mini' : 'Normal';
+  const incluida = saborTraeCorona(nombre);
+  const quedan = posDisponible('coronas', tipoCor, '');
+  document.getElementById('cor-titulo').textContent = '¿Lleva corona?';
+  document.getElementById('cor-sub').textContent = `Pastel ${tam} ${nombre}` + (incluida ? ' · este sabor ya incluye la corona' : '') + ` · coronas ${tipoCor.toLowerCase()} disponibles: ${quedan}`;
+  const cont = document.getElementById('cor-opciones'); cont.innerHTML = '';
+  const boton = (texto, sub, fn, deshab) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pos-card'; b.style.minHeight = '0';
+    b.innerHTML = `<div class="nm">${texto}</div><div class="st">${sub}</div>`;
+    if(deshab){ b.classList.add('agotado'); b.disabled = true; }
+    b.onclick = fn; cont.appendChild(b);
+  };
+  const tamPrecio = tam === 'mini' ? 'mini' : 'normal';
+  [['ambar','Corona ámbar'],['color','Corona de color']].forEach(([tipo, etiqueta])=>{
+    const precio = incluida ? 0 : precioCorona(tipo, tamPrecio);
+    boton(etiqueta, quedan <= 0 ? 'Ya no hay coronas ' + tipoCor.toLowerCase() : (incluida ? 'Incluida, sin costo' : '+ ' + fmtDinero(precio)),
+      ()=>{ cerrarPreguntaCorona(); agregarAVenta('pasteles', nombre, tam); agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio); }, quedan <= 0);
+  });
+  boton('Sin corona', 'Solo el pastel', ()=>{ cerrarPreguntaCorona(); agregarAVenta('pasteles', nombre, tam); });
+  document.getElementById('cor-velo').classList.add('on');
+  document.getElementById('cor-hoja').classList.add('on');
+}
+function agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio){
+  if(posDisponible('coronas', tipoCor, '') <= 0) return;
+  const variante = tipo + (incluida ? '-incluida' : '');
+  const it = posVenta.find(x=>x.tipo==='local' && x.cat==='coronas' && x.clave===tipoCor && x.variante===variante);
+  if(it) it.cantidad++;
+  else posVenta.push({ tipo:'local', cat:'coronas', categoria:'corona', clave:tipoCor, tam:null, variante, incluida,
+    nombre: `${etiqueta} ${tipoCor.toLowerCase()}${incluida ? ' (incluida)' : ''}`, precio: Number(precio)||0, sinPrecio:false, cantidad:1 });
+  posTotalManual = false;
+  pintarVenta(); pintarCatalogoPOS();
 }
 
 cargarSesion();

@@ -537,6 +537,10 @@
   body:not(.rol-director) .solo-director{display:none !important;}
   .ph-grid{display:grid; grid-template-columns:1fr; gap:18px;}
   @media (min-width:900px){ main:has(#view-porhacer.active){max-width:1180px;} }
+  .btn-editar-fila{font-family:inherit; font-size:12.5px; font-weight:700; padding:7px 12px; border-radius:999px; border:1px solid var(--cocoa); background:#fff; color:var(--cocoa); cursor:pointer; white-space:nowrap;}
+  .pg-resumen{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;}
+  .pg-resumen div{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:8px 12px; font-size:12px; color:var(--cocoa-soft);}
+  .pg-resumen b{display:block; font-family:'Tinos',Georgia,serif; font-weight:400; font-size:20px; color:var(--cocoa);}
   .ph-tabs{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:0 0 26px;}
   .ph-tabs button{font-family:inherit; font-size:16px; font-weight:700; padding:14px 26px; border-radius:999px; border:1.5px solid var(--cocoa); background:#fff; color:var(--cocoa); cursor:pointer; min-width:150px;}
   .ph-tabs button.sel{background:var(--cocoa); color:var(--yeso);}
@@ -1210,6 +1214,36 @@
 
 </div><!-- cierre app-contenido -->
 
+<div class="ep-velo" id="acc-velo" onclick="cerrarModal('acc')"></div>
+<div class="ep-hoja" id="acc-hoja" role="dialog" aria-modal="true" style="width:min(440px,94vw);">
+  <h2 id="acc-titulo">Pedido</h2>
+  <div class="ep-sub" id="acc-sub"></div>
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <button type="button" class="primary" style="margin:0;" onclick="accionEditarPedido()">Editar pedido</button>
+    <button type="button" class="primary" style="margin:0; background:var(--amber-l); color:var(--cocoa);" onclick="accionRegistrarPago()">Ingresar monto pagado</button>
+  </div>
+  <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('acc')">Cancelar</button></div>
+</div>
+<div class="ep-velo" id="pg-velo" onclick="cerrarModal('pg')"></div>
+<div class="ep-hoja" id="pg-hoja" role="dialog" aria-modal="true" style="width:min(480px,94vw);">
+  <h2 id="pg-titulo">Ingresar pago</h2>
+  <div class="ep-sub" id="pg-sub"></div>
+  <div class="pg-resumen"><div>Total<b id="pg-total">$0</b></div><div>Pagado<b id="pg-pagado">$0</b></div><div>Falta<b id="pg-falta">$0</b></div></div>
+  <div id="pg-historial" class="hint" style="margin:0 0 12px;"></div>
+  <label for="pg-monto">Monto que pagó</label>
+  <input id="pg-monto" type="number" inputmode="decimal">
+  <label style="margin-top:12px;">Método de pago</label>
+  <div class="chip-group" id="pg-metodos">
+    <div class="chip" data-m="transferencia">Transferencia</div>
+    <div class="chip" data-m="efectivo">Efectivo</div>
+    <div class="chip" data-m="terminal">Terminal</div>
+  </div>
+  <div class="ep-acc">
+    <button type="button" class="btn-cerrar-ep" onclick="cerrarModal('pg')">Cancelar</button>
+    <button type="button" class="primary" id="pg-guardar" onclick="guardarPagoPedido()">Guardar pago</button>
+  </div>
+  <div class="msg" id="pg-msg"></div>
+</div>
 <div class="ep-velo" id="cor-velo" onclick="cerrarPreguntaCorona()"></div>
 <div class="ep-hoja" id="cor-hoja" role="dialog" aria-modal="true" style="width:min(460px,94vw);">
   <h2 id="cor-titulo">¿Lleva corona?</h2>
@@ -2123,7 +2157,9 @@ function escHtml(s){
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 // Lo que ya está cubierto de un pedido: anticipo + lo cobrado al entregar + descuento al entregar
-function pagadoDe(p){ return (Number(p.anticipo)||0) + (Number(p.pago_entrega)||0) + (Number(p.descuento_entrega)||0); }
+function pagosDe(p){ return Array.isArray(p.pagos) ? p.pagos : []; }
+function sumaPagos(p){ return pagosDe(p).reduce((a, x)=> a + (Number(x.monto)||0), 0); }
+function pagadoDe(p){ return (Number(p.anticipo)||0) + (Number(p.pago_entrega)||0) + (Number(p.descuento_entrega)||0) + sumaPagos(p); }
 function fmtDinero(n){ return '$' + (Number(n)||0).toLocaleString('es-MX'); }
 
 
@@ -2255,6 +2291,7 @@ function pintarPedidosPorDia(data, cont){
       faltaDia += Math.max(0, total - pagado);
       if(p.metodo_pago && p.metodo_pago in cobrado) cobrado[p.metodo_pago] += Number(p.anticipo)||0;
       if(p.metodo_entrega && p.metodo_entrega in cobrado) cobrado[p.metodo_entrega] += Number(p.pago_entrega)||0;
+      pagosDe(p).forEach(x=>{ if(x.metodo in cobrado) cobrado[x.metodo] += Number(x.monto)||0; });
     });
 
     let filas = '';
@@ -2270,13 +2307,14 @@ function pintarPedidosPorDia(data, cont){
       const total = Number(p.precio)||0;
       const pagado = pagadoDe(p);
       const falta = Math.max(0, total - pagado);
-      const metodos = [Number(p.anticipo) > 0 ? p.metodo_pago : '', Number(p.pago_entrega) > 0 ? p.metodo_entrega : ''].filter(Boolean).map(formatNombre);
+      const metodos = [Number(p.anticipo) > 0 ? p.metodo_pago : '', Number(p.pago_entrega) > 0 ? p.metodo_entrega : '', ...pagosDe(p).map(x=>x.metodo)].filter(Boolean).map(formatNombre);
       const metodo = metodos.length ? `<span class="sub">${esc([...new Set(metodos)].join(' + '))}</span>` : '';
       const faltaHtml = (falta <= 0 ? '<span class="falta-ok">✓ Pagado</span>' : `<span class="falta-pend">${dinero(falta)}</span>`) + (p.entregado ? '<span class="sub">Entregado</span>' : '');
 
       pedidosPorId[p.id] = p;
       filas += `
         <tr class="click" onclick="abrirEditarPedido(${Number(p.id)})" title="Toca para ver o editar">
+          ${rolActual === 'director' ? `<td class="c"><button type="button" class="btn-editar-fila" onclick="event.stopPropagation(); elegirAccionPedido(${Number(p.id)})">Editar</button></td>` : ''}
           <td class="num">${idx+1}</td>
           <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
           <td class="nowrap">${esc(p.telefono || '')}</td>
@@ -2305,7 +2343,7 @@ function pintarPedidosPorDia(data, cont){
         <table class="tabla-pedidos">
           <thead>
             <tr>
-              <th>No.</th><th>Nombre</th><th>Teléfono</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th>
+              ${rolActual === 'director' ? '<th></th>' : ''}<th>No.</th><th>Nombre</th><th>Teléfono</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th>
               <th>Hora</th><th>Entrega</th><th class="dinero">Total</th><th class="dinero">Pagó</th><th class="dinero">Falta</th><th>Comentarios</th>
             </tr>
           </thead>
@@ -3674,7 +3712,7 @@ function epActualizarUI(){
   document.getElementById('ep-color-wrap').style.display = esPastel && epVal('ep-cor') === 'color' ? 'block' : 'none';
   const dom = epVal('ep-entrega') === 'domicilio';
   document.querySelectorAll('.ep-dom').forEach(e => e.style.display = dom ? 'block' : 'none');
-  const extra = pedidoEditando ? (Number(pedidoEditando.pago_entrega)||0) + (Number(pedidoEditando.descuento_entrega)||0) : 0;
+  const extra = pedidoEditando ? (Number(pedidoEditando.pago_entrega)||0) + (Number(pedidoEditando.descuento_entrega)||0) + sumaPagos(pedidoEditando) : 0;
   const falta = Math.max(0, (Number(epVal('ep-precio'))||0) - (Number(epVal('ep-anticipo'))||0) - extra);
   document.getElementById('ep-falta').textContent = falta <= 0 ? 'Pagado' : fmtDinero(falta);
 }
@@ -4543,6 +4581,61 @@ function agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio){
     nombre: `${etiqueta} ${tipoCor.toLowerCase()}${incluida ? ' (incluida)' : ''}`, precio: Number(precio)||0, sinPrecio:false, cantidad:1 });
   posTotalManual = false;
   pintarVenta(); pintarCatalogoPOS();
+}
+
+// ---------- Editar / ingresar pago de un pedido (directora) ----------
+let pedidoAccion = null;
+let pgMetodo = null;
+function abrirModal(k){ document.getElementById(k+'-velo').classList.add('on'); document.getElementById(k+'-hoja').classList.add('on'); }
+function cerrarModal(k){ document.getElementById(k+'-velo').classList.remove('on'); document.getElementById(k+'-hoja').classList.remove('on'); }
+function elegirAccionPedido(id){
+  if(rolActual !== 'director') return;
+  const p = pedidosPorId[id]; if(!p) return;
+  pedidoAccion = p;
+  document.getElementById('acc-titulo').textContent = p.nombre_cliente || 'Pedido';
+  const tot = Number(p.precio)||0, falta = Math.max(0, tot - pagadoDe(p));
+  document.getElementById('acc-sub').textContent = detallePedidoPOS(p) + ' · Total ' + fmtDinero(tot) + (falta > 0 ? ' · Falta ' + fmtDinero(falta) : ' · Pagado');
+  abrirModal('acc');
+}
+function accionEditarPedido(){ cerrarModal('acc'); if(pedidoAccion) abrirEditarPedido(pedidoAccion.id); }
+function accionRegistrarPago(){
+  cerrarModal('acc');
+  const p = pedidoAccion; if(!p) return;
+  const tot = Number(p.precio)||0, pag = pagadoDe(p), falta = Math.max(0, tot - pag);
+  document.getElementById('pg-titulo').textContent = 'Ingresar pago — ' + (p.nombre_cliente || 'Pedido');
+  document.getElementById('pg-sub').textContent = detallePedidoPOS(p) + (p.fecha_entrega ? ' · para el ' + new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'long'}) : '');
+  document.getElementById('pg-total').textContent = fmtDinero(tot);
+  document.getElementById('pg-pagado').textContent = fmtDinero(pag);
+  document.getElementById('pg-falta').textContent = falta > 0 ? fmtDinero(falta) : '✓ $0';
+  const hist = [];
+  if(Number(p.anticipo) > 0) hist.push(`Anticipo ${fmtDinero(p.anticipo)}${p.metodo_pago ? ' (' + formatNombre(p.metodo_pago) + ')' : ''}`);
+  pagosDe(p).forEach(x=> hist.push(`${fmtDinero(x.monto)} (${formatNombre(x.metodo)}) el ${new Date(x.fecha).toLocaleDateString('es-MX',{day:'numeric', month:'short'})}`));
+  if(Number(p.pago_entrega) > 0) hist.push(`${fmtDinero(p.pago_entrega)} al entregar (${formatNombre(p.metodo_entrega || '')})`);
+  document.getElementById('pg-historial').textContent = hist.length ? 'Pagos anteriores: ' + hist.join(' · ') : 'Todavía no hay pagos registrados.';
+  document.getElementById('pg-monto').value = falta > 0 ? falta : '';
+  pgMetodo = null;
+  document.querySelectorAll('#pg-metodos .chip').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('pg-msg').className = 'msg';
+  abrirModal('pg');
+}
+document.querySelectorAll('#pg-metodos .chip').forEach(c=> c.addEventListener('click', ()=>{
+  pgMetodo = c.dataset.m;
+  document.querySelectorAll('#pg-metodos .chip').forEach(x=>x.classList.toggle('selected', x === c));
+}));
+async function guardarPagoPedido(){
+  const p = pedidoAccion; if(!p) return;
+  const msg = document.getElementById('pg-msg'); msg.className = 'msg';
+  const monto = Number(document.getElementById('pg-monto').value);
+  if(!(monto > 0)){ msg.className = 'msg err'; msg.textContent = 'Escribe el monto que pagó.'; return; }
+  if(!pgMetodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
+  const pagos = [...pagosDe(p), { monto, metodo: pgMetodo, fecha: new Date().toISOString() }];
+  const btn = document.getElementById('pg-guardar'); btn.disabled = true; btn.textContent = 'Guardando...';
+  const { data, error } = await sb.from('pedidos').update({ pagos }).eq('id', p.id).select();
+  btn.disabled = false; btn.textContent = 'Guardar pago';
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message; return; }
+  if(!data || !data.length){ msg.className = 'msg err'; msg.textContent = 'No se guardó. Revisa que ya se haya corrido el SQL de pagos.'; return; }
+  cerrarModal('pg');
+  refrescarVistaActual();
 }
 
 cargarSesion();

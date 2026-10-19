@@ -1,0 +1,3275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connie Repostería Fina — Pedidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --cream:#FBF6EC;
+    --cream-deep:#F3EADA;
+    --paper:#FFFFFF;
+    --cocoa:#3A2A1E;
+    --cocoa-soft:#6B5848;
+    --muted:#9A8A79;
+    --line:#E7DCC9;
+    --jam:#B3425A;
+    --jam-deep:#8F2E44;
+    --caramel:#C98F3F;
+    --sage:#5B7F55;
+    --sage-bg:#E7EFE3;
+    --jam-bg:#F7E4E8;
+    --caramel-bg:#FBEFDC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--cocoa);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:40px;
+  }
+  header{
+    padding:28px 20px 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--cream);
+  }
+  header h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 2px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--cocoa-soft);
+    font-size:14px;
+  }
+  nav{
+    display:flex;
+    gap:6px;
+    padding:14px 20px 0;
+    background:var(--cream);
+    position:sticky;
+    top:0;
+    z-index:10;
+    border-bottom:1px solid var(--line);
+  }
+  nav button{
+    flex:1;
+    border:none;
+    background:none;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--muted);
+    padding:12px 8px 14px;
+    cursor:pointer;
+    border-bottom:2.5px solid transparent;
+  }
+  nav button.active{
+    color:var(--jam-deep);
+    border-bottom-color:var(--jam);
+  }
+  main{
+    max-width:640px;
+    margin:0 auto;
+    padding:22px 18px 10px;
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--cocoa-soft);
+    margin-bottom:7px;
+  }
+  .field .hint{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:5px;
+  }
+  input[type=text], input[type=tel], input[type=number], input[type=date], input[type=time], input[type=email], input[type=password], select, textarea{
+    width:100%;
+    padding:12px 13px;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    background:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    color:var(--cocoa);
+  }
+  select{appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%236B5848' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>"); background-repeat:no-repeat; background-position:right 14px center;}
+  textarea{resize:vertical; min-height:70px;}
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--jam);
+  }
+
+  .row2{display:flex; gap:12px;}
+  .row2 > div{flex:1;}
+
+  .chip-group{display:flex; gap:8px; flex-wrap:wrap;}
+  .chip{
+    padding:9px 16px;
+    border:1.5px solid var(--line);
+    border-radius:999px;
+    background:var(--paper);
+    font-size:14px;
+    font-weight:600;
+    color:var(--cocoa-soft);
+    cursor:pointer;
+  }
+  .chip.selected{
+    background:var(--jam);
+    border-color:var(--jam);
+    color:#fff;
+  }
+
+  .price-tag{
+    display:inline-flex;
+    align-items:baseline;
+    gap:6px;
+    background:var(--caramel-bg);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-top:4px;
+  }
+  .price-tag .amount{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:600;
+    color:var(--jam-deep);
+  }
+  .price-tag .label{font-size:12.5px; color:var(--cocoa-soft);}
+
+  button.primary{
+    width:100%;
+    background:var(--jam);
+    color:#fff;
+    border:none;
+    padding:15px;
+    border-radius:11px;
+    font-family:'Inter',sans-serif;
+    font-size:15.5px;
+    font-weight:700;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  button.primary:disabled{background:var(--muted);}
+  button.primary:active{background:var(--jam-deep);}
+
+  .msg{
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:14px;
+    margin-top:14px;
+    display:none;
+  }
+  .msg.ok{background:var(--sage-bg); color:#3F5C3A; display:block;}
+  .msg.err{background:var(--jam-bg); color:var(--jam-deep); display:block;}
+
+  /* Lista de pedidos */
+  .day-group{margin-bottom:26px;}
+  .day-group h3{
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    font-weight:600;
+    color:var(--jam-deep);
+    margin:0 0 10px;
+    padding-bottom:6px;
+    border-bottom:1.5px solid var(--line);
+  }
+  .order-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 15px;
+    margin-bottom:10px;
+  }
+  .order-card .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .order-card .name{font-weight:700; font-size:15px;}
+  .order-card .desc{font-size:13.5px; color:var(--cocoa-soft); margin-top:3px;}
+  .order-card .meta{font-size:12.5px; color:var(--muted); margin-top:6px;}
+  .status{
+    font-size:11.5px;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .status.pendiente{background:var(--caramel-bg); color:#8A5F1E;}
+  .status.confirmado{background:#E4E9F7; color:#3B4E8F;}
+  .status.entregado{background:var(--sage-bg); color:#3F5C3A;}
+
+  .order-card .actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .order-card .actions button{
+    flex:1;
+    font-size:12.5px;
+    font-weight:600;
+    padding:8px 6px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:var(--cream);
+    color:var(--cocoa-soft);
+  }
+  .order-card .actions button.go{
+    border-color:var(--sage);
+    color:#3F5C3A;
+  }
+
+  .cart-list{
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    background:var(--paper);
+    overflow:hidden;
+  }
+  .cart-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+  }
+  .cart-row:last-of-type{border-bottom:none;}
+  .cart-row-name{font-size:14.5px; font-weight:600; color:var(--cocoa);}
+  .qty-stepper{display:flex; align-items:center; gap:10px;}
+  .qty-stepper button{
+    width:30px; height:30px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:var(--cream);
+    color:var(--jam-deep);
+    font-size:17px;
+    font-weight:700;
+    line-height:1;
+  }
+  .qty-stepper span{
+    min-width:18px;
+    text-align:center;
+    font-weight:700;
+    font-size:14.5px;
+  }
+  .cart-total{
+    padding:11px 14px;
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--jam-deep);
+    background:var(--caramel-bg);
+  }
+
+  .seccion-item{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 11px;
+    margin-bottom:7px;
+    background:var(--paper);
+  }
+  .seccion-item .nombre-item{font-weight:700; font-size:13.5px; margin-bottom:6px;}
+  .grid4{display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:7px;}
+  .mini-label{display:block; font-size:9.5px; font-weight:700; color:var(--muted); margin-bottom:2px; text-transform:uppercase;}
+  .mini-input{
+    width:100%;
+    max-width:150px;
+    padding:7px 8px;
+    border:1.5px solid var(--line);
+    border-radius:7px;
+    font-size:14px;
+    text-align:center;
+    box-sizing:border-box;
+  }
+  .campos-fila{display:flex; gap:10px; flex-wrap:wrap;}
+  .tanda-extra{margin-top:5px;}
+  .link-agregar{font-size:12px; color:var(--jam-deep); font-weight:600; display:inline-block; margin-top:6px;}
+  .check-ok{color:var(--sage); font-weight:700;}
+
+  /* Tabla de pedidos por día */
+  main:has(#view-lista.active){max-width:1240px;}
+  .tabla-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--paper);
+  }
+  .tabla-pedidos{width:100%; border-collapse:collapse; font-size:13px;}
+  .tabla-pedidos th{
+    background:var(--cream-deep);
+    color:var(--cocoa-soft);
+    font-size:12px;
+    font-weight:700;
+    text-align:left;
+    padding:9px 10px;
+    white-space:nowrap;
+    border-bottom:1px solid var(--line);
+  }
+  .tabla-pedidos td{
+    padding:10px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+    color:var(--cocoa);
+  }
+  .tabla-pedidos tr:last-child td{border-bottom:none;}
+  .tabla-pedidos td.num{font-weight:700; color:var(--jam-deep); text-align:center;}
+  .tabla-pedidos td.nombre{font-weight:700; white-space:nowrap;}
+  .tabla-pedidos td.nowrap{white-space:nowrap;}
+  .tabla-pedidos td.dinero, .tabla-pedidos th.dinero{white-space:nowrap; text-align:right;}
+  .tabla-pedidos td.det{min-width:170px;}
+  .tabla-pedidos td.coment{min-width:160px; color:var(--cocoa-soft);}
+  .tabla-pedidos .sub{display:block; font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .falta-ok{color:#3F5C3A; font-weight:700;}
+  .falta-pend{color:var(--jam-deep); font-weight:700;}
+  .resumen-dia{
+    display:flex; flex-wrap:wrap; gap:4px 18px;
+    font-size:12.5px; color:var(--cocoa-soft);
+    margin:0 0 10px;
+  }
+  .resumen-dia b{color:var(--cocoa);}
+
+  /* Pantallas anchas de la directora */
+  main:has(#view-lista.active),
+  main:has(#view-resumen.active),
+  main:has(#view-historial.active),
+  main:has(#view-historial-detalle.active){max-width:1240px;}
+  #view-resumen > .chip-group, #view-resumen > .row2, #view-resumen > button.primary{max-width:640px;}
+
+  /* Líneas verticales y detalles de tabla */
+  .tabla-pedidos th, .tabla-pedidos td{border-right:1px solid var(--line);}
+  .tabla-pedidos th:last-child, .tabla-pedidos td:last-child{border-right:none;}
+  .tabla-pedidos td.n, .tabla-pedidos th.n{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .tabla-pedidos td.c, .tabla-pedidos th.c{text-align:center;}
+  .tabla-pedidos tfoot td{background:var(--caramel-bg); font-weight:700; border-top:1.5px solid var(--line); border-bottom:none;}
+  .tabla-pedidos tr.click{cursor:pointer;}
+  .tabla-pedidos tr.click:active td{background:var(--cream);}
+  .tabla-pedidos td.vend{font-weight:700; color:var(--jam-deep);}
+  .tag-ok{color:#3F5C3A; font-weight:700;}
+  .tag-prog{color:#8A5F1E; font-weight:700;}
+
+  /* Botón para el repartidor */
+  .btn-repartidor{
+    margin-top:10px;
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 16px;
+    border-radius:10px;
+    border:1.5px solid var(--sage);
+    background:var(--sage-bg);
+    color:#3F5C3A;
+    font-family:'Inter',sans-serif;
+    font-size:14px; font-weight:700;
+    cursor:pointer;
+  }
+  .btn-repartidor.copiado{background:var(--sage); color:#fff;}
+
+  /* Resumen en cuadrícula */
+  .totales-top{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; margin-bottom:22px;}
+  .total-box{border-radius:12px; padding:14px 16px; background:var(--sage-bg);}
+  .total-box.caramelo{background:var(--caramel-bg);}
+  .total-box .tb-label{font-size:13px; color:var(--cocoa-soft);}
+  .total-box .tb-monto{font-family:'Fraunces',serif; font-size:26px; font-weight:600; color:var(--jam-deep); margin-top:2px;}
+  .total-box .tb-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+  .seccion-resumen{margin-bottom:24px;}
+  .seccion-resumen h3{font-family:'Fraunces',serif; color:var(--jam-deep); margin:0 0 10px; font-size:18px;}
+  .grid-prod{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px;}
+  .celda-prod{
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; display:flex; flex-direction:column; gap:3px;
+  }
+  .celda-prod .cp-nombre{font-weight:700; font-size:14px;}
+  .celda-prod .cp-linea{font-size:12.5px; color:var(--cocoa-soft);}
+  .celda-prod .cp-total{font-weight:700; color:var(--jam-deep); font-size:15px; margin-top:auto; padding-top:4px;}
+  .celda-prod .cp-falta{font-size:12px; color:var(--jam-deep);}
+  .pie-seccion{
+    display:flex; justify-content:space-between; align-items:baseline;
+    background:var(--caramel-bg); border-radius:10px;
+    padding:11px 14px; margin-top:8px; font-size:13.5px; color:var(--cocoa-soft);
+  }
+  .pie-seccion b{font-family:'Fraunces',serif; font-size:20px; color:var(--jam-deep);}
+
+  /* Historial: bloques lado a lado */
+  .grid-historial{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
+  .col-hist{display:flex; flex-direction:column; gap:20px; min-width:0;}
+  .bloque-caja{margin-top:28px; padding-top:20px; border-top:1.5px solid var(--line);}
+  .bloque-caja .grid-caja{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
+  @media (max-width:820px){ .grid-historial, .bloque-caja .grid-caja{grid-template-columns:1fr;} }
+  .grid-historial h3{font-family:'Fraunces',serif; color:var(--jam-deep); margin:0 0 10px; font-size:17px;}
+
+  .titulo-bloque{
+    font-family:'Fraunces',serif; font-size:22px; font-weight:600; color:var(--cocoa);
+    margin:34px 0 4px; padding-top:18px; border-top:1.5px solid var(--line);
+  }
+
+  /* Inicio del colaborador */
+  body:not(.rol-colaborador) .solo-colab{display:none !important;}
+  body.rol-colaborador nav{display:none;}
+  .inicio-botones{display:flex; flex-direction:column; gap:14px; padding-top:20px;}
+  .btn-inicio{
+    width:100%; text-align:left;
+    background:var(--paper); border:1.5px solid var(--line); border-radius:14px;
+    padding:22px 20px; cursor:pointer;
+    font-family:'Fraunces',serif; font-size:21px; font-weight:600; color:var(--jam-deep);
+  }
+  .btn-inicio span{display:block; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:500; color:var(--cocoa-soft); margin-top:4px;}
+  .btn-inicio:active{background:var(--cream-deep);}
+  .link-inicio{display:inline-block; color:var(--jam-deep); font-weight:700; font-size:14px; text-decoration:none; margin-bottom:14px;}
+
+  /* Clientes */
+  .lista-resultados{border:1.5px solid var(--line); border-radius:10px; background:var(--paper); margin-top:6px; overflow:hidden; display:none;}
+  .lista-resultados.visible{display:block;}
+  .resultado-cliente{display:block; width:100%; text-align:left; border:none; border-bottom:1px solid var(--line); background:none; padding:11px 13px; cursor:pointer; font-family:'Inter',sans-serif;}
+  .resultado-cliente:last-child{border-bottom:none;}
+  .resultado-cliente:active{background:var(--cream);}
+  .resultado-cliente .rc-nombre{font-weight:700; font-size:14.5px; color:var(--cocoa);}
+  .resultado-cliente .rc-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .sin-resultados{padding:12px 13px; font-size:13px; color:var(--muted);}
+  .btn-secundario{
+    margin-top:10px; padding:10px 16px; border-radius:10px;
+    border:1.5px solid var(--jam); background:var(--paper); color:var(--jam-deep);
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .cliente-card{background:var(--paper); border:1.5px solid var(--line); border-radius:10px; padding:12px 14px; font-size:14px;}
+  .cliente-card .cc-nombre{font-weight:700; font-size:15px;}
+  .cliente-card .cc-linea{color:var(--cocoa-soft); font-size:13.5px; margin-top:3px;}
+  .cliente-card a{color:var(--jam-deep); font-weight:600; font-size:13px; display:inline-block; margin-top:8px;}
+  .cliente-nuevo{background:var(--cream-deep); border-radius:12px; padding:14px 14px 4px; margin-top:4px;}
+  .sub-titulo{font-size:12px; font-weight:700; color:var(--cocoa-soft); text-transform:uppercase; letter-spacing:.03em; margin:4px 0 10px;}
+  .form-dir .field{margin-bottom:12px;}
+  .form-dir textarea{min-height:56px;}
+  .botones-fila{display:flex; gap:10px; align-items:center; margin-bottom:10px;}
+  .botones-fila .primary{margin-top:0; flex:1;}
+  .botones-fila .btn-secundario{margin-top:0;}
+
+  /* Editar pedido */
+  .ep-velo{position:fixed;inset:0;background:rgba(43,30,22,.45);z-index:90;display:none}
+  .ep-velo.on{display:block}
+  .ep-hoja{position:fixed;z-index:91;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:92vh;overflow-y:auto;background:var(--cream);border-radius:18px;padding:20px 20px 16px;display:none;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .ep-hoja.on{display:block}
+  .ep-hoja h2{font-family:'Fraunces',serif;color:var(--jam-deep);margin:0 0 2px;font-size:22px}
+  .ep-hoja .ep-sub{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+  .ep-sec{font-size:12px;font-weight:700;color:var(--cocoa-soft);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:12px}
+  .ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ep-grid .full{grid-column:1/-1}
+  .ep-hoja label{display:block;font-size:12px;font-weight:600;color:var(--cocoa-soft);margin-bottom:4px}
+  .ep-hoja input,.ep-hoja select,.ep-hoja textarea{width:100%;box-sizing:border-box;font-family:inherit;font-size:15px;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--cocoa)}
+  .ep-hoja textarea{min-height:60px}
+  .ep-acc{display:flex;gap:10px;margin-top:18px;align-items:center}
+  .ep-acc .primary{margin:0;flex:1}
+  .btn-borrar{padding:12px 16px;border-radius:10px;border:1.5px solid var(--jam-deep);background:#fff;color:var(--jam-deep);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+  .btn-cerrar-ep{padding:12px 16px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
+  @media (max-width:520px){ .ep-grid{grid-template-columns:1fr} }
+
+  .empty{
+    text-align:center;
+    padding:40px 20px;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .loading{
+    text-align:center;
+    padding:30px;
+    color:var(--muted);
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="max-width:380px; width:100%;">
+    <div style="text-align:center; margin-bottom:28px;">
+      <h1 style="font-family:'Fraunces',serif; font-size:26px; font-weight:600; color:var(--cocoa); margin:0 0 4px;">Connie Repostería Fina</h1>
+      <p style="color:var(--cocoa-soft); font-size:14px; margin:0;">Sistema de pedidos</p>
+    </div>
+    <div class="field">
+      <label>Correo</label>
+      <input type="email" id="login-email" autocomplete="username" style="height:46px; width:100%; box-sizing:border-box;">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <div style="position:relative; height:46px;">
+        <input type="password" id="login-password" autocomplete="current-password" style="padding-right:44px; height:46px; width:100%; box-sizing:border-box;">
+        <button type="button" onclick="toggleVerContrasena()" style="position:absolute; right:2px; top:2px; width:42px; height:42px; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--cocoa-soft);" aria-label="Mostrar contraseña">
+          <svg id="icono-ojo" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="primary" id="btn-login" onclick="iniciarSesion()">Entrar</button>
+    <div class="msg" id="login-msg"></div>
+    <div style="text-align:center; margin-top:14px;">
+      <a href="#" onclick="pedirResetPassword(); return false;" style="color:var(--cocoa-soft); font-size:13px;">¿Olvidaste tu contraseña?</a>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA: PONER CONTRASEÑA NUEVA (llega aquí desde el link del correo) -->
+<div id="reset-screen" style="display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px;">
+  <div style="max-width:380px; width:100%;">
+    <div style="text-align:center; margin-bottom:28px;">
+      <h1 style="font-family:'Fraunces',serif; font-size:22px; font-weight:600; color:var(--cocoa); margin:0 0 4px;">Nueva contraseña</h1>
+      <p style="color:var(--cocoa-soft); font-size:14px; margin:0;">Escribe tu nueva contraseña</p>
+    </div>
+    <div class="field">
+      <label>Contraseña nueva</label>
+      <input type="password" id="reset-password" style="height:46px; width:100%; box-sizing:border-box;">
+    </div>
+    <button class="primary" id="btn-reset" onclick="guardarNuevaPassword()">Guardar contraseña</button>
+    <div class="msg" id="reset-msg"></div>
+  </div>
+</div>
+
+<!-- APP (solo visible tras iniciar sesión) -->
+<div id="app-contenido" style="display:none;">
+
+<header>
+  <h1>Connie Repostería Fina</h1>
+  <p>Sistema de pedidos — <span id="usuario-rol-label"></span> <a href="#" onclick="cerrarSesion(); return false;" style="color:var(--jam-deep); margin-left:8px;">Cerrar sesión</a></p>
+</header>
+
+<nav>
+  <button id="tab-nuevo" class="active" onclick="switchView('nuevo')">Nuevo pedido</button>
+  <button id="tab-lista" onclick="switchView('lista')" style="display:none;">Pedidos</button>
+  <button id="tab-productos" onclick="abrirProductosDia()" style="display:none;">Productos del día</button>
+  <button id="tab-historial" onclick="abrirHistorial()" style="display:none;">Historial</button>
+  <button id="tab-resumen" onclick="abrirResumen()" style="display:none;">Resumen</button>
+</nav>
+<div id="debug-banner" style="display:none; background:#F7E4E8; color:#8F2E44; padding:12px 18px; font-size:13px; font-weight:600; border-bottom:1px solid #E0A8B5;"></div>
+
+<main>
+
+  <!-- VISTA: INICIO (colaborador) -->
+  <section id="view-inicio" class="view">
+    <div class="inicio-botones">
+      <button type="button" class="btn-inicio" onclick="irNuevoPedido()">Nuevo pedido<span>Capturar el pedido de un cliente</span></button>
+      <button type="button" class="btn-inicio" onclick="abrirProductosDia()">Productos del día<span>Inicio y cierre de producto, corte de caja</span></button>
+    </div>
+  </section>
+
+  <!-- VISTA: NUEVO PEDIDO -->
+  <section id="view-nuevo" class="view active">
+    <a href="#" class="link-inicio solo-colab" onclick="irInicio(); return false;">← Inicio</a>
+    <form id="form-pedido">
+
+      <div class="field">
+        <label>Cliente</label>
+        <div id="cliente-buscar-wrap">
+          <input type="text" id="cliente-busqueda" placeholder="Buscar por nombre o teléfono" autocomplete="off">
+          <div id="cliente-resultados" class="lista-resultados"></div>
+          <button type="button" class="btn-secundario" onclick="abrirClienteNuevo()">+ Cliente nuevo</button>
+        </div>
+        <div id="cliente-seleccionado" class="cliente-card" style="display:none;"></div>
+        <div id="cliente-nuevo-wrap" class="cliente-nuevo" style="display:none;">
+          <div class="field"><label>Nombre</label><input type="text" id="cn-nombre"></div>
+          <div class="field"><label>Teléfono</label><input type="tel" id="cn-telefono" inputmode="tel"></div>
+          <div class="sub-titulo">Dirección (se puede dejar vacía si no pide a domicilio)</div>
+          <div id="cn-direccion" class="form-dir"></div>
+          <div class="botones-fila">
+            <button type="button" class="primary" id="btn-guardar-cliente" onclick="guardarClienteNuevo()">Guardar cliente</button>
+            <button type="button" class="btn-secundario" onclick="cancelarClienteNuevo()">Cancelar</button>
+          </div>
+          <div class="msg" id="cn-msg" style="margin:0 0 10px;"></div>
+        </div>
+      </div>
+
+      <div class="hint" id="pedido-sin-cliente" style="margin:-6px 0 18px;">Busca o agrega un cliente para continuar con el pedido.</div>
+      <div id="pedido-resto" style="display:none;">
+      <div class="field">
+        <label>¿Qué va a llevar?</label>
+        <div class="chip-group" id="categoria-chips">
+          <div class="chip" data-cat="pastel">Pastel</div>
+          <div class="chip" data-cat="cupcake">Cupcake</div>
+          <div class="chip" data-cat="individual">Individual</div>
+          <div class="chip" data-cat="panque">Panqué</div>
+        </div>
+      </div>
+
+      <div id="detalle-pastel" style="display:none;">
+        <div class="field">
+          <label>Tamaño</label>
+          <select id="sel-tamano"><option value="">Selecciona...</option></select>
+        </div>
+        <div class="field">
+          <label>Sabor</label>
+          <select id="sel-sabor-pastel"><option value="">Selecciona un tamaño primero</option></select>
+        </div>
+        <div id="corona-wrap" style="display:none;">
+          <div class="hint" id="corona-incluida" style="display:none; margin:-6px 0 18px;">Este sabor ya incluye corona.</div>
+          <div id="corona-pregunta">
+            <div class="field">
+              <label>¿Quiere corona?</label>
+              <div class="chip-group" id="corona-si-no-chips">
+                <div class="chip" data-corona="si">Sí</div>
+                <div class="chip" data-corona="no">No</div>
+              </div>
+            </div>
+            <div class="field" id="corona-tipo-wrap" style="display:none;">
+              <label id="corona-tipo-label">Tipo de corona</label>
+              <div class="chip-group" id="corona-tipo-chips">
+                <div class="chip" data-coronatipo="ambar">Ámbar</div>
+                <div class="chip" data-coronatipo="color">De color</div>
+              </div>
+            </div>
+            <div class="field" id="corona-color-wrap" style="display:none;">
+              <label>Color de la corona</label>
+              <input type="text" id="corona-color" placeholder="Ej. rosa pastel">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="detalle-cupcake" style="display:none;">
+        <div class="field">
+          <label>Sabores y cantidades</label>
+          <div id="cart-cupcake" class="cart-list"></div>
+        </div>
+      </div>
+
+      <div id="detalle-individual" style="display:none;">
+        <div class="field">
+          <label>Productos y cantidades</label>
+          <div id="cart-individual" class="cart-list"></div>
+        </div>
+      </div>
+
+      <div id="detalle-panque" style="display:none;">
+        <div class="field">
+          <label>Panqués y cantidades</label>
+          <div id="cart-panque" class="cart-list"></div>
+        </div>
+      </div>
+
+      <div class="field" id="precio-wrap" style="display:none;">
+        <label id="precio-label">Total</label>
+        <div class="price-tag">
+          <span class="label">$</span>
+          <input type="number" id="precio" style="border:none;background:none;padding:0;width:90px;font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--jam-deep);">
+        </div>
+        <div class="hint">Puedes editarlo si es un precio especial (por ejemplo, pastel decorado)</div>
+      </div>
+
+      <div class="field">
+        <label>¿Recoge en el local o es a domicilio?</label>
+        <div class="chip-group" id="entrega-chips">
+          <div class="chip" data-entrega="recoger">Recoge en local</div>
+          <div class="chip" data-entrega="casa">Recoger en casa</div>
+          <div class="chip" data-entrega="domicilio">Domicilio</div>
+        </div>
+      </div>
+
+      <div class="field" id="recibe-wrap" style="display:none;">
+        <label>¿Quién recibe el pedido?</label>
+        <div class="chip-group" id="recibe-chips">
+          <div class="chip selected" data-recibe="cliente">El mismo cliente</div>
+          <div class="chip" data-recibe="otra">Otra persona</div>
+        </div>
+      </div>
+      <div id="recibe-otra-wrap" class="cliente-nuevo" style="display:none; margin:-6px 0 18px;">
+        <div class="field"><label>Nombre de quien recibe</label><input type="text" id="recibe-nombre"></div>
+        <div class="field"><label>Teléfono de contacto</label><input type="tel" id="recibe-telefono" inputmode="tel"></div>
+      </div>
+
+      <div class="field" id="direccion-wrap" style="display:none;">
+        <label>Dirección de entrega</label>
+        <div class="chip-group" id="dir-opcion-chips" style="margin-bottom:10px;">
+          <div class="chip" data-dir="guardada">Dirección guardada</div>
+          <div class="chip" data-dir="nueva">Otra dirección</div>
+        </div>
+        <div id="dir-guardada-texto" class="cliente-card" style="display:none;"></div>
+        <div id="dir-nueva-form" class="form-dir" style="display:none;"></div>
+        <div class="hint" id="dir-nueva-hint" style="display:none; margin-top:0;">Esta dirección solo se usa en este pedido; no cambia la que el cliente tiene guardada.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Fecha de entrega</label>
+          <input type="date" id="fecha_entrega">
+        </div>
+        <div class="field">
+          <label id="hora-label">Hora</label>
+          <input type="time" id="hora_entrega">
+        </div>
+      </div>
+      <div class="hint" id="hora-hint" style="margin:-10px 0 18px;">Si no especificas hora, se agenda por default a las 11:00 am.</div>
+
+      <div class="field">
+        <label>¿Dio anticipo o ya pagó completo?</label>
+        <div class="chip-group" id="pago-si-no-chips">
+          <div class="chip" data-pagosn="si">Sí</div>
+          <div class="chip" data-pagosn="no">No, sigue pendiente</div>
+        </div>
+      </div>
+
+      <div id="pago-detalle" style="display:none;">
+        <div class="field">
+          <label>Método de pago</label>
+          <div class="chip-group" id="metodo-pago-chips">
+            <div class="chip" data-metodo="efectivo">Efectivo</div>
+            <div class="chip" data-metodo="transferencia">Transferencia</div>
+            <div class="chip" data-metodo="terminal">Terminal</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Monto pagado</label>
+          <input type="number" id="anticipo" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="field">
+          <div class="price-tag" style="background:var(--sage-bg);">
+            <span class="label">Falta por pagar:</span>
+            <span class="amount" id="falta-pago-display">$0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Comentarios (dedicatoria, decoración, alergias...)</label>
+        <textarea id="notas"></textarea>
+      </div>
+
+      <button type="submit" class="primary" id="btn-guardar">Guardar pedido</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <div id="confirmacion" style="display:none; text-align:center; padding:50px 20px;">
+      <div style="font-size:40px; margin-bottom:10px;">✅</div>
+      <div style="font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--jam-deep); margin-bottom:6px;">Tu pedido se guardó exitosamente</div>
+      <div style="font-size:13.5px; color:var(--cocoa-soft); margin-bottom:22px;">Ya puedes capturar el siguiente.</div>
+      <button class="primary" style="max-width:260px;" onclick="iniciarNuevoPedido()">Iniciar nuevo pedido</button>
+      <div class="solo-colab" style="margin-top:14px;"><a href="#" class="link-inicio" onclick="iniciarNuevoPedido(); irInicio(); return false;">Volver al inicio</a></div>
+    </div>
+  </section>
+
+  <!-- VISTA: LISTA DE PEDIDOS -->
+  <section id="view-lista" class="view">
+    <div style="margin-bottom:16px;">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Buscar por nombre</label>
+        <input type="text" id="filtro-nombre" oninput="cargarPedidos()" placeholder="Nombre de cliente...">
+      </div>
+      <div class="row2" style="margin-bottom:10px;">
+        <div class="field">
+          <label>Categoría</label>
+          <select id="filtro-categoria" onchange="cargarPedidos()">
+            <option value="">Todas</option>
+            <option value="pastel">Pastel</option>
+            <option value="cupcake">Cupcake</option>
+            <option value="individual">Individual</option>
+            <option value="panque">Panqué</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Mostrar</label>
+          <select id="filtro-rango" onchange="cambiarRangoPedidos()">
+            <option value="proximos">Próximos (desde hoy)</option>
+            <option value="todos">Todos</option>
+            <option value="personalizado">Fechas personalizadas</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2" id="filtro-fechas-wrap" style="display:none; margin-bottom:6px;">
+        <div class="field"><label>Desde</label><input type="date" id="filtro-desde" onchange="cargarPedidos()"></div>
+        <div class="field"><label>Hasta</label><input type="date" id="filtro-hasta" onchange="cargarPedidos()"></div>
+      </div>
+    </div>
+    <div id="lista-contenido" class="loading">Cargando pedidos...</div>
+  </section>
+
+  <!-- VISTA: PRODUCTOS DEL DIA (HUB) -->
+  <section id="view-productos" class="view">
+    <a href="#" class="link-inicio solo-colab" onclick="irInicio(); return false;">← Inicio</a>
+    <div style="font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--cocoa); margin-bottom:16px;" id="productos-dia-fecha"></div>
+    <div class="cart-list" style="margin-bottom:18px;">
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('cupcakes')">
+        <div class="cart-row-name">Cupcakes <span id="check-cupcakes"></span></div>
+        <div>›</div>
+      </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('individuales')">
+        <div class="cart-row-name">Individuales <span id="check-individuales"></span></div>
+        <div>›</div>
+      </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('pasteles')">
+        <div class="cart-row-name">Pasteles <span id="check-pasteles"></span></div>
+        <div>›</div>
+      </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('panques')">
+        <div class="cart-row-name">Panqués <span id="check-panques"></span></div>
+        <div>›</div>
+      </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('caja')">
+        <div class="cart-row-name">Corte de caja <span id="check-caja"></span></div>
+        <div>›</div>
+      </div>
+    </div>
+    <button class="primary" id="btn-cerrar-dia" onclick="cerrarDia()">Cerrar día</button>
+    <div class="msg" id="productos-dia-msg"></div>
+  </section>
+
+  <!-- VISTA: EDITOR DE SECCION (Cupcakes / Individuales) -->
+  <section id="view-seccion" class="view">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <a href="#" onclick="irAtras(); return false;" style="color:var(--jam-deep); font-weight:700; font-size:22px; text-decoration:none;">←</a>
+      <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:600;" id="seccion-titulo"></div>
+    </div>
+    <div id="seccion-filas"></div>
+    <button class="primary" id="btn-guardar-seccion" style="margin-top:8px; display:none;" onclick="guardarSeccion(false)">Guardar</button>
+    <button class="primary" id="btn-finalizar-seccion" style="margin-top:10px; background:var(--sage); display:none;" onclick="guardarSeccion(true)">Finalizar sección</button>
+    <div class="msg" id="seccion-msg"></div>
+  </section>
+
+  <!-- VISTA: RESUMEN DE VENTAS -->
+  <section id="view-resumen" class="view">
+    <div class="chip-group" style="margin-bottom:12px;">
+      <div class="chip" onclick="rangoResumenRapido('hoy')">Hoy</div>
+      <div class="chip" onclick="rangoResumenRapido('semana')">Esta semana</div>
+      <div class="chip" onclick="rangoResumenRapido('mes')">Este mes</div>
+    </div>
+    <div class="row2" style="margin-bottom:12px;">
+      <div class="field"><label>Desde</label><input type="date" id="resumen-desde"></div>
+      <div class="field"><label>Hasta</label><input type="date" id="resumen-hasta"></div>
+    </div>
+    <button class="primary" onclick="generarResumen()">Ver resumen</button>
+    <div id="resumen-contenido" style="margin-top:18px;"></div>
+  </section>
+
+  <!-- VISTA: HISTORIAL (LISTA) -->
+  <section id="view-historial" class="view">
+    <div id="historial-contenido" class="loading">Cargando historial...</div>
+  </section>
+
+  <!-- VISTA: HISTORIAL (DETALLE DE UN DIA) -->
+  <section id="view-historial-detalle" class="view">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <a href="#" onclick="abrirHistorial(); return false;" style="color:var(--jam-deep); font-weight:700; font-size:22px; text-decoration:none;">←</a>
+      <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:600;" id="historial-detalle-titulo"></div>
+    </div>
+    <div id="historial-detalle-contenido"></div>
+  </section>
+
+</main>
+
+</div><!-- cierre app-contenido -->
+
+<div class="ep-velo" id="ep-velo" onclick="cerrarEditarPedido()"></div>
+<div class="ep-hoja" id="ep-hoja" role="dialog" aria-modal="true" aria-labelledby="ep-titulo">
+  <h2 id="ep-titulo">Pedido</h2>
+  <div class="ep-sub" id="ep-sub"></div>
+
+  <div class="ep-sec">Cliente</div>
+  <div class="ep-grid">
+    <div><label for="ep-nombre">Nombre</label><input id="ep-nombre" maxlength="80"></div>
+    <div><label for="ep-tel">Teléfono</label><input id="ep-tel" type="tel" maxlength="20"></div>
+  </div>
+
+  <div class="ep-sec">Producto</div>
+  <div class="ep-grid">
+    <div><label for="ep-cat">Categoría</label>
+      <select id="ep-cat"><option value="pastel">Pastel</option><option value="cupcake">Cupcakes</option><option value="individual">Individuales</option><option value="panque">Panqués</option></select></div>
+    <div><label for="ep-tam">Tamaño</label><input id="ep-tam" maxlength="60"></div>
+    <div class="full"><label for="ep-sabor">Sabor / detalle</label><input id="ep-sabor" maxlength="300"></div>
+    <div id="ep-cor-wrap"><label for="ep-cor">Corona</label>
+      <select id="ep-cor"><option value="">Sin corona</option><option value="incluida">Incluida</option><option value="ambar">Ámbar</option><option value="color">De color</option></select></div>
+    <div id="ep-color-wrap"><label for="ep-color">Color de la corona</label><input id="ep-color" maxlength="60"></div>
+  </div>
+
+  <div class="ep-sec">Entrega</div>
+  <div class="ep-grid">
+    <div><label for="ep-fecha">Fecha</label><input id="ep-fecha" type="date"></div>
+    <div><label for="ep-hora">Hora</label><input id="ep-hora" type="time"></div>
+    <div><label for="ep-entrega">Tipo de entrega</label>
+      <select id="ep-entrega"><option value="recoger">Recoge en local</option><option value="casa">Recoger en casa</option><option value="domicilio">Domicilio</option></select></div>
+    <div class="full ep-dom"><label for="ep-dir">Dirección</label><input id="ep-dir" maxlength="300"></div>
+    <div class="ep-dom"><label for="ep-rnombre">Recibe (nombre)</label><input id="ep-rnombre" maxlength="80"></div>
+    <div class="ep-dom"><label for="ep-rtel">Recibe (teléfono)</label><input id="ep-rtel" type="tel" maxlength="20"></div>
+  </div>
+
+  <div class="ep-sec">Pago</div>
+  <div class="ep-grid">
+    <div><label for="ep-precio">Total</label><input id="ep-precio" type="number" inputmode="numeric"></div>
+    <div><label for="ep-anticipo">Pagado</label><input id="ep-anticipo" type="number" inputmode="numeric"></div>
+    <div><label for="ep-metodo">Método de pago</label>
+      <select id="ep-metodo"><option value="">Sin pago</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="terminal">Terminal</option></select></div>
+    <div><label>Falta por pagar</label><div id="ep-falta" style="font-weight:700;padding:9px 0;color:var(--jam-deep)">$0</div></div>
+  </div>
+
+  <div class="ep-sec">Comentarios</div>
+  <textarea id="ep-notas" maxlength="1000"></textarea>
+
+  <div class="ep-acc">
+    <button type="button" class="btn-borrar" onclick="borrarPedido()">Borrar</button>
+    <button type="button" class="btn-cerrar-ep" onclick="cerrarEditarPedido()">Cancelar</button>
+    <button type="button" class="primary" id="ep-guardar" onclick="guardarEdicionPedido()">Guardar cambios</button>
+  </div>
+  <div class="msg" id="ep-msg"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://cmdiowwxpectngfidpuc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Maj56l0lrEIGoIhKtAcJnw_HpkWaHIL";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let categoriaActual = null;
+let tamanosData = [];
+let saboresPastelesData = [];
+let saboresCupcakesData = [];
+let individualesData = [];
+let coronasData = [];
+let panquesData = [];
+let PANQUE_PRODUCTOS = []; // se llena desde la tabla "panques" de Supabase
+let INDIVIDUAL_PRODUCTOS = []; // se llena desde la tabla "individuales" de Supabase
+let catalogosListos = null;
+
+let carritos = {
+  'cart-cupcake': { items: [], qtys: {} },
+  'cart-individual': { items: [], qtys: {} },
+  'cart-panque': { items: [], qtys: {} }
+};
+
+function formatNombre(s){
+  if(!s) return '';
+  let t = s.replace(/^cc_/i, '');
+  t = t.replace(/_/g, ' ');
+  return t.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function mostrarDebug(texto){
+  const el = document.getElementById('debug-banner');
+  el.style.display = 'block';
+  el.textContent = texto;
+  console.error(texto);
+}
+
+function switchView(view){
+  const yaEstabaEnNuevo = document.getElementById('view-nuevo').classList.contains('active');
+  if(view === 'nuevo' && !yaEstabaEnNuevo){
+    limpiarFormularioPedido();
+    iniciarNuevoPedido();
+  }
+  document.getElementById('tab-nuevo').classList.toggle('active', view==='nuevo');
+  document.getElementById('tab-lista').classList.toggle('active', view==='lista');
+  document.getElementById('tab-productos').classList.remove('active');
+  document.getElementById('tab-historial').classList.remove('active');
+  document.getElementById('tab-resumen').classList.remove('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-nuevo').classList.toggle('active', view==='nuevo');
+  document.getElementById('view-lista').classList.toggle('active', view==='lista');
+  if(view==='lista') cargarPedidos();
+}
+
+
+function irInicio(){
+  limpiarFormularioPedido();
+  iniciarNuevoPedido();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-inicio').classList.add('active');
+  window.scrollTo(0,0);
+}
+function irNuevoPedido(){
+  switchView('nuevo');
+  window.scrollTo(0,0);
+}
+
+async function cargarCatalogos(){
+  try{
+    const [t, sp, sc, ind, cor, pan] = await Promise.all([
+      sb.from('tamanos_pastel').select('*').order('precio'),
+      sb.from('sabores_pasteles').select('*').order('nombre'),
+      sb.from('sabores_cupcakes').select('*').order('nombre'),
+      sb.from('individuales').select('*').order('nombre'),
+      sb.from('coronas').select('*'),
+      sb.from('panques').select('*').order('nombre')
+    ]);
+    coronasData = cor.data || [];
+    panquesData = pan.data || [];
+    PANQUE_PRODUCTOS = panquesData.map(r=>formatNombre(r.nombre));
+    if(pan.error) mostrarDebug('No se pudo cargar el catálogo de panqués: ' + pan.error.message);
+
+    if(cor.error) mostrarDebug('No se pudo cargar el catálogo de coronas: ' + cor.error.message);
+    const errores = [t.error, sp.error, sc.error, ind.error].filter(Boolean);
+    if(errores.length){
+      mostrarDebug('Error al cargar catálogos: ' + errores.map(e=>e.message).join(' | '));
+      return;
+    }
+
+    tamanosData = t.data || [];
+    saboresPastelesData = sp.data || [];
+    saboresCupcakesData = sc.data || [];
+    individualesData = ind.data || [];
+    // La lista de individuales de Productos del día sale del catálogo de Supabase
+    INDIVIDUAL_PRODUCTOS = individualesData.filter(r=>r.nombre!=='cupcake').map(r=>formatNombre(r.nombre));
+
+    if(tamanosData.length===0 && saboresPastelesData.length===0){
+      mostrarDebug('Conexión OK pero las tablas regresaron vacías. Revisa que las políticas RLS se hayan creado.');
+    }
+  } catch(ex){
+    mostrarDebug('Excepción al conectar con Supabase: ' + ex.message);
+    return;
+  }
+
+  const selTamano = document.getElementById('sel-tamano');
+  // Orden fijo de tamaños; los que no estén en la lista van al final
+  const ORDEN_TAMANOS = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','plancha50','plancha60'];
+  const claveTam = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const posTam = s => { const i = ORDEN_TAMANOS.indexOf(claveTam(s)); return i === -1 ? 999 : i; };
+  [...tamanosData].sort((a,b)=> posTam(a.tamano) - posTam(b.tamano)).forEach(row=>{
+    const opt = document.createElement('option');
+    opt.value = row.tamano;
+    opt.textContent = formatNombre(row.tamano);
+    opt.dataset.precio = row.precio;
+    selTamano.appendChild(opt);
+  });
+
+  const cupcakePrecio = (individualesData.find(r=>r.nombre==='cupcake')||{}).precio || 0;
+  carritos['cart-cupcake'].items = saboresCupcakesData.map(r=>({nombre:r.nombre, precio:cupcakePrecio}));
+  carritos['cart-individual'].items = individualesData.filter(r=>r.nombre!=='cupcake').map(r=>({nombre:r.nombre, precio:r.precio}));
+  carritos['cart-panque'].items = panquesData.map(r=>({nombre:r.nombre, precio:r.precio}));
+}
+
+function renderCarrito(containerId){
+  const carrito = carritos[containerId];
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = '';
+  carrito.items.forEach(item=>{
+    if(!(item.nombre in carrito.qtys)) carrito.qtys[item.nombre] = 0;
+    const row = document.createElement('div');
+    row.className = 'cart-row';
+    row.innerHTML = `
+      <div class="cart-row-name">${formatNombre(item.nombre)}</div>
+      <div class="qty-stepper">
+        <button type="button" onclick="cambiarQty('${containerId}','${item.nombre}',-1)">−</button>
+        <span id="qty-${containerId}-${item.nombre}">${carrito.qtys[item.nombre]}</span>
+        <button type="button" onclick="cambiarQty('${containerId}','${item.nombre}',1)">+</button>
+      </div>`;
+    cont.appendChild(row);
+  });
+  const totalDiv = document.createElement('div');
+  totalDiv.className = 'cart-total';
+  totalDiv.id = containerId + '-total-line';
+  cont.appendChild(totalDiv);
+  actualizarTotalCarrito(containerId);
+}
+
+function cambiarQty(containerId, nombre, delta){
+  const carrito = carritos[containerId];
+  carrito.qtys[nombre] = Math.max(0, (carrito.qtys[nombre]||0) + delta);
+  document.getElementById(`qty-${containerId}-${nombre}`).textContent = carrito.qtys[nombre];
+  actualizarTotalCarrito(containerId);
+}
+
+function actualizarTotalCarrito(containerId){
+  const carrito = carritos[containerId];
+  let piezas = 0, total = 0;
+  carrito.items.forEach(item=>{
+    const q = carrito.qtys[item.nombre] || 0;
+    piezas += q;
+    total += q * item.precio;
+  });
+  const totalLine = document.getElementById(containerId + '-total-line');
+  if(totalLine) totalLine.textContent = piezas > 0 ? `${piezas} piezas — $${total}` : 'Agrega cantidades arriba';
+  document.getElementById('precio').value = total || '';
+}
+
+
+// ---------- Coronas ----------
+let coronaQuiere = null;   // 'si' | 'no'
+let coronaTipo = null;     // 'ambar' | 'color'
+
+function coronaTamanoActual(){
+  return (document.getElementById('sel-tamano').value || '').toLowerCase() === 'mini' ? 'mini' : 'normal';
+}
+function saborIncluyeCorona(){
+  const sabor = document.getElementById('sel-sabor-pastel').value;
+  const s = saboresPastelesData.find(x=>x.nombre === sabor);
+  return !!(s && s.incluye_corona);
+}
+function precioCorona(tipo, tamano){
+  const c = coronasData.find(r => (r.tipo||'').toLowerCase() === tipo && (r.tamano||'').toLowerCase() === tamano);
+  return c ? Number(c.precio)||0 : 0;
+}
+function precioBasePastel(){
+  const opt = document.getElementById('sel-tamano').selectedOptions[0];
+  return opt && opt.dataset.precio ? Number(opt.dataset.precio) : 0;
+}
+function recalcularPrecioPastel(){
+  if(categoriaActual !== 'pastel') return;
+  const base = precioBasePastel();
+  let extra = 0;
+  if(!saborIncluyeCorona() && coronaQuiere === 'si' && coronaTipo) extra = precioCorona(coronaTipo, coronaTamanoActual());
+  document.getElementById('precio').value = base ? base + extra : '';
+}
+function ponerCoronaChips(){
+  document.querySelectorAll('#corona-si-no-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.corona === coronaQuiere));
+  document.querySelectorAll('#corona-tipo-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.coronatipo === coronaTipo));
+}
+function actualizarCoronaUI(){
+  const tamano = document.getElementById('sel-tamano').value;
+  const sabor = document.getElementById('sel-sabor-pastel').value;
+  const wrap = document.getElementById('corona-wrap');
+  if(categoriaActual !== 'pastel' || !tamano || !sabor){ wrap.style.display = 'none'; recalcularPrecioPastel(); return; }
+  wrap.style.display = 'block';
+  const incluida = saborIncluyeCorona();
+  document.getElementById('corona-incluida').style.display = incluida ? 'block' : 'none';
+  document.getElementById('corona-pregunta').style.display = incluida ? 'none' : 'block';
+  const tam = coronaTamanoActual();
+  document.getElementById('corona-tipo-label').textContent = 'Tipo de corona ' + (tam === 'mini' ? 'mini' : 'normal');
+  document.querySelector('#corona-tipo-chips [data-coronatipo="ambar"]').textContent = `Ámbar (+${fmtDinero(precioCorona('ambar', tam))})`;
+  document.querySelector('#corona-tipo-chips [data-coronatipo="color"]').textContent = `De color (+${fmtDinero(precioCorona('color', tam))})`;
+  document.getElementById('corona-tipo-wrap').style.display = coronaQuiere === 'si' ? 'block' : 'none';
+  document.getElementById('corona-color-wrap').style.display = (coronaQuiere === 'si' && coronaTipo === 'color') ? 'block' : 'none';
+  ponerCoronaChips();
+  recalcularPrecioPastel();
+}
+function reiniciarCorona(){
+  coronaQuiere = null;
+  coronaTipo = null;
+  document.getElementById('corona-color').value = '';
+  ponerCoronaChips();
+  document.getElementById('corona-wrap').style.display = 'none';
+}
+document.querySelectorAll('#corona-si-no-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    coronaQuiere = chip.dataset.corona;
+    if(coronaQuiere === 'no'){ coronaTipo = null; document.getElementById('corona-color').value = ''; }
+    actualizarCoronaUI();
+  });
+});
+document.querySelectorAll('#corona-tipo-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    coronaTipo = chip.dataset.coronatipo;
+    if(coronaTipo !== 'color') document.getElementById('corona-color').value = '';
+    actualizarCoronaUI();
+  });
+});
+document.getElementById('sel-sabor-pastel').addEventListener('change', actualizarCoronaUI);
+
+function textoCorona(p){
+  if(!p || !p.corona_tipo) return '';
+  if(p.corona_tipo === 'incluida') return 'Corona incluida';
+  const tam = p.corona_tamano === 'mini' ? ' mini' : '';
+  if(p.corona_tipo === 'ambar') return `Corona ámbar${tam}`;
+  if(p.corona_tipo === 'color') return `Corona de color${tam}${p.corona_color ? ' (' + p.corona_color + ')' : ''}`;
+  return '';
+}
+
+function limpiarCamposCategoria(){
+  document.getElementById('sel-tamano').value = '';
+  const selSabor = document.getElementById('sel-sabor-pastel');
+  selSabor.innerHTML = '<option value="">Selecciona un tamaño primero</option>';
+  carritos['cart-cupcake'].qtys = {};
+  carritos['cart-individual'].qtys = {};
+  carritos['cart-panque'].qtys = {};
+  document.getElementById('precio').value = '';
+  reiniciarCorona();
+}
+
+let entregaActual = null;
+let metodoPagoActual = null;
+
+// ---------- Clientes y direcciones ----------
+const CAMPOS_DIR = [
+  {k:'calle', label:'Calle'},
+  {k:'numero_exterior', label:'Número exterior'},
+  {k:'numero_interior', label:'Número interior (opcional)'},
+  {k:'colonia', label:'Colonia o fraccionamiento'},
+  {k:'codigo_postal', label:'Código postal'},
+  {k:'ciudad', label:'Ciudad'},
+  {k:'referencias', label:'Referencias (entre calles, color de fachada, privada, etc.)'}
+];
+
+function htmlFormDireccion(pre){
+  return `
+    <div class="field"><label>Calle</label><input type="text" id="${pre}-calle"></div>
+    <div class="row2">
+      <div class="field"><label>Número exterior</label><input type="text" id="${pre}-numero_exterior"></div>
+      <div class="field"><label>Número interior</label><input type="text" id="${pre}-numero_interior" placeholder="Opcional"></div>
+    </div>
+    <div class="field"><label>Colonia o fraccionamiento</label><input type="text" id="${pre}-colonia"></div>
+    <div class="row2">
+      <div class="field"><label>Código postal</label><input type="text" id="${pre}-codigo_postal" inputmode="numeric" maxlength="5"></div>
+      <div class="field"><label>Ciudad</label><input type="text" id="${pre}-ciudad" value="Culiacán"></div>
+    </div>
+    <div class="field"><label>Referencias</label><textarea id="${pre}-referencias" placeholder="Entre calles, color de fachada, privada, etc."></textarea></div>`;
+}
+
+function leerDireccion(pre){
+  const d = {};
+  CAMPOS_DIR.forEach(c=>{ d[c.k] = (document.getElementById(`${pre}-${c.k}`).value || '').trim(); });
+  return d;
+}
+
+function direccionVacia(d){
+  return !d.calle && !d.numero_exterior && !d.numero_interior && !d.colonia && !d.codigo_postal && !d.referencias;
+}
+
+function faltaEnDireccion(d){
+  const faltan = [];
+  if(!d.calle) faltan.push('calle');
+  if(!d.numero_exterior) faltan.push('número exterior');
+  if(!d.colonia) faltan.push('colonia');
+  return faltan;
+}
+
+function textoDireccion(d){
+  if(!d) return '';
+  let t = [d.calle, d.numero_exterior].filter(Boolean).join(' ');
+  if(d.numero_interior) t += ` int. ${d.numero_interior}`;
+  const partes = [t];
+  if(d.colonia) partes.push(`Col. ${d.colonia}`);
+  if(d.codigo_postal) partes.push(`C.P. ${d.codigo_postal}`);
+  if(d.ciudad) partes.push(d.ciudad);
+  let s = partes.filter(Boolean).join(', ');
+  if(d.referencias) s += `. Ref: ${d.referencias}`;
+  return s;
+}
+
+function direccionDeCliente(c){
+  if(!c || !c.calle) return null;
+  const d = {};
+  CAMPOS_DIR.forEach(x=>{ d[x.k] = c[x.k] || ''; });
+  return d;
+}
+
+let clienteActual = null;
+let dirOpcion = null;
+let busquedaTimer = null;
+
+function limpiarResultados(){
+  const r = document.getElementById('cliente-resultados');
+  r.innerHTML = '';
+  r.classList.remove('visible');
+}
+
+async function buscarClientes(){
+  const texto = document.getElementById('cliente-busqueda').value;
+  const q = texto.replace(/[,()"\\%*]/g, ' ').replace(/\s+/g,' ').trim();
+  const cont = document.getElementById('cliente-resultados');
+  if(q.length < 1){ limpiarResultados(); return; }
+
+  const { data, error } = await sb.from('clientes')
+    .select('*')
+    // Nombre que empieza con lo escrito, o cualquier palabra del nombre (apellido) que empiece igual,
+    // o teléfono que contenga los números escritos
+    .or(`nombre.ilike."${q}*",nombre.ilike."* ${q}*",telefono.ilike."*${q}*"`)
+    .order('nombre')
+    .limit(12);
+
+  if(document.getElementById('cliente-busqueda').value !== texto) return; // ya escribió otra cosa
+  cont.classList.add('visible');
+  if(error){
+    cont.innerHTML = `<div class="sin-resultados">No se pudo buscar: ${escHtml(error.message)}</div>`;
+    return;
+  }
+  if(!data || data.length === 0){
+    cont.innerHTML = '<div class="sin-resultados">No se encontró ningún cliente. Agrégalo con "+ Cliente nuevo".</div>';
+    return;
+  }
+  cont.innerHTML = '';
+  data.forEach(c=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'resultado-cliente';
+    const dir = direccionDeCliente(c);
+    b.innerHTML = `<div class="rc-nombre">${escHtml(c.nombre)}</div>
+      <div class="rc-sub">${escHtml(c.telefono || 'Sin teléfono')}${dir && dir.colonia ? ' · ' + escHtml(dir.colonia) : ''}</div>`;
+    b.onclick = () => seleccionarCliente(c);
+    cont.appendChild(b);
+  });
+}
+
+document.getElementById('cliente-busqueda').addEventListener('input', ()=>{
+  clearTimeout(busquedaTimer);
+  busquedaTimer = setTimeout(buscarClientes, 150);
+});
+document.getElementById('cliente-busqueda').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') e.preventDefault();
+});
+
+function seleccionarCliente(c){
+  clienteActual = c;
+  limpiarResultados();
+  document.getElementById('cliente-busqueda').value = '';
+  document.getElementById('cliente-buscar-wrap').style.display = 'none';
+  document.getElementById('cliente-nuevo-wrap').style.display = 'none';
+  const dir = direccionDeCliente(c);
+  const card = document.getElementById('cliente-seleccionado');
+  card.innerHTML = `
+    <div class="cc-nombre">${escHtml(c.nombre)}</div>
+    <div class="cc-linea">${escHtml(c.telefono || 'Sin teléfono')}</div>
+    <div class="cc-linea">${dir ? escHtml(textoDireccion(dir)) : 'Sin dirección guardada'}</div>
+    <a href="#" onclick="quitarCliente(); return false;">Cambiar cliente</a>`;
+  card.style.display = 'block';
+  document.getElementById('pedido-resto').style.display = 'block';
+  document.getElementById('pedido-sin-cliente').style.display = 'none';
+  dirOpcion = null;
+  actualizarDireccionUI();
+}
+
+function quitarCliente(){
+  clienteActual = null;
+  dirOpcion = null;
+  document.getElementById('cliente-seleccionado').style.display = 'none';
+  document.getElementById('cliente-buscar-wrap').style.display = 'block';
+  document.getElementById('pedido-resto').style.display = 'none';
+  document.getElementById('pedido-sin-cliente').style.display = 'block';
+  actualizarDireccionUI();
+}
+
+function abrirClienteNuevo(){
+  const texto = document.getElementById('cliente-busqueda').value.trim();
+  limpiarResultados();
+  document.getElementById('cliente-buscar-wrap').style.display = 'none';
+  document.getElementById('cliente-nuevo-wrap').style.display = 'block';
+  document.getElementById('cn-msg').className = 'msg';
+  // Si ya había escrito algo en el buscador, se pasa al campo que corresponda
+  if(texto){
+    if(/^[\d\s+()-]+$/.test(texto)) document.getElementById('cn-telefono').value = texto;
+    else document.getElementById('cn-nombre').value = texto;
+  }
+  document.getElementById('cn-nombre').focus();
+}
+
+function limpiarFormCliente(){
+  document.getElementById('cn-nombre').value = '';
+  document.getElementById('cn-telefono').value = '';
+  CAMPOS_DIR.forEach(c=>{ document.getElementById(`cn-${c.k}`).value = c.k === 'ciudad' ? 'Culiacán' : ''; });
+  document.getElementById('cn-msg').className = 'msg';
+}
+
+function cancelarClienteNuevo(){
+  limpiarFormCliente();
+  document.getElementById('cliente-nuevo-wrap').style.display = 'none';
+  document.getElementById('cliente-buscar-wrap').style.display = 'block';
+}
+
+async function guardarClienteNuevo(){
+  const msg = document.getElementById('cn-msg');
+  msg.className = 'msg';
+  const nombre = document.getElementById('cn-nombre').value.trim();
+  const telefono = document.getElementById('cn-telefono').value.trim();
+  if(!nombre){ msg.className = 'msg err'; msg.textContent = 'Falta el nombre del cliente.'; return; }
+  if(!telefono){ msg.className = 'msg err'; msg.textContent = 'Falta el teléfono.'; return; }
+
+  const dir = leerDireccion('cn');
+  const conDireccion = !direccionVacia(dir);
+  if(conDireccion){
+    const faltan = faltaEnDireccion(dir);
+    if(faltan.length){
+      msg.className = 'msg err';
+      msg.textContent = 'A la dirección le falta: ' + faltan.join(', ') + '. Complétala o déjala vacía.';
+      return;
+    }
+  }
+
+  const nuevo = { nombre, telefono };
+  CAMPOS_DIR.forEach(c=>{ nuevo[c.k] = conDireccion ? (dir[c.k] || null) : null; });
+
+  const btn = document.getElementById('btn-guardar-cliente');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const { data, error } = await sb.from('clientes').insert([nuevo]).select().single();
+  btn.disabled = false; btn.textContent = 'Guardar cliente';
+
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo guardar el cliente: ' + error.message;
+    return;
+  }
+  limpiarFormCliente();
+  seleccionarCliente(data);
+}
+
+function actualizarDireccionUI(){
+  const wrap = document.getElementById('direccion-wrap');
+  const esDomicilio = entregaActual === 'domicilio';
+  wrap.style.display = esDomicilio ? 'block' : 'none';
+  if(!esDomicilio) return;
+
+  const guardada = direccionDeCliente(clienteActual);
+  const chips = document.getElementById('dir-opcion-chips');
+  if(guardada){
+    chips.style.display = 'flex';
+    if(!dirOpcion) dirOpcion = 'guardada';
+  } else {
+    chips.style.display = 'none';
+    dirOpcion = 'nueva';
+  }
+  chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('selected', c.dataset.dir === dirOpcion));
+
+  const txt = document.getElementById('dir-guardada-texto');
+  if(dirOpcion === 'guardada'){
+    txt.innerHTML = `<div class="cc-linea" style="margin:0;">${escHtml(textoDireccion(guardada))}</div>`;
+    txt.style.display = 'block';
+  } else {
+    txt.style.display = 'none';
+  }
+  document.getElementById('dir-nueva-form').style.display = dirOpcion === 'nueva' ? 'block' : 'none';
+  document.getElementById('dir-nueva-hint').style.display = (dirOpcion === 'nueva' && clienteActual) ? 'block' : 'none';
+}
+
+let recibeOpcion = 'cliente';
+function ponerRecibe(op){
+  recibeOpcion = op;
+  document.querySelectorAll('#recibe-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.recibe === op));
+  document.getElementById('recibe-otra-wrap').style.display = op === 'otra' ? 'block' : 'none';
+  if(op !== 'otra'){
+    document.getElementById('recibe-nombre').value = '';
+    document.getElementById('recibe-telefono').value = '';
+  }
+}
+document.querySelectorAll('#recibe-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=> ponerRecibe(chip.dataset.recibe));
+});
+
+document.querySelectorAll('#dir-opcion-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    dirOpcion = chip.dataset.dir;
+    actualizarDireccionUI();
+  });
+});
+
+document.getElementById('cn-direccion').innerHTML = htmlFormDireccion('cn');
+document.getElementById('dir-nueva-form').innerHTML = htmlFormDireccion('pd');
+
+
+document.querySelectorAll('#entrega-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#entrega-chips .chip').forEach(c=>c.classList.remove('selected'));
+    chip.classList.add('selected');
+    entregaActual = chip.dataset.entrega;
+    actualizarDireccionUI();
+    const esDom = entregaActual === 'domicilio';
+    document.getElementById('recibe-wrap').style.display = esDom ? 'block' : 'none';
+    if(!esDom) ponerRecibe('cliente');
+    document.getElementById('hora-label').textContent = 'Hora';
+  });
+});
+
+document.querySelectorAll('#metodo-pago-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#metodo-pago-chips .chip').forEach(c=>c.classList.remove('selected'));
+    chip.classList.add('selected');
+    metodoPagoActual = chip.dataset.metodo;
+  });
+});
+
+let pagoDadoActual = null;
+
+document.querySelectorAll('#pago-si-no-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#pago-si-no-chips .chip').forEach(c=>c.classList.remove('selected'));
+    chip.classList.add('selected');
+    pagoDadoActual = chip.dataset.pagosn;
+    const esSi = pagoDadoActual === 'si';
+    document.getElementById('pago-detalle').style.display = esSi ? 'block' : 'none';
+    if(!esSi){
+      document.getElementById('anticipo').value = '';
+      metodoPagoActual = null;
+      document.querySelectorAll('#metodo-pago-chips .chip').forEach(c=>c.classList.remove('selected'));
+    }
+    actualizarFaltaPago();
+  });
+});
+
+function actualizarFaltaPago(){
+  const total = parseFloat(document.getElementById('precio').value) || 0;
+  const pagado = parseFloat(document.getElementById('anticipo').value) || 0;
+  const falta = Math.max(0, total - pagado);
+  document.getElementById('falta-pago-display').textContent = '$' + falta;
+}
+document.getElementById('anticipo').addEventListener('input', actualizarFaltaPago);
+document.getElementById('precio').addEventListener('input', actualizarFaltaPago);
+
+document.querySelectorAll('#categoria-chips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#categoria-chips .chip').forEach(c=>c.classList.remove('selected'));
+    chip.classList.add('selected');
+    categoriaActual = chip.dataset.cat;
+
+    limpiarCamposCategoria();
+
+    document.getElementById('detalle-pastel').style.display = categoriaActual==='pastel' ? 'block':'none';
+    document.getElementById('detalle-cupcake').style.display = categoriaActual==='cupcake' ? 'block':'none';
+    document.getElementById('detalle-individual').style.display = categoriaActual==='individual' ? 'block':'none';
+    document.getElementById('detalle-panque').style.display = categoriaActual==='panque' ? 'block':'none';
+    document.getElementById('precio-wrap').style.display = 'block';
+    document.getElementById('precio-label').textContent = 'Total';
+
+    if(categoriaActual==='cupcake'){
+      renderCarrito('cart-cupcake');
+    } else if(categoriaActual==='individual'){
+      renderCarrito('cart-individual');
+    } else if(categoriaActual==='panque'){
+      renderCarrito('cart-panque');
+    }
+  });
+});
+
+document.getElementById('sel-tamano').addEventListener('change', (e)=>{
+  const tamano = e.target.value;
+  const opt = e.target.selectedOptions[0];
+  document.getElementById('precio').value = opt && opt.dataset.precio ? opt.dataset.precio : '';
+
+  const selSabor = document.getElementById('sel-sabor-pastel');
+  selSabor.innerHTML = '<option value="">Selecciona...</option>';
+  const esCheese = tamano.toLowerCase().includes('cheesecake');
+  const lista = saboresPastelesData.filter(s=>{
+    const esCC = s.nombre.startsWith('cc_');
+    return esCheese ? esCC : !esCC;
+  });
+  lista.forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s.nombre;
+    opt.textContent = formatNombre(s.nombre);
+    selSabor.appendChild(opt);
+  });
+  actualizarCoronaUI();
+});
+
+document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById('btn-guardar');
+  const msg = document.getElementById('msg');
+  msg.className = 'msg';
+
+  if(!clienteActual){
+    msg.className = 'msg err';
+    msg.textContent = document.getElementById('cliente-nuevo-wrap').style.display === 'block'
+      ? 'Primero toca "Guardar cliente" para dar de alta al cliente nuevo.'
+      : 'Busca y selecciona al cliente, o agrégalo con "+ Cliente nuevo".';
+    return;
+  }
+
+  if(!categoriaActual){
+    msg.className = 'msg err';
+    msg.textContent = 'Selecciona qué va a llevar el pedido (pastel, cupcake o individual).';
+    return;
+  }
+
+  let tamano_o_sabor = '';
+  let coronaDatos = { corona_tipo:null, corona_tamano:null, corona_color:null, corona_precio:null };
+  let sabor = '';
+  let precioCalculado = document.getElementById('precio').value || '0';
+
+  if(categoriaActual === 'pastel'){
+    tamano_o_sabor = document.getElementById('sel-tamano').value;
+    sabor = document.getElementById('sel-sabor-pastel').value;
+    if(!tamano_o_sabor){ msg.className='msg err'; msg.textContent='Selecciona el tamaño del pastel.'; return; }
+    if(!sabor){ msg.className='msg err'; msg.textContent='Selecciona el sabor del pastel.'; return; }
+    if(saborIncluyeCorona()){
+      coronaDatos = { corona_tipo:'incluida', corona_tamano: coronaTamanoActual(), corona_color:null, corona_precio:0 };
+    } else {
+      if(!coronaQuiere){ msg.className='msg err'; msg.textContent='Indica si el pastel lleva corona.'; return; }
+      if(coronaQuiere === 'si'){
+        if(!coronaTipo){ msg.className='msg err'; msg.textContent='Elige si la corona es ámbar o de color.'; return; }
+        const color = document.getElementById('corona-color').value.trim();
+        if(coronaTipo === 'color' && !color){ msg.className='msg err'; msg.textContent='Escribe el color de la corona.'; return; }
+        const tam = coronaTamanoActual();
+        coronaDatos = { corona_tipo: coronaTipo, corona_tamano: tam, corona_color: coronaTipo === 'color' ? color : null, corona_precio: precioCorona(coronaTipo, tam) };
+      }
+    }
+  } else if(categoriaActual === 'cupcake' || categoriaActual === 'individual' || categoriaActual === 'panque'){
+    const containerId = {cupcake:'cart-cupcake', individual:'cart-individual', panque:'cart-panque'}[categoriaActual];
+    const carrito = carritos[containerId];
+    const seleccionados = carrito.items.filter(item => (carrito.qtys[item.nombre]||0) > 0);
+    if(seleccionados.length === 0){
+      msg.className = 'msg err';
+      msg.textContent = 'Agrega al menos una cantidad mayor a 0.';
+      return;
+    }
+    tamano_o_sabor = categoriaActual;
+    sabor = seleccionados.map(item => `${carrito.qtys[item.nombre]} ${formatNombre(item.nombre)}`).join(', ');
+  }
+
+  if(!entregaActual){
+    msg.className = 'msg err';
+    msg.textContent = 'Indica si recoge en el local o es a domicilio.';
+    return;
+  }
+
+  let direccionDetalle = null;
+  if(entregaActual === 'domicilio'){
+    direccionDetalle = dirOpcion === 'guardada' ? direccionDeCliente(clienteActual) : leerDireccion('pd');
+    const faltan = direccionDetalle ? faltaEnDireccion(direccionDetalle) : ['calle','número exterior','colonia'];
+    if(faltan.length){
+      msg.className = 'msg err';
+      msg.textContent = 'A la dirección de entrega le falta: ' + faltan.join(', ') + '.';
+      return;
+    }
+  }
+
+  let recibeNombre = '', recibeTelefono = '';
+  if(entregaActual === 'domicilio' && recibeOpcion === 'otra'){
+    recibeNombre = document.getElementById('recibe-nombre').value.trim();
+    recibeTelefono = document.getElementById('recibe-telefono').value.trim();
+    if(!recibeNombre || !recibeTelefono){
+      msg.className = 'msg err';
+      msg.textContent = 'Falta el nombre y el teléfono de la persona que recibe.';
+      return;
+    }
+  }
+
+  const fecha = document.getElementById('fecha_entrega').value;
+  if(!fecha){
+    msg.className = 'msg err';
+    msg.textContent = 'Falta la fecha de entrega.';
+    return;
+  }
+
+  let hora = document.getElementById('hora_entrega').value;
+  if(!hora) hora = '11:00';
+  const fecha_entrega = new Date(`${fecha}T${hora}:00`).toISOString();
+
+  if(!pagoDadoActual){
+    msg.className = 'msg err';
+    msg.textContent = 'Indica si dio anticipo, ya pagó completo, o sigue pendiente.';
+    return;
+  }
+  if(pagoDadoActual === 'si' && !metodoPagoActual){
+    msg.className = 'msg err';
+    msg.textContent = 'Selecciona el método de pago.';
+    return;
+  }
+
+  const pedido = {
+    cliente_id: clienteActual.id,
+    nombre_cliente: clienteActual.nombre,
+    telefono: clienteActual.telefono || '',
+    categoria: categoriaActual,
+    tamano_o_sabor: tamano_o_sabor,
+    sabor: sabor,
+    precio: precioCalculado || '0',
+    fecha_entrega: fecha_entrega,
+    entrega: entregaActual,
+    direccion: direccionDetalle ? textoDireccion(direccionDetalle) : '',
+    direccion_detalle: direccionDetalle,
+    ...coronaDatos,
+    recibe_nombre: recibeNombre || null,
+    recibe_telefono: recibeTelefono || null,
+    metodo_pago: metodoPagoActual || '',
+    anticipo: document.getElementById('anticipo').value || '0',
+    notas: document.getElementById('notas').value
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  const { error } = await sb.from('pedidos').insert([pedido]);
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar pedido';
+
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo guardar: ' + error.message;
+  } else {
+    limpiarFormularioPedido();
+
+    document.getElementById('form-pedido').style.display = 'none';
+    document.getElementById('confirmacion').style.display = 'block';
+  }
+});
+
+// Deja el formulario de Nuevo pedido completamente limpio
+function limpiarFormularioPedido(){
+  document.getElementById('form-pedido').reset();
+  categoriaActual = null;
+  document.querySelectorAll('#form-pedido .chip').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('detalle-pastel').style.display='none';
+  document.getElementById('detalle-cupcake').style.display='none';
+  document.getElementById('detalle-individual').style.display='none';
+  document.getElementById('detalle-panque').style.display='none';
+  document.getElementById('precio-wrap').style.display='none';
+  carritos['cart-cupcake'].qtys = {};
+  carritos['cart-individual'].qtys = {};
+  carritos['cart-panque'].qtys = {};
+  entregaActual = null;
+  metodoPagoActual = null;
+  pagoDadoActual = null;
+  document.getElementById('direccion-wrap').style.display = 'none';
+  document.getElementById('pago-detalle').style.display = 'none';
+  document.getElementById('recibe-wrap').style.display = 'none';
+  reiniciarCorona();
+  document.getElementById('falta-pago-display').textContent = '$0';
+  clearTimeout(busquedaTimer);
+  document.getElementById('cliente-busqueda').value = '';
+  limpiarResultados();
+  cancelarClienteNuevo();
+  ponerRecibe('cliente');
+  quitarCliente();
+  document.getElementById('msg').className = 'msg';
+}
+
+function iniciarNuevoPedido(){
+  document.getElementById('confirmacion').style.display = 'none';
+  document.getElementById('form-pedido').style.display = 'block';
+}
+
+function cambiarRangoPedidos(){
+  const rango = document.getElementById('filtro-rango').value;
+  document.getElementById('filtro-fechas-wrap').style.display = rango === 'personalizado' ? 'flex' : 'none';
+  cargarPedidos();
+}
+
+function escHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDinero(n){ return '$' + (Number(n)||0).toLocaleString('es-MX'); }
+
+
+function resumenPedidoCorto(p){
+  if(p.categoria === 'pastel'){
+    const cor = textoCorona(p);
+    return `Pastel ${formatNombre(p.tamano_o_sabor)}${p.sabor ? ' de ' + formatNombre(p.sabor) : ''}${cor ? ', ' + cor.toLowerCase() : ''}`;
+  }
+  const tipo = {cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria;
+  return `${tipo}: ${p.sabor || ''}`;
+}
+
+function armarTextoRepartidor(fechaTitulo, pedidos){
+  const lineas = [];
+  lineas.push(`🛵 *Domicilios — ${fechaTitulo}*`);
+  lineas.push(`${pedidos.length} ${pedidos.length === 1 ? 'entrega' : 'entregas'}`);
+  pedidos.forEach((p, i)=>{
+    const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
+    const falta = Math.max(0, (Number(p.precio)||0) - (Number(p.anticipo)||0));
+    lineas.push('');
+    if(p.recibe_nombre){
+      lineas.push(`*${i+1}. Entregar a: ${p.recibe_nombre}*${hora ? ' — ' + hora : ''}`);
+      if(p.recibe_telefono) lineas.push(`📞 ${p.recibe_telefono}`);
+      lineas.push(`👤 Pidió: ${p.nombre_cliente || 'Sin nombre'}${p.telefono ? ' (' + p.telefono + ')' : ''}`);
+    } else {
+      lineas.push(`*${i+1}. ${p.nombre_cliente || 'Sin nombre'}*${hora ? ' — ' + hora : ''}`);
+      if(p.telefono) lineas.push(`📞 ${p.telefono}`);
+    }
+    lineas.push(`📍 ${p.direccion || 'Sin dirección, confirmar con la clienta'}`);
+    lineas.push(`🎂 ${resumenPedidoCorto(p)}`);
+    lineas.push(falta > 0 ? `💵 Cobrar ${fmtDinero(falta)}` : '✅ Ya está pagado, no cobrar');
+    if(p.notas) lineas.push(`📝 ${p.notas}`);
+  });
+  return lineas.join('\n');
+}
+
+async function copiarRepartidor(texto, btn){
+  let ok = false;
+  try{
+    await navigator.clipboard.writeText(texto);
+    ok = true;
+  } catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.setAttribute('readonly','');
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, texto.length);
+    try{ ok = document.execCommand('copy'); }catch(e2){}
+    document.body.removeChild(ta);
+  }
+  const original = btn.dataset.original || btn.innerHTML;
+  btn.dataset.original = original;
+  if(ok){
+    btn.classList.add('copiado');
+    btn.innerHTML = '✓ Copiado, ya lo puedes pegar en WhatsApp';
+  } else {
+    btn.innerHTML = 'No se pudo copiar, intenta de nuevo';
+  }
+  setTimeout(()=>{ btn.classList.remove('copiado'); btn.innerHTML = original; }, 2500);
+}
+
+async function cargarPedidos(){
+  const cont = document.getElementById('lista-contenido');
+  cont.className = 'loading';
+  cont.textContent = 'Cargando pedidos...';
+
+  let q = sb.from('pedidos').select('*').order('fecha_entrega', {ascending:true});
+
+  const nombre = document.getElementById('filtro-nombre').value.trim();
+  if(nombre) q = q.ilike('nombre_cliente', `%${nombre}%`);
+
+  const categoria = document.getElementById('filtro-categoria').value;
+  if(categoria) q = q.eq('categoria', categoria);
+
+  const rango = document.getElementById('filtro-rango').value;
+  if(rango === 'proximos'){
+    q = q.gte('fecha_entrega', new Date().toISOString());
+  } else if(rango === 'personalizado'){
+    const desde = document.getElementById('filtro-desde').value;
+    const hasta = document.getElementById('filtro-hasta').value;
+    if(desde) q = q.gte('fecha_entrega', desde + 'T00:00:00');
+    if(hasta) q = q.lte('fecha_entrega', hasta + 'T23:59:59');
+  }
+
+  const { data, error } = await q;
+
+  if(error){
+    cont.className = 'empty';
+    cont.textContent = 'No se pudieron cargar los pedidos: ' + error.message;
+    return;
+  }
+  if(!data || data.length===0){
+    cont.className = 'empty';
+    cont.textContent = 'Todavía no hay pedidos capturados.';
+    return;
+  }
+
+  pintarPedidosPorDia(data, cont);
+}
+
+function pintarPedidosPorDia(data, cont){
+  const grupos = {};
+  data.forEach(p=>{
+    const d = p.fecha_entrega ? new Date(p.fecha_entrega) : null;
+    const key = d ? d.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'}) : 'Sin fecha';
+    if(!grupos[key]) grupos[key] = [];
+    grupos[key].push(p);
+  });
+
+  const esc = escHtml;
+  const dinero = fmtDinero;
+
+  cont.className = '';
+  cont.innerHTML = '';
+  Object.keys(grupos).forEach(fecha=>{
+    const g = document.createElement('div');
+    g.className = 'day-group';
+
+    // Totales del día (como en la hoja de seguimiento)
+    const cobrado = { efectivo:0, transferencia:0, terminal:0 };
+    let totalDia = 0, faltaDia = 0;
+    grupos[fecha].forEach(p=>{
+      const total = Number(p.precio)||0;
+      const pagado = Number(p.anticipo)||0;
+      totalDia += total;
+      faltaDia += Math.max(0, total - pagado);
+      if(p.metodo_pago && p.metodo_pago in cobrado) cobrado[p.metodo_pago] += pagado;
+    });
+
+    let filas = '';
+    grupos[fecha].forEach((p, idx)=>{
+      const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
+      const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria;
+      const tamano = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '—';
+      const sabor = p.categoria === 'pastel' ? formatNombre(p.sabor) + (textoCorona(p) ? ' · ' + textoCorona(p) : '') : (p.sabor || '');
+      const entrega = p.entrega === 'domicilio' ? 'Domicilio'
+        : p.entrega === 'casa' ? 'Recoger en casa'
+        : 'Recoge en local';
+      const direccion = p.entrega === 'domicilio' && p.direccion ? `<span class="sub">${esc(p.direccion)}</span>` : '';
+      const total = Number(p.precio)||0;
+      const pagado = Number(p.anticipo)||0;
+      const falta = Math.max(0, total - pagado);
+      const metodo = pagado > 0 && p.metodo_pago ? `<span class="sub">${esc(formatNombre(p.metodo_pago))}</span>` : '';
+      const faltaHtml = falta <= 0 ? '<span class="falta-ok">Pagado</span>' : `<span class="falta-pend">${dinero(falta)}</span>`;
+
+      pedidosPorId[p.id] = p;
+      filas += `
+        <tr class="click" onclick="abrirEditarPedido(${Number(p.id)})" title="Toca para ver o editar">
+          <td class="num">${idx+1}</td>
+          <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
+          <td class="nowrap">${esc(p.telefono || '')}</td>
+          <td class="nowrap">${producto}</td>
+          <td class="nowrap">${esc(tamano)}</td>
+          <td class="det">${esc(sabor)}</td>
+          <td class="nowrap">${hora}</td>
+          <td class="nowrap">${entrega}${direccion}</td>
+          <td class="dinero">${dinero(total)}</td>
+          <td class="dinero">${dinero(pagado)}${metodo}</td>
+          <td class="dinero">${faltaHtml}</td>
+          <td class="coment">${esc(p.notas || '')}</td>
+        </tr>`;
+    });
+
+    g.innerHTML = `
+      <h3>${fecha.charAt(0).toUpperCase() + fecha.slice(1)}</h3>
+      <div class="resumen-dia">
+        <span>Efectivo <b>${dinero(cobrado.efectivo)}</b></span>
+        <span>Transferencia <b>${dinero(cobrado.transferencia)}</b></span>
+        <span>Terminal <b>${dinero(cobrado.terminal)}</b></span>
+        <span>Total <b>${dinero(totalDia)}</b></span>
+        <span>Falta pago <b>${dinero(faltaDia)}</b></span>
+      </div>
+      <div class="tabla-wrap">
+        <table class="tabla-pedidos">
+          <thead>
+            <tr>
+              <th>No.</th><th>Nombre</th><th>Teléfono</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th>
+              <th>Hora</th><th>Entrega</th><th class="dinero">Total</th><th class="dinero">Pagó</th><th class="dinero">Falta</th><th>Comentarios</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>`;
+
+    const domicilios = grupos[fecha].filter(p => p.entrega === 'domicilio');
+    if(domicilios.length){
+      const tituloDia = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+      const textoRep = armarTextoRepartidor(tituloDia, domicilios);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-repartidor';
+      btn.innerHTML = `🛵 Copiar domicilios para el repartidor (${domicilios.length})`;
+      btn.onclick = () => copiarRepartidor(textoRep, btn);
+      g.appendChild(btn);
+    }
+    cont.appendChild(g);
+  });
+}
+
+let rolActual = null;
+
+function toggleVerContrasena(){
+  const campo = document.getElementById('login-password');
+  const icono = document.getElementById('icono-ojo');
+  const esOculto = campo.type === 'password';
+  campo.type = esOculto ? 'text' : 'password';
+  icono.innerHTML = esOculto
+    ? '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.6 21.6 0 0 1-3.22 4.44M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+    : '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle>';
+}
+
+async function iniciarSesion(){
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const msg = document.getElementById('login-msg');
+  msg.className = 'msg';
+
+  if(!email || !password){
+    msg.className = 'msg err';
+    msg.textContent = 'Escribe tu correo y contraseña.';
+    return;
+  }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'Correo o contraseña incorrectos.';
+    return;
+  }
+
+  await cargarSesion();
+}
+
+async function cerrarSesion(){
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function cargarSesion(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session){
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-contenido').style.display = 'none';
+    return;
+  }
+
+  const { data: perfil, error: perfilError } = await sb
+    .from('perfiles')
+    .select('rol')
+    .eq('user_id', session.user.id)
+    .single();
+
+  if(perfilError || !perfil){
+    document.getElementById('login-msg').className = 'msg err';
+    document.getElementById('login-msg').textContent = 'Tu cuenta no tiene un rol asignado. Avísale a la directora.';
+    document.getElementById('login-screen').style.display = 'flex';
+    await sb.auth.signOut();
+    return;
+  }
+
+  rolActual = perfil.rol;
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-contenido').style.display = 'block';
+  document.getElementById('usuario-rol-label').textContent = rolActual === 'director' ? 'Directora' : 'Colaborador';
+  document.getElementById('tab-lista').style.display = rolActual === 'director' ? 'inline-block' : 'none';
+  document.getElementById('tab-productos').style.display = rolActual === 'colaborador' ? 'inline-block' : 'none';
+  document.getElementById('tab-historial').style.display = rolActual === 'director' ? 'inline-block' : 'none';
+  document.getElementById('tab-resumen').style.display = rolActual === 'director' ? 'inline-block' : 'none';
+  document.body.classList.toggle('rol-colaborador', rolActual === 'colaborador');
+  if(rolActual === 'colaborador') irInicio();
+  else switchView('lista'); // la directora entra directo a Pedidos
+
+  catalogosListos = cargarCatalogos();
+}
+
+async function pedirResetPassword(){
+  const email = document.getElementById('login-email').value.trim();
+  const msg = document.getElementById('login-msg');
+  if(!email){
+    msg.className = 'msg err';
+    msg.textContent = 'Primero escribe tu correo arriba, luego toca "¿Olvidaste tu contraseña?" de nuevo.';
+    return;
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href.split('#')[0].split('?')[0]
+  });
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo enviar el correo: ' + error.message;
+  } else {
+    msg.className = 'msg ok';
+    msg.textContent = 'Te mandamos un correo con un link para poner una contraseña nueva. Revisa tu bandeja (y spam).';
+  }
+}
+
+async function guardarNuevaPassword(){
+  const nueva = document.getElementById('reset-password').value;
+  const msg = document.getElementById('reset-msg');
+  if(!nueva || nueva.length < 6){
+    msg.className = 'msg err';
+    msg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+    return;
+  }
+  const { error } = await sb.auth.updateUser({ password: nueva });
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo guardar: ' + error.message;
+  } else {
+    msg.className = 'msg ok';
+    msg.textContent = 'Contraseña actualizada. Entrando...';
+    setTimeout(()=>{ document.getElementById('reset-screen').style.display='none'; cargarSesion(); }, 1200);
+  }
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if(event === 'PASSWORD_RECOVERY'){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-contenido').style.display = 'none';
+    document.getElementById('reset-screen').style.display = 'flex';
+  }
+});
+
+const CUPCAKE_SABORES = ["Limón","Pistache","Bi-cajeta","Especial","Bi-especial","Coco","Caramelo","Choco caramelo","Chocolate","Choco cajeta","Choco phila","Zanahoria","Plátano"];
+const PASTEL_SABORES = ["White velvet","Bi-cajeta","Bi-especial","Bi-chocolate","Pistache","Limón","Marmoleado","Vintage","Chocolate","Caramelo","Cajeta","Especial","Rayado","Zanahoria","Cheesecakes"];
+
+let cierreDiaActual = null;
+
+function itemsDeSeccion(sec){
+  if(sec === 'cupcakes') return CUPCAKE_SABORES;
+  if(sec === 'panques') return PANQUE_PRODUCTOS;
+  return INDIVIDUAL_PRODUCTOS;
+}
+let seccionActual = null;
+let tandasCount = {};
+
+function fechaHoyStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+async function abrirProductosDia(){
+  document.getElementById('tab-nuevo').classList.remove('active');
+  document.getElementById('tab-lista').classList.remove('active');
+  document.getElementById('tab-productos').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-productos').classList.add('active');
+
+  const fecha = fechaHoyStr();
+  const fechaLegible = new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('productos-dia-fecha').textContent = fechaLegible.charAt(0).toUpperCase() + fechaLegible.slice(1);
+
+  const { data, error } = await sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle();
+  if(error){
+    document.getElementById('productos-dia-msg').className = 'msg err';
+    document.getElementById('productos-dia-msg').textContent = 'Error al cargar: ' + error.message;
+    return;
+  }
+  cierreDiaActual = data || { fecha, cupcakes:{}, individuales:{}, pasteles:{}, panques:{}, corte_caja:{}, cupcakes_listo:false, individuales_listo:false, pasteles_listo:false, panques_listo:false, caja_listo:false, cerrado:false };
+  actualizarChecksHub();
+}
+
+function actualizarChecksHub(){
+  document.getElementById('check-cupcakes').innerHTML = cierreDiaActual.cupcakes_listo ? '<span class="check-ok">✓</span>' : '';
+  document.getElementById('check-individuales').innerHTML = cierreDiaActual.individuales_listo ? '<span class="check-ok">✓</span>' : '';
+  document.getElementById('check-pasteles').innerHTML = cierreDiaActual.pasteles_listo ? '<span class="check-ok">✓</span>' : '';
+  document.getElementById('check-panques').innerHTML = cierreDiaActual.panques_listo ? '<span class="check-ok">✓</span>' : '';
+  document.getElementById('check-caja').innerHTML = cierreDiaActual.caja_listo ? '<span class="check-ok">✓</span>' : '';
+  const msg = document.getElementById('productos-dia-msg');
+  if(cierreDiaActual.cerrado){
+    msg.className = 'msg ok';
+    msg.textContent = 'Este día ya está cerrado.';
+  } else {
+    msg.className = 'msg';
+  }
+}
+
+let modoActual = null;
+let nivelSeccion = 'chooser';
+
+function volverAProductosDia(){
+  document.getElementById('view-seccion').classList.remove('active');
+  document.getElementById('view-productos').classList.add('active');
+}
+
+function irAtras(){
+  if(nivelSeccion === 'editor' && seccionActual !== 'caja'){
+    abrirSeccion(seccionActual);
+  } else {
+    volverAProductosDia();
+  }
+}
+
+function campoConBorrar(id, valor, extraAttrs){
+  extraAttrs = extraAttrs || '';
+  return `<input type="number" inputmode="numeric" class="mini-input" id="${id}" value="${valor}" ${extraAttrs}>`;
+}
+
+function esLunesHoy(){
+  return new Date().getDay() === 1;
+}
+
+function fechaStrDesdeDate(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function abrirSeccion(tipo){
+  if(tipo === 'caja'){
+    return abrirSeccionCaja();
+  }
+  seccionActual = tipo;
+  nivelSeccion = 'chooser';
+  const nombres = {cupcakes:'Cupcakes', individuales:'Individuales', pasteles:'Pasteles', panques:'Panqués'};
+  document.getElementById('seccion-titulo').textContent = nombres[tipo];
+  document.getElementById('btn-guardar-seccion').style.display = 'none';
+  document.getElementById('btn-finalizar-seccion').style.display = 'none';
+  document.getElementById('seccion-msg').className = 'msg';
+
+  const cont = document.getElementById('seccion-filas');
+  cont.innerHTML = `
+    <div class="cart-list">
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirModoSeccion('inicio')">
+        <div class="cart-row-name">Inicio de día</div><div>›</div>
+      </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirModoSeccion('cierre')">
+        <div class="cart-row-name">Cierre de día</div><div>›</div>
+      </div>
+    </div>`;
+
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-seccion').classList.add('active');
+}
+
+async function abrirModoSeccion(modo){
+  if(seccionActual === 'pasteles'){
+    return abrirModoSeccionPasteles(modo);
+  }
+  if(catalogosListos) await catalogosListos;
+  modoActual = modo;
+  nivelSeccion = 'editor';
+  tandasCount = {};
+  const items = itemsDeSeccion(seccionActual);
+  const datosHoy = cierreDiaActual[seccionActual] || {};
+  const lunes = esLunesHoy();
+
+  let existenciaAyer = {};
+  if(modo === 'inicio' && !lunes){
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    const fechaAyer = fechaStrDesdeDate(ayer);
+    const { data } = await sb.from('cierres_dia').select(seccionActual).eq('fecha', fechaAyer).maybeSingle();
+    if(data && data[seccionActual]){
+      items.forEach(nombre=>{
+        const it = data[seccionActual][nombre];
+        existenciaAyer[nombre] = it ? (it.cierre || 0) : 0;
+      });
+    }
+  }
+
+  document.getElementById('seccion-titulo').textContent =
+    ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
+
+  const cont = document.getElementById('seccion-filas');
+  cont.innerHTML = '';
+
+  items.forEach((nombre, i)=>{
+    tandasCount[i] = 1;
+    const prev = datosHoy[nombre] || {};
+    const grisStyle = 'background:var(--cream-deep); color:var(--muted);';
+
+    let camposHtml = '';
+
+    if(!lunes){
+      const exisValor = modo === 'inicio' ? (existenciaAyer[nombre] || '') : (prev.exis || '');
+      camposHtml += `<div><label class="mini-label">Exis</label><input type="number" class="mini-input" id="f_${i}_exis" value="${exisValor}" disabled style="${grisStyle}"></div>`;
+    }
+
+    if(modo === 'inicio'){
+      camposHtml += `<div><label class="mini-label">IN</label><div id="in-wrap-${i}">${campoConBorrar(`f_${i}_in_0`, prev.in || '', `onkeydown="siEnterBajar(event, ${i})"`)}</div></div>`;
+    } else {
+      camposHtml += `<div><label class="mini-label">IN</label><input type="number" class="mini-input" id="f_${i}_in_0" value="${prev.in || ''}" disabled style="${grisStyle}"></div>`;
+      camposHtml += `<div><label class="mini-label">Cierre</label>${campoConBorrar(`f_${i}_cierre`, prev.cierre || '', `onkeydown="siEnterBajar(event, ${i})"`)}</div>`;
+      camposHtml += `<div><label class="mini-label">M</label>${campoConBorrar(`f_${i}_merma`, prev.merma || '')}</div>`;
+      camposHtml += `<div><label class="mini-label">Cortesía</label>${campoConBorrar(`f_${i}_cortesia`, prev.cortesia || '')}</div>`;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'seccion-item';
+    div.innerHTML = `
+      <div class="nombre-item">${nombre}</div>
+      <div class="campos-fila">${camposHtml}</div>
+      ${modo === 'inicio' ? `<a href="#" class="link-agregar" onclick="agregarTanda(${i}); return false;">+ agregar tanda</a>` : ''}
+    `;
+    cont.appendChild(div);
+  });
+
+  document.getElementById('btn-guardar-seccion').style.display = 'block';
+  document.getElementById('btn-finalizar-seccion').style.display = modo === 'cierre' ? 'block' : 'none';
+  document.getElementById('seccion-msg').className = 'msg';
+}
+
+function agregarTanda(i){
+  const n = tandasCount[i];
+  tandasCount[i] = n + 1;
+  const wrap = document.getElementById('in-wrap-'+i);
+  const extra = document.createElement('div');
+  extra.className = 'tanda-extra';
+  extra.innerHTML = campoConBorrar(`f_${i}_in_${n}`, '');
+  wrap.appendChild(extra);
+  document.getElementById(`f_${i}_in_${n}`).focus();
+}
+
+function siEnterBajar(event, i){
+  if(event.key !== 'Enter') return;
+  event.preventDefault();
+  const items = itemsDeSeccion(seccionActual);
+  if(i + 1 < items.length){
+    const siguiente = document.getElementById(`f_${i+1}_in_0`);
+    if(siguiente) siguiente.focus();
+  }
+}
+
+function campoPastelHtml(idx, tam, modo, prevTam, exisAyer, lunes){
+  const gris = 'background:var(--cream-deep); color:var(--muted);';
+  let html = '';
+  if(!lunes){
+    const exisValor = modo === 'inicio' ? (exisAyer || '') : (prevTam.exis || '');
+    html += `<div><label class="mini-label">Exis</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_exis" value="${exisValor}" disabled style="${gris}"></div>`;
+  }
+  if(modo === 'inicio'){
+    html += `<div>
+      <label class="mini-label">IN</label>
+      <div style="display:flex; gap:6px; align-items:center;" id="inwrap_p_${idx}_${tam}">
+        <input type="number" inputmode="numeric" class="mini-input" id="fp_${idx}_${tam}_in_0" value="${prevTam.in || ''}">
+        <a href="#" class="link-agregar" style="margin:0; white-space:nowrap;" onclick="agregarTandaPastel(${idx}, '${tam}'); return false;">+ tanda</a>
+      </div>
+    </div>`;
+  } else {
+    html += `<div><label class="mini-label">IN</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_in" value="${prevTam.in || ''}" disabled style="${gris}"></div>`;
+    html += `<div><label class="mini-label">Cierre</label>${campoConBorrar(`fp_${idx}_${tam}_cierre`, prevTam.cierre || '')}</div>`;
+    html += `<div><label class="mini-label">M</label>${campoConBorrar(`fp_${idx}_${tam}_merma`, prevTam.merma || '')}</div>`;
+    html += `<div><label class="mini-label">Cortesía</label>${campoConBorrar(`fp_${idx}_${tam}_cortesia`, prevTam.cortesia || '')}</div>`;
+  }
+  return html;
+}
+
+let tandasPastel = {};
+
+function agregarTandaPastel(idx, tam){
+  const key = idx + '_' + tam;
+  const n = tandasPastel[key] || 1;
+  tandasPastel[key] = n + 1;
+  const wrap = document.getElementById(`inwrap_p_${idx}_${tam}`);
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.inputMode = 'numeric';
+  input.className = 'mini-input';
+  input.style.maxWidth = '70px';
+  input.id = `fp_${idx}_${tam}_in_${n}`;
+  const boton = wrap.querySelector('a');
+  wrap.insertBefore(input, boton);
+  input.focus();
+}
+
+async function abrirModoSeccionPasteles(modo){
+  modoActual = modo;
+  nivelSeccion = 'editor';
+  tandasPastel = {};
+  const datosHoy = cierreDiaActual.pasteles || {};
+  const lunes = esLunesHoy();
+
+  let existenciaAyer = {};
+  if(modo === 'inicio' && !lunes){
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    const fechaAyer = fechaStrDesdeDate(ayer);
+    const { data } = await sb.from('cierres_dia').select('pasteles').eq('fecha', fechaAyer).maybeSingle();
+    if(data && data.pasteles){
+      PASTEL_SABORES.forEach(nombre=>{
+        const it = data.pasteles[nombre];
+        existenciaAyer[nombre] = {
+          mini: it && it.mini ? (it.mini.cierre || 0) : 0,
+          chico: it && it.chico ? (it.chico.cierre || 0) : 0
+        };
+      });
+    }
+  }
+
+  document.getElementById('seccion-titulo').textContent = 'Pasteles — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
+
+  const cont = document.getElementById('seccion-filas');
+  cont.innerHTML = '';
+
+  let seMostroAlgo = false;
+  PASTEL_SABORES.forEach((nombre, i)=>{
+    const prev = datosHoy[nombre] || {};
+    const prevMini = prev.mini || {};
+    const prevChico = prev.chico || {};
+    const exisAyerMini = existenciaAyer[nombre] ? existenciaAyer[nombre].mini : 0;
+    const exisAyerChico = existenciaAyer[nombre] ? existenciaAyer[nombre].chico : 0;
+
+    const hayMini = (prevMini.in || 0) > 0;
+    const hayChico = (prevChico.in || 0) > 0;
+
+    if(modo === 'cierre' && !hayMini && !hayChico) return;
+
+    let bloques = '';
+    if(modo !== 'cierre' || hayMini){
+      bloques += `<div style="font-size:11px; font-weight:700; color:var(--jam-deep); margin-bottom:3px;">MINI</div>
+      <div style="display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap;">${campoPastelHtml(i,'mini',modo,prevMini,exisAyerMini,lunes)}</div>`;
+    }
+    if(modo !== 'cierre' || hayChico){
+      bloques += `<div style="font-size:11px; font-weight:700; color:var(--jam-deep); margin-bottom:3px;">CHICO</div>
+      <div style="display:flex; gap:7px; flex-wrap:wrap;">${campoPastelHtml(i,'chico',modo,prevChico,exisAyerChico,lunes)}</div>`;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'seccion-item';
+    div.innerHTML = `<div class="nombre-item">${nombre}</div>${bloques}`;
+    cont.appendChild(div);
+    seMostroAlgo = true;
+  });
+
+  if(modo === 'cierre' && !seMostroAlgo){
+    cont.innerHTML = '<div class="empty">No se registró entrada de ningún pastel hoy. Ve primero a "Inicio de día".</div>';
+  }
+
+  document.getElementById('btn-guardar-seccion').style.display = 'block';
+  document.getElementById('btn-finalizar-seccion').style.display = modo === 'cierre' ? 'block' : 'none';
+  document.getElementById('seccion-msg').className = 'msg';
+}
+
+async function guardarSeccionPasteles(finalizar){
+  const existente = cierreDiaActual.pasteles || {};
+  const resultado = {};
+
+  PASTEL_SABORES.forEach((nombre, i)=>{
+    const prevItem = existente[nombre] || { mini:{exis:0,in:0,cierre:0,merma:0,cortesia:0}, chico:{exis:0,in:0,cierre:0,merma:0,cortesia:0} };
+    const nuevoItem = { mini: {...prevItem.mini}, chico: {...prevItem.chico} };
+
+    ['mini','chico'].forEach(tam=>{
+      if(modoActual === 'inicio'){
+        nuevoItem[tam].exis = parseFloat(document.getElementById(`fp_${i}_${tam}_exis`)?.value) || 0;
+        let inTotal = 0;
+        let t = 0;
+        while(document.getElementById(`fp_${i}_${tam}_in_${t}`)){
+          inTotal += parseFloat(document.getElementById(`fp_${i}_${tam}_in_${t}`).value) || 0;
+          t++;
+        }
+        nuevoItem[tam].in = inTotal;
+      } else if(modoActual === 'cierre'){
+        nuevoItem[tam].cierre = parseFloat(document.getElementById(`fp_${i}_${tam}_cierre`)?.value) || 0;
+        nuevoItem[tam].merma = parseFloat(document.getElementById(`fp_${i}_${tam}_merma`)?.value) || 0;
+        nuevoItem[tam].cortesia = parseFloat(document.getElementById(`fp_${i}_${tam}_cortesia`)?.value) || 0;
+      }
+    });
+
+    resultado[nombre] = nuevoItem;
+  });
+
+  const msg = document.getElementById('seccion-msg');
+  const fecha = fechaHoyStr();
+  const payload = { fecha, pasteles: resultado };
+  if(finalizar && modoActual === 'cierre') payload.pasteles_listo = true;
+
+  const { data: sesion } = await sb.auth.getSession();
+  if(!cierreDiaActual.id) payload.abierto_por = sesion.session.user.id;
+
+  const { data, error } = await sb.from('cierres_dia').upsert(payload, { onConflict: 'fecha' }).select().maybeSingle();
+
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo guardar: ' + error.message;
+    return;
+  }
+
+  cierreDiaActual = data;
+  msg.className = 'msg ok';
+  msg.textContent = finalizar ? (modoActual === 'cierre' ? 'Cierre finalizado.' : 'Inicio guardado.') : 'Guardado.';
+
+  if(finalizar){
+    setTimeout(()=>{
+      if(modoActual === 'cierre'){
+        volverAProductosDia();
+        actualizarChecksHub();
+      } else {
+        abrirSeccion('pasteles');
+      }
+    }, 700);
+  }
+}
+
+const DENOMINACIONES = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+let fondoCajaAyer = 0;
+
+async function abrirSeccionCaja(){
+  seccionActual = 'caja';
+  nivelSeccion = 'editor';
+  modoActual = 'caja';
+  document.getElementById('seccion-titulo').textContent = 'Corte de caja';
+
+  const ayer = new Date();
+  ayer.setDate(ayer.getDate() - 1);
+  const fechaAyer = fechaStrDesdeDate(ayer);
+  const { data: dataAyer } = await sb.from('cierres_dia').select('corte_caja').eq('fecha', fechaAyer).maybeSingle();
+  fondoCajaAyer = (dataAyer && dataAyer.corte_caja && dataAyer.corte_caja.fondo_caja) || 0;
+
+  const datos = cierreDiaActual.corte_caja || {};
+  const denom = datos.denominaciones || {};
+  const g = v => v || '';
+
+  let filasDenom = '';
+  DENOMINACIONES.forEach(d=>{
+    filasDenom += `
+      <div class="seccion-item" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="font-weight:700; font-size:14px; width:50px;">$${d}</div>
+        <div style="flex:1;"><label class="mini-label">Cantidad</label><input type="number" inputmode="numeric" class="mini-input" style="max-width:none;" id="dc_${d}" value="${g(denom[d])}" oninput="actualizarTotalesCaja()"></div>
+        <div style="flex:1; text-align:right;"><label class="mini-label">Total</label><div id="dt_${d}" style="font-weight:700; padding:7px 0;">$0</div></div>
+      </div>`;
+  });
+
+  const cont = document.getElementById('seccion-filas');
+  cont.innerHTML = `
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:15px; margin-bottom:8px;">Denominaciones</div>
+    ${filasDenom}
+    <div class="price-tag" style="background:var(--sage-bg); width:100%; box-sizing:border-box; justify-content:space-between; margin:10px 0 20px;">
+      <span class="label">Total contado:</span>
+      <span class="amount" id="total-contado-caja">$0</span>
+    </div>
+
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:15px; margin-bottom:8px;">Ventas del día</div>
+    <div class="field">
+      <label>Venta en efectivo (todo lo que hay en caja, incluyendo el fondo del día anterior)</label>
+      <input type="number" inputmode="numeric" id="vc_efectivo" value="${g(datos.venta_efectivo)}" oninput="actualizarTotalesCaja()">
+      <div class="hint" id="efectivo-ajustado-hint"></div>
+    </div>
+    <div class="field"><label>Venta en tarjeta</label><input type="number" inputmode="numeric" id="vc_tarjeta" value="${g(datos.venta_tarjeta)}" oninput="actualizarTotalesCaja()"></div>
+    <div class="field"><label>Venta en transferencia</label><input type="number" inputmode="numeric" id="vc_transferencia" value="${g(datos.venta_transferencia)}" oninput="actualizarTotalesCaja()"></div>
+    <div class="field"><label>Venta local</label><input type="number" inputmode="numeric" id="vc_local" value="${g(datos.venta_local)}" oninput="actualizarTotalesCaja()"></div>
+    <div class="field"><label>Venta pedidos</label><input type="number" inputmode="numeric" id="vc_pedidos" value="${g(datos.venta_pedidos)}" oninput="actualizarTotalesCaja()"></div>
+    <div class="price-tag" style="background:var(--caramel-bg); width:100%; box-sizing:border-box; justify-content:space-between; margin:4px 0 20px;">
+      <span class="label">Venta total (ya con el ajuste del efectivo):</span>
+      <span class="amount" id="total-ventas-caja">$0</span>
+    </div>
+
+    <div style="font-family:'Fraunces',serif; font-weight:600; font-size:15px; margin-bottom:8px;">Otros</div>
+    <div class="field">
+      <label>Fondo de caja (lo que se deja para mañana)</label>
+      <input type="number" inputmode="numeric" id="vc_fondo" value="${g(datos.fondo_caja)}">
+      <div class="hint">Este monto se le va a restar al corte de caja del día siguiente.</div>
+    </div>
+    <div class="field"><label>Gastos</label><input type="number" inputmode="numeric" id="vc_gastos" value="${g(datos.gastos)}"></div>
+  `;
+
+  document.getElementById('btn-guardar-seccion').style.display = 'block';
+  document.getElementById('btn-finalizar-seccion').style.display = 'block';
+  document.getElementById('seccion-msg').className = 'msg';
+
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-seccion').classList.add('active');
+
+  actualizarTotalesCaja();
+}
+
+function actualizarTotalesCaja(){
+  let totalContado = 0;
+  DENOMINACIONES.forEach(d=>{
+    const cant = parseFloat(document.getElementById(`dc_${d}`).value) || 0;
+    const tot = cant * d;
+    totalContado += tot;
+    document.getElementById(`dt_${d}`).textContent = '$' + tot;
+  });
+  document.getElementById('total-contado-caja').textContent = '$' + totalContado;
+
+  const efectivoBruto = parseFloat(document.getElementById('vc_efectivo').value) || 0;
+  const efectivoAjustado = efectivoBruto - fondoCajaAyer;
+  const hint = document.getElementById('efectivo-ajustado-hint');
+  if(hint){
+    hint.textContent = `Corte anterior: $${fondoCajaAyer} · Efectivo real de hoy: $${efectivoAjustado}`;
+  }
+
+  const otrosCampos = ['vc_tarjeta','vc_transferencia','vc_local','vc_pedidos'];
+  let totalVentas = efectivoAjustado;
+  otrosCampos.forEach(id=>{ totalVentas += parseFloat(document.getElementById(id).value) || 0; });
+  document.getElementById('total-ventas-caja').textContent = '$' + totalVentas;
+}
+
+async function guardarSeccionCaja(finalizar){
+  const denominaciones = {};
+  DENOMINACIONES.forEach(d=>{
+    denominaciones[d] = parseFloat(document.getElementById(`dc_${d}`).value) || 0;
+  });
+
+  const corte_caja = {
+    denominaciones,
+    venta_efectivo: parseFloat(document.getElementById('vc_efectivo').value) || 0,
+    venta_tarjeta: parseFloat(document.getElementById('vc_tarjeta').value) || 0,
+    venta_transferencia: parseFloat(document.getElementById('vc_transferencia').value) || 0,
+    venta_local: parseFloat(document.getElementById('vc_local').value) || 0,
+    venta_pedidos: parseFloat(document.getElementById('vc_pedidos').value) || 0,
+    fondo_caja: parseFloat(document.getElementById('vc_fondo').value) || 0,
+    gastos: parseFloat(document.getElementById('vc_gastos').value) || 0
+  };
+
+  const msg = document.getElementById('seccion-msg');
+  const fecha = fechaHoyStr();
+  const payload = { fecha, corte_caja };
+  if(finalizar) payload.caja_listo = true;
+
+  const { data: sesion } = await sb.auth.getSession();
+  if(!cierreDiaActual.id) payload.abierto_por = sesion.session.user.id;
+
+  const { data, error } = await sb.from('cierres_dia').upsert(payload, { onConflict: 'fecha' }).select().maybeSingle();
+
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo guardar: ' + error.message;
+    return;
+  }
+
+  cierreDiaActual = data;
+  msg.className = 'msg ok';
+  msg.textContent = finalizar ? 'Corte de caja finalizado.' : 'Guardado.';
+
+  if(finalizar){
+    setTimeout(()=>{ volverAProductosDia(); actualizarChecksHub(); }, 700);
+  }
+}
+
+async function guardarSeccion(finalizar){
+  if(seccionActual === 'caja'){
+    return guardarSeccionCaja(finalizar);
+  }
+  if(seccionActual === 'pasteles'){
+    return guardarSeccionPasteles(finalizar);
+  }
+  const items = itemsDeSeccion(seccionActual);
+  const existente = cierreDiaActual[seccionActual] || {};
+  const resultado = {};
+
+  items.forEach((nombre, i)=>{
+    const prevItem = existente[nombre] || { exis:0, in:0, cierre:0, merma:0, cortesia:0 };
+    let exis = prevItem.exis;
+    let inTotal = prevItem.in;
+    let cierre = prevItem.cierre;
+    let merma = prevItem.merma;
+    let cortesia = prevItem.cortesia || 0;
+
+    if(modoActual === 'inicio'){
+      exis = parseFloat(document.getElementById(`f_${i}_exis`)?.value) || 0;
+      inTotal = 0;
+      let t = 0;
+      while(document.getElementById(`f_${i}_in_${t}`)){
+        inTotal += parseFloat(document.getElementById(`f_${i}_in_${t}`).value) || 0;
+        t++;
+      }
+    } else if(modoActual === 'cierre'){
+      cierre = parseFloat(document.getElementById(`f_${i}_cierre`).value) || 0;
+      merma = parseFloat(document.getElementById(`f_${i}_merma`).value) || 0;
+      cortesia = parseFloat(document.getElementById(`f_${i}_cortesia`).value) || 0;
+    }
+
+    resultado[nombre] = { exis, in: inTotal, cierre, merma, cortesia };
+  });
+
+  const msg = document.getElementById('seccion-msg');
+  const campoJson = seccionActual;
+  const campoListo = seccionActual + '_listo';
+  const fecha = fechaHoyStr();
+
+  const payload = { fecha };
+  payload[campoJson] = resultado;
+  if(finalizar && modoActual === 'cierre') payload[campoListo] = true;
+
+  const { data: sesion } = await sb.auth.getSession();
+  if(!cierreDiaActual.id){
+    payload.abierto_por = sesion.session.user.id;
+  }
+
+  const { data, error } = await sb.from('cierres_dia').upsert(payload, { onConflict: 'fecha' }).select().maybeSingle();
+
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo guardar: ' + error.message;
+    return;
+  }
+
+  cierreDiaActual = data;
+  msg.className = 'msg ok';
+  msg.textContent = finalizar ? (modoActual === 'cierre' ? 'Cierre finalizado.' : 'Inicio guardado.') : 'Guardado.';
+
+  if(finalizar){
+    setTimeout(()=>{
+      if(modoActual === 'cierre'){
+        volverAProductosDia();
+        actualizarChecksHub();
+      } else {
+        abrirSeccion(seccionActual);
+      }
+    }, 700);
+  }
+}
+
+async function cerrarDia(){
+  if(!cierreDiaActual.cupcakes_listo || !cierreDiaActual.individuales_listo || !cierreDiaActual.pasteles_listo || !cierreDiaActual.panques_listo){
+    alert('Faltan secciones por finalizar antes de poder cerrar el día.');
+    return;
+  }
+  if(!cierreDiaActual.caja_listo){
+    alert('Falta finalizar el corte de caja antes de poder cerrar el día.');
+    return;
+  }
+  const { error } = await sb.from('cierres_dia').update({ cerrado:true, cerrado_at:new Date().toISOString() }).eq('fecha', fechaHoyStr());
+  const msg = document.getElementById('productos-dia-msg');
+  if(error){
+    msg.className = 'msg err';
+    msg.textContent = 'No se pudo cerrar: ' + error.message;
+  } else {
+    msg.className = 'msg ok';
+    msg.textContent = '¡Día cerrado correctamente!';
+    cierreDiaActual.cerrado = true;
+  }
+}
+
+function abrirResumen(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-resumen').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-resumen').classList.add('active');
+  if(!document.getElementById('resumen-desde').value){
+    rangoResumenRapido('semana');
+  }
+}
+
+function rangoResumenRapido(tipo){
+  const hoy = new Date();
+  let desde = new Date(hoy);
+  let hasta = new Date(hoy);
+  if(tipo === 'semana'){
+    desde.setDate(hoy.getDate() - hoy.getDay() + 1);
+  } else if(tipo === 'mes'){
+    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  }
+  document.getElementById('resumen-desde').value = fechaStrDesdeDate(desde);
+  document.getElementById('resumen-hasta').value = fechaStrDesdeDate(hasta);
+  generarResumen();
+}
+
+function buscarPrecioIndividualCatalogo(nombreMostrado){
+  // Convierte un nombre a sus palabras clave: sin acentos, sin "de/del/la",
+  // sin prefijos (cc, cheesecake, cuchareable, individual) y sin plural.
+  // Así "Carlota de limón" y "carlota_limon" quedan iguales,
+  // y "CC fruto rojos" empata con "cuchareable_frutos_rojos".
+  const ignorar = ['de','del','la','el','los','las','y','cc','cheesecake','cuchareable','individual'];
+  const clave = s => (s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .split(/[^a-z0-9]+/)
+    .filter(w => w && !ignorar.includes(w))
+    .map(w => w.length > 3 ? w.replace(/s$/, '') : w)
+    .join('');
+  const exacto = individualesData.find(r => formatNombre(r.nombre) === nombreMostrado);
+  if(exacto) return exacto.precio;
+  const objetivo = clave(nombreMostrado);
+  if(!objetivo) return null;
+  let match = individualesData.find(r => clave(r.nombre) === objetivo);
+  if(!match){
+    match = individualesData.find(r=>{
+      const n = clave(r.nombre);
+      return n && (n.includes(objetivo) || objetivo.includes(n));
+    });
+  }
+  return match ? match.precio : null;
+}
+
+async function generarResumen(){
+  const desde = document.getElementById('resumen-desde').value;
+  const hasta = document.getElementById('resumen-hasta').value;
+  const cont = document.getElementById('resumen-contenido');
+  cont.innerHTML = '<div class="loading">Calculando...</div>';
+
+  if(!desde || !hasta){
+    cont.innerHTML = '<div class="empty">Selecciona un rango de fechas.</div>';
+    return;
+  }
+
+  const inicioRango = new Date(desde + 'T00:00:00').toISOString();
+  const finRango = new Date(hasta + 'T23:59:59').toISOString();
+  const [resCierres, resPedidos] = await Promise.all([
+    sb.from('cierres_dia').select('*').gte('fecha', desde).lte('fecha', hasta),
+    sb.from('pedidos').select('*').gte('fecha_entrega', inicioRango).lte('fecha_entrega', finRango).order('fecha_entrega', {ascending:true})
+  ]);
+  const errorRango = resCierres.error || resPedidos.error;
+  if(errorRango){
+    cont.innerHTML = '<div class="empty">Error: ' + escHtml(errorRango.message) + '</div>';
+    return;
+  }
+  const data = resCierres.data || [];
+  const pedidosRango = resPedidos.data || [];
+  if(data.length === 0 && pedidosRango.length === 0){
+    cont.innerHTML = '<div class="empty">No hay información capturada en ese rango.</div>';
+    return;
+  }
+
+  if(catalogosListos) await catalogosListos;
+  const LISTA_IND = [...new Set([...INDIVIDUAL_PRODUCTOS, ...data.flatMap(d => Object.keys(d.individuales || {}))])];
+  const cupcakePrecio = (individualesData.find(r=>r.nombre==='cupcake')||{}).precio || 0;
+  const precioMini = (tamanosData.find(r=>r.tamano==='mini')||{}).precio || 0;
+  const precioChico = (tamanosData.find(r=>r.tamano==='chico')||{}).precio || 0;
+
+  const vendidosCupcakes = {};
+  CUPCAKE_SABORES.forEach(n=>vendidosCupcakes[n]=0);
+  const vendidosIndividuales = {};
+  LISTA_IND.forEach(n=>vendidosIndividuales[n]=0);
+  const LISTA_PAN = [...new Set([...PANQUE_PRODUCTOS, ...data.flatMap(d => Object.keys(d.panques || {}))])];
+  const vendidosPanques = {};
+  LISTA_PAN.forEach(n=>vendidosPanques[n]=0);
+  const vendidosPasteles = {};
+  PASTEL_SABORES.forEach(n=>vendidosPasteles[n]={mini:0,chico:0});
+
+  let ventaEfectivoBruto=0, ventaTarjeta=0, ventaTransferencia=0, ventaLocal=0, ventaPedidos=0;
+  let diasCerrados = 0;
+
+  data.forEach(dia=>{
+    if(dia.cerrado) diasCerrados++;
+
+    CUPCAKE_SABORES.forEach(nombre=>{
+      const it = (dia.cupcakes && dia.cupcakes[nombre]) || {};
+      vendidosCupcakes[nombre] += Math.max(0, (it.exis||0)+(it.in||0)-(it.cierre||0)-(it.merma||0)-(it.cortesia||0));
+    });
+
+    LISTA_IND.forEach(nombre=>{
+      const it = (dia.individuales && dia.individuales[nombre]) || {};
+      vendidosIndividuales[nombre] += Math.max(0, (it.exis||0)+(it.in||0)-(it.cierre||0)-(it.merma||0)-(it.cortesia||0));
+    });
+
+    LISTA_PAN.forEach(nombre=>{
+      const it = (dia.panques && dia.panques[nombre]) || {};
+      vendidosPanques[nombre] += Math.max(0, (it.exis||0)+(it.in||0)-(it.cierre||0)-(it.merma||0)-(it.cortesia||0));
+    });
+
+    PASTEL_SABORES.forEach(nombre=>{
+      const it = (dia.pasteles && dia.pasteles[nombre]) || {};
+      const mini = it.mini || {}; const chico = it.chico || {};
+      vendidosPasteles[nombre].mini += Math.max(0, (mini.exis||0)+(mini.in||0)-(mini.cierre||0)-(mini.merma||0)-(mini.cortesia||0));
+      vendidosPasteles[nombre].chico += Math.max(0, (chico.exis||0)+(chico.in||0)-(chico.cierre||0)-(chico.merma||0)-(chico.cortesia||0));
+    });
+
+    const cc = dia.corte_caja || {};
+    ventaEfectivoBruto += cc.venta_efectivo||0;
+    ventaTarjeta += cc.venta_tarjeta||0;
+    ventaTransferencia += cc.venta_transferencia||0;
+    ventaLocal += cc.venta_local||0;
+    ventaPedidos += cc.venta_pedidos||0;
+  });
+
+  const totalCajaCrudo = ventaEfectivoBruto+ventaTarjeta+ventaTransferencia+ventaLocal+ventaPedidos;
+
+  // Tablas por sección (mismo formato que el historial)
+  const tablaVentas = (titulo, filas, conTamano, nota) => {
+    let cuerpo = '', piezas = 0, total = 0;
+    filas.forEach(f=>{
+      piezas += f.piezas;
+      total += f.total || 0;
+      cuerpo += `<tr>
+        <td class="nombre">${escHtml(f.nombre)}</td>${conTamano ? `<td>${f.tamano}</td>` : ''}
+        <td class="n">${f.piezas}</td>
+        <td class="n">${f.precio !== null ? fmtDinero(f.precio) : '<span style="color:var(--jam-deep);">Sin precio</span>'}</td>
+        <td class="n vend">${f.precio !== null ? fmtDinero(f.total) : '—'}</td>
+      </tr>`;
+    });
+    const cols = conTamano ? 5 : 4;
+    const cuerpoFinal = cuerpo || `<tr><td colspan="${cols}" style="color:var(--muted); text-align:center;">Sin ventas en el rango</td></tr>`;
+    const pieTabla = cuerpo ? `<tfoot><tr><td${conTamano ? ' colspan="2"' : ''}>Total</td><td class="n">${piezas}</td><td></td><td class="n">${fmtDinero(total)}</td></tr></tfoot>` : '';
+    return `<div>
+      <h3>${titulo}</h3>
+      <div class="tabla-wrap"><table class="tabla-pedidos">
+        <thead><tr><th>${conTamano ? 'Sabor' : 'Producto'}</th>${conTamano ? '<th>Tamaño</th>' : ''}<th class="n">Piezas</th><th class="n">Precio</th><th class="n">Total</th></tr></thead>
+        <tbody>${cuerpoFinal}</tbody>${pieTabla}
+      </table></div>
+      ${nota || ''}
+    </div>`;
+  };
+
+  // CUPCAKES
+  const filasCup = [];
+  let totalCupcakesPiezas = 0, totalCupcakesDinero = 0;
+  CUPCAKE_SABORES.forEach(nombre=>{
+    const v = vendidosCupcakes[nombre];
+    if(v<=0) return;
+    const dinero = v*cupcakePrecio;
+    totalCupcakesPiezas += v; totalCupcakesDinero += dinero;
+    filasCup.push({nombre, piezas:v, precio:cupcakePrecio, total:dinero});
+  });
+
+  // INDIVIDUALES
+  const filasInd = [], faltaPrecio = [];
+  let totalIndividualesPiezas = 0, totalIndividualesDinero = 0;
+  LISTA_IND.forEach(nombre=>{
+    const v = vendidosIndividuales[nombre];
+    if(v<=0) return;
+    const precio = buscarPrecioIndividualCatalogo(nombre);
+    totalIndividualesPiezas += v;
+    if(precio !== null){
+      totalIndividualesDinero += v*precio;
+      filasInd.push({nombre, piezas:v, precio, total:v*precio});
+    } else {
+      faltaPrecio.push(nombre);
+      filasInd.push({nombre, piezas:v, precio:null, total:0});
+    }
+  });
+
+  // PANQUÉS
+  const filasPan = [];
+  let totalPanquesPiezas = 0, totalPanquesDinero = 0;
+  LISTA_PAN.forEach(nombre=>{
+    const v = vendidosPanques[nombre];
+    if(v<=0) return;
+    const r = panquesData.find(x => formatNombre(x.nombre) === nombre);
+    const precio = r ? Number(r.precio) : null;
+    totalPanquesPiezas += v;
+    if(precio !== null){
+      totalPanquesDinero += v*precio;
+      filasPan.push({nombre, piezas:v, precio, total:v*precio});
+    } else {
+      faltaPrecio.push(nombre);
+      filasPan.push({nombre, piezas:v, precio:null, total:0});
+    }
+  });
+
+  // PASTELES
+  const filasPas = [];
+  let totalPastelesPiezas = 0, totalPastelesDinero = 0;
+  PASTEL_SABORES.forEach(nombre=>{
+    const vMini = vendidosPasteles[nombre].mini;
+    const vChico = vendidosPasteles[nombre].chico;
+    if(vMini>0){
+      filasPas.push({nombre, tamano:'Mini', piezas:vMini, precio:precioMini, total:vMini*precioMini});
+      totalPastelesPiezas += vMini; totalPastelesDinero += vMini*precioMini;
+    }
+    if(vChico>0){
+      filasPas.push({nombre, tamano:'Chico', piezas:vChico, precio:precioChico, total:vChico*precioChico});
+      totalPastelesPiezas += vChico; totalPastelesDinero += vChico*precioChico;
+    }
+  });
+
+  const totalGeneralProduccion = totalCupcakesDinero + totalIndividualesDinero + totalPastelesDinero + totalPanquesDinero;
+  const totalPiezas = totalCupcakesPiezas + totalIndividualesPiezas + totalPastelesPiezas + totalPanquesPiezas;
+  const notaFalta = faltaPrecio.length ? `<div class="hint" style="color:var(--jam-deep); margin-top:6px;">Faltan en el catálogo: ${faltaPrecio.map(escHtml).join(', ')}</div>` : '';
+
+  // Pedidos agendados del rango, por categoría
+  const ped = { pastel:{n:0,$:0}, cupcake:{n:0,$:0}, individual:{n:0,$:0}, panque:{n:0,$:0} };
+  let pedidosTotal = 0, pedidosCobrado = 0, pedidosFalta = 0;
+  pedidosRango.forEach(p=>{
+    const total = Number(p.precio)||0;
+    const pagado = Number(p.anticipo)||0;
+    if(ped[p.categoria]){ ped[p.categoria].n++; ped[p.categoria].$ += total; }
+    pedidosTotal += total;
+    pedidosCobrado += Math.min(pagado, total);
+    pedidosFalta += Math.max(0, total - pagado);
+  });
+
+  const totalVendido = totalGeneralProduccion + pedidosTotal;
+
+  const filaDesglose = (nombre, mostrador$, mostradorPzas, pedidos$, pedidosN) => `
+    <tr>
+      <td class="nombre">${nombre}</td>
+      <td class="n">${fmtDinero(mostrador$)}<span class="sub">${mostradorPzas} piezas</span></td>
+      <td class="n">${fmtDinero(pedidos$)}<span class="sub">${pedidosN} ${pedidosN === 1 ? 'pedido' : 'pedidos'}</span></td>
+      <td class="n vend">${fmtDinero(mostrador$ + pedidos$)}</td>
+    </tr>`;
+
+  const html = `
+    <div style="font-size:13px; color:var(--muted); margin-bottom:12px;">${data.length} día(s) capturados en mostrador · ${diasCerrados} cerrado(s) · ${pedidosRango.length} pedido(s) agendados</div>
+
+    <div class="totales-top">
+      <div class="total-box" style="background:var(--jam-bg);">
+        <div class="tb-label">Total vendido (mostrador + pedidos)</div>
+        <div class="tb-monto">${fmtDinero(totalVendido)}</div>
+      </div>
+      <div class="total-box caramelo">
+        <div class="tb-label">Mostrador (lo que salió de vitrina)</div>
+        <div class="tb-monto">${fmtDinero(totalGeneralProduccion)}</div>
+        <div class="tb-sub">${totalPiezas} piezas</div>
+      </div>
+      <div class="total-box caramelo">
+        <div class="tb-label">Pedidos agendados</div>
+        <div class="tb-monto">${fmtDinero(pedidosTotal)}</div>
+        <div class="tb-sub">Cobrado ${fmtDinero(pedidosCobrado)} · Falta por cobrar ${fmtDinero(pedidosFalta)}</div>
+      </div>
+      <div class="total-box">
+        <div class="tb-label">Venta reportada en caja (sin ajustar fondos)</div>
+        <div class="tb-monto">${fmtDinero(totalCajaCrudo)}</div>
+      </div>
+    </div>
+
+    <div class="tabla-wrap" style="margin-bottom:8px;">
+      <table class="tabla-pedidos">
+        <thead><tr><th>Categoría</th><th class="n">Mostrador</th><th class="n">Pedidos</th><th class="n">Total</th></tr></thead>
+        <tbody>
+          ${filaDesglose('Pasteles', totalPastelesDinero, totalPastelesPiezas, ped.pastel.$, ped.pastel.n)}
+          ${filaDesglose('Cupcakes', totalCupcakesDinero, totalCupcakesPiezas, ped.cupcake.$, ped.cupcake.n)}
+          ${filaDesglose('Individuales', totalIndividualesDinero, totalIndividualesPiezas, ped.individual.$, ped.individual.n)}
+          ${filaDesglose('Panqués', totalPanquesDinero, totalPanquesPiezas, ped.panque.$, ped.panque.n)}
+        </tbody>
+        <tfoot><tr>
+          <td>Total</td>
+          <td class="n">${fmtDinero(totalGeneralProduccion)}</td>
+          <td class="n">${fmtDinero(pedidosTotal)}</td>
+          <td class="n">${fmtDinero(totalVendido)}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <h2 class="titulo-bloque">Mostrador</h2>
+    <div class="hint" style="margin:0 0 14px;">Lo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).</div>
+    <div class="grid-historial">
+      <div class="col-hist">
+        ${tablaVentas('Pasteles', filasPas, true)}
+        ${tablaVentas('Individuales', filasInd, false, notaFalta)}
+        ${tablaVentas('Panqués', filasPan, false)}
+      </div>
+      <div class="col-hist">
+        ${tablaVentas('Cupcakes', filasCup, false)}
+      </div>
+    </div>
+
+    <h2 class="titulo-bloque">Pedidos agendados</h2>
+    <div class="hint" style="margin:0 0 14px;">Pedidos con fecha de entrega dentro del rango.</div>
+    <div id="resumen-pedidos"></div>
+  `;
+
+  cont.innerHTML = html;
+  const contPedidos = document.getElementById('resumen-pedidos');
+  if(pedidosRango.length){
+    pintarPedidosPorDia(pedidosRango, contPedidos);
+  } else {
+    contPedidos.className = 'empty';
+    contPedidos.textContent = 'No hay pedidos agendados en este rango.';
+  }
+}
+
+async function abrirHistorial(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-historial').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-historial').classList.add('active');
+
+  const cont = document.getElementById('historial-contenido');
+  cont.className = 'loading';
+  cont.textContent = 'Cargando historial...';
+
+  const { data, error } = await sb.from('cierres_dia').select('*').order('fecha', {ascending:false}).limit(60);
+
+  if(error){
+    cont.className = 'empty';
+    cont.textContent = 'No se pudo cargar: ' + error.message;
+    return;
+  }
+  if(!data || data.length===0){
+    cont.className = 'empty';
+    cont.textContent = 'Todavía no hay días capturados.';
+    return;
+  }
+
+  const marca = v => v ? '<span class="tag-ok">✓</span>' : '<span style="color:var(--muted);">—</span>';
+  let filas = '';
+  data.forEach(dia=>{
+    const cc = dia.corte_caja || {};
+    const totalVentasCrudo = (cc.venta_efectivo||0)+(cc.venta_tarjeta||0)+(cc.venta_transferencia||0)+(cc.venta_local||0)+(cc.venta_pedidos||0);
+    const fechaLegible = new Date(dia.fecha + 'T12:00:00').toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
+    filas += `
+      <tr class="click" onclick="abrirDetalleDia('${dia.fecha}')">
+        <td class="nombre">${fechaLegible.charAt(0).toUpperCase()+fechaLegible.slice(1)}</td>
+        <td>${dia.cerrado ? '<span class="tag-ok">Cerrado</span>' : '<span class="tag-prog">En progreso</span>'}</td>
+        <td class="c">${marca(dia.cupcakes_listo)}</td>
+        <td class="c">${marca(dia.individuales_listo)}</td>
+        <td class="c">${marca(dia.pasteles_listo)}</td>
+        <td class="c">${marca(dia.panques_listo)}</td>
+        <td class="c">${marca(dia.caja_listo)}</td>
+        <td class="n">${fmtDinero(totalVentasCrudo)}</td>
+        <td class="c" style="color:var(--jam-deep); font-weight:700;">›</td>
+      </tr>`;
+  });
+
+  cont.className = '';
+  cont.innerHTML = `
+    <div class="tabla-wrap">
+      <table class="tabla-pedidos">
+        <thead><tr>
+          <th>Fecha</th><th>Estado</th><th class="c">Cupcakes</th><th class="c">Individuales</th><th class="c">Pasteles</th><th class="c">Panqués</th><th class="c">Caja</th><th class="n">Ventas (sin ajustar fondo)</th><th></th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>`;
+}
+
+function vendidosDe(it){
+  return (it.exis||0) + (it.in||0) - (it.cierre||0) - (it.merma||0) - (it.cortesia||0);
+}
+
+function tablaInventario(titulo, listo, filas, conTamano){
+  // filas: [{nombre, tamano?, exis, in, cierre, merma}]
+  const encabezado = `<th>${conTamano ? 'Sabor' : 'Producto'}</th>${conTamano ? '<th>Tamaño</th>' : ''}<th class="n">Exis</th><th class="n">IN</th><th class="n">Cierre</th><th class="n">Merma</th><th class="n">Cortesía</th><th class="n">Vendidos</th>`;
+  let cuerpo = '';
+  const tot = {exis:0, in:0, cierre:0, merma:0, cortesia:0, vend:0};
+  filas.forEach(f=>{
+    const v = vendidosDe(f);
+    tot.exis += f.exis||0; tot.in += f.in||0; tot.cierre += f.cierre||0; tot.merma += f.merma||0; tot.cortesia += f.cortesia||0; tot.vend += v;
+    cuerpo += `<tr>
+      <td class="nombre">${escHtml(f.nombre)}</td>${conTamano ? `<td>${f.tamano}</td>` : ''}
+      <td class="n">${f.exis||0}</td><td class="n">${f.in||0}</td><td class="n">${f.cierre||0}</td><td class="n">${f.merma||0}</td><td class="n">${f.cortesia||0}</td>
+      <td class="n vend">${v}</td>
+    </tr>`;
+  });
+  const cuerpoFinal = cuerpo || `<tr><td colspan="${conTamano ? 8 : 7}" style="color:var(--muted); text-align:center;">Sin captura este día</td></tr>`;
+  const pieTabla = cuerpo ? `<tfoot><tr><td${conTamano ? ' colspan="2"' : ''}>Total</td><td class="n">${tot.exis}</td><td class="n">${tot.in}</td><td class="n">${tot.cierre}</td><td class="n">${tot.merma}</td><td class="n">${tot.cortesia}</td><td class="n">${tot.vend}</td></tr></tfoot>` : '';
+  return `<div>
+    <h3>${titulo} ${listo ? '<span class="tag-ok">✓</span>' : ''}</h3>
+    <div class="tabla-wrap"><table class="tabla-pedidos">
+      <thead><tr>${encabezado}</tr></thead>
+      <tbody>${cuerpoFinal}</tbody>${pieTabla}
+    </table></div>
+  </div>`;
+}
+
+async function abrirDetalleDia(fecha){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-historial-detalle').classList.add('active');
+
+  const fechaLegible = new Date(fecha + 'T12:00:00').toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('historial-detalle-titulo').textContent = fechaLegible.charAt(0).toUpperCase()+fechaLegible.slice(1);
+
+  const cont = document.getElementById('historial-detalle-contenido');
+  cont.innerHTML = '<div class="loading">Cargando...</div>';
+
+  const { data, error } = await sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle();
+  if(error || !data){
+    cont.innerHTML = '<div class="empty">No se pudo cargar el detalle.</div>';
+    return;
+  }
+
+  const tieneDatos = it => it && (it.in || it.exis || it.cierre || it.merma || it.cortesia);
+
+  const filasCup = CUPCAKE_SABORES
+    .map(n => ({nombre:n, ...((data.cupcakes && data.cupcakes[n]) || {})}))
+    .filter(tieneDatos);
+
+  if(catalogosListos) await catalogosListos;
+  const filasInd = [...new Set([...INDIVIDUAL_PRODUCTOS, ...Object.keys(data.individuales || {})])]
+    .map(n => ({nombre:n, ...((data.individuales && data.individuales[n]) || {})}))
+    .filter(tieneDatos);
+
+  const filasPan = [...new Set([...PANQUE_PRODUCTOS, ...Object.keys(data.panques || {})])]
+    .map(n => ({nombre:n, ...((data.panques && data.panques[n]) || {})}))
+    .filter(tieneDatos);
+
+  const filasPas = [];
+  PASTEL_SABORES.forEach(n=>{
+    const it = (data.pasteles && data.pasteles[n]) || {};
+    if(tieneDatos(it.mini)) filasPas.push({nombre:n, tamano:'Mini', ...it.mini});
+    if(tieneDatos(it.chico)) filasPas.push({nombre:n, tamano:'Chico', ...it.chico});
+  });
+
+  // Corte de caja
+  const cc = data.corte_caja || {};
+  const totalVentasCrudo = (cc.venta_efectivo||0)+(cc.venta_tarjeta||0)+(cc.venta_transferencia||0)+(cc.venta_local||0)+(cc.venta_pedidos||0);
+  const filaCaja = (concepto, monto, fuerte) =>
+    `<tr><td${fuerte ? ' style="font-weight:700;"' : ''}>${concepto}</td><td class="n"${fuerte ? ' style="font-weight:700; color:var(--jam-deep);"' : ''}>${fmtDinero(monto)}</td></tr>`;
+
+  const denom = cc.denominaciones || {};
+  let filasDenom = '', totalContado = 0;
+  DENOMINACIONES.forEach(d=>{
+    const cant = Number(denom[d])||0;
+    if(!cant) return;
+    totalContado += cant*d;
+    filasDenom += `<tr><td>$${d}</td><td class="n">${cant}</td><td class="n">${fmtDinero(cant*d)}</td></tr>`;
+  });
+
+  const bloqueCaja = `<div class="bloque-caja grid-historial" style="display:block;">
+    <h3>Corte de caja ${data.caja_listo ? '<span class="tag-ok">✓</span>' : ''}</h3>
+    <div class="grid-caja">
+      <div class="tabla-wrap"><table class="tabla-pedidos">
+        <thead><tr><th>Concepto</th><th class="n">Monto</th></tr></thead>
+        <tbody>
+          ${filaCaja('Venta en efectivo', cc.venta_efectivo)}
+          ${filaCaja('Venta en tarjeta', cc.venta_tarjeta)}
+          ${filaCaja('Venta en transferencia', cc.venta_transferencia)}
+          ${filaCaja('Venta local', cc.venta_local)}
+          ${filaCaja('Venta pedidos', cc.venta_pedidos)}
+          ${filaCaja('Total ventas (sin ajustar fondo)', totalVentasCrudo, true)}
+          ${filaCaja('Fondo de caja dejado', cc.fondo_caja)}
+          ${filaCaja('Gastos', cc.gastos)}
+        </tbody>
+      </table></div>
+      ${filasDenom ? `
+      <div class="tabla-wrap"><table class="tabla-pedidos">
+        <thead><tr><th>Billete / moneda</th><th class="n">Cantidad</th><th class="n">Total</th></tr></thead>
+        <tbody>${filasDenom}</tbody>
+        <tfoot><tr><td colspan="2">Total contado</td><td class="n">${fmtDinero(totalContado)}</td></tr></tfoot>
+      </table></div>` : '<div style="color:var(--muted); font-size:13px;">No se capturó el conteo de billetes y monedas.</div>'}
+    </div>
+  </div>`;
+
+  cont.innerHTML = `
+    <div class="grid-historial">
+      <div class="col-hist">
+        ${tablaInventario('Pasteles', data.pasteles_listo, filasPas, true)}
+        ${tablaInventario('Individuales', data.individuales_listo, filasInd, false)}
+        ${tablaInventario('Panqués', data.panques_listo, filasPan, false)}
+      </div>
+      <div class="col-hist">
+        ${tablaInventario('Cupcakes', data.cupcakes_listo, filasCup, false)}
+      </div>
+    </div>
+    ${bloqueCaja}`;
+}
+
+
+// ---------- Ver / editar / borrar pedido ----------
+const pedidosPorId = {};
+let pedidoEditando = null;
+
+function fechaLocalPartes(iso){
+  if(!iso) return {f:'', h:''};
+  const d = new Date(iso);
+  const f = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const h = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  return {f, h};
+}
+function epVal(id){ return document.getElementById(id).value; }
+function epSet(id, v){ document.getElementById(id).value = v ?? ''; }
+
+function epActualizarUI(){
+  const esPastel = epVal('ep-cat') === 'pastel';
+  document.getElementById('ep-cor-wrap').style.display = esPastel ? 'block' : 'none';
+  document.getElementById('ep-color-wrap').style.display = esPastel && epVal('ep-cor') === 'color' ? 'block' : 'none';
+  const dom = epVal('ep-entrega') === 'domicilio';
+  document.querySelectorAll('.ep-dom').forEach(e => e.style.display = dom ? 'block' : 'none');
+  const falta = Math.max(0, (Number(epVal('ep-precio'))||0) - (Number(epVal('ep-anticipo'))||0));
+  document.getElementById('ep-falta').textContent = falta <= 0 ? 'Pagado' : fmtDinero(falta);
+}
+['ep-cat','ep-cor','ep-entrega','ep-precio','ep-anticipo'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', epActualizarUI);
+  document.getElementById(id).addEventListener('change', epActualizarUI);
+});
+
+function abrirEditarPedido(id){
+  const p = pedidosPorId[id];
+  if(!p) return;
+  pedidoEditando = p;
+  const {f, h} = fechaLocalPartes(p.fecha_entrega);
+  document.getElementById('ep-titulo').textContent = p.nombre_cliente || 'Pedido';
+  document.getElementById('ep-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'long'}) : '');
+  epSet('ep-nombre', p.nombre_cliente); epSet('ep-tel', p.telefono);
+  epSet('ep-cat', p.categoria || 'pastel');
+  epSet('ep-tam', p.categoria === 'pastel' ? p.tamano_o_sabor : '');
+  epSet('ep-sabor', p.sabor);
+  epSet('ep-cor', p.corona_tipo || ''); epSet('ep-color', p.corona_color);
+  epSet('ep-fecha', f); epSet('ep-hora', h);
+  epSet('ep-entrega', p.entrega === 'local' ? 'recoger' : (p.entrega || 'recoger'));
+  epSet('ep-dir', p.direccion); epSet('ep-rnombre', p.recibe_nombre); epSet('ep-rtel', p.recibe_telefono);
+  epSet('ep-precio', p.precio); epSet('ep-anticipo', p.anticipo); epSet('ep-metodo', p.metodo_pago || '');
+  epSet('ep-notas', p.notas);
+  document.getElementById('ep-msg').className = 'msg';
+  epActualizarUI();
+  document.getElementById('ep-velo').classList.add('on');
+  document.getElementById('ep-hoja').classList.add('on');
+}
+function cerrarEditarPedido(){
+  document.getElementById('ep-velo').classList.remove('on');
+  document.getElementById('ep-hoja').classList.remove('on');
+  pedidoEditando = null;
+}
+function refrescarVistaActual(){
+  if(document.getElementById('view-resumen') && document.getElementById('view-resumen').classList.contains('active')) generarResumen();
+  else cargarPedidos();
+}
+async function guardarEdicionPedido(){
+  const msg = document.getElementById('ep-msg'); msg.className = 'msg';
+  const p = pedidoEditando; if(!p) return;
+  const nombre = epVal('ep-nombre').trim();
+  const fecha = epVal('ep-fecha');
+  if(!nombre){ msg.className='msg err'; msg.textContent='Falta el nombre del cliente.'; return; }
+  if(!fecha){ msg.className='msg err'; msg.textContent='Falta la fecha de entrega.'; return; }
+  const cat = epVal('ep-cat');
+  const entrega = epVal('ep-entrega');
+  const cor = cat === 'pastel' ? epVal('ep-cor') : '';
+  if(cor === 'color' && !epVal('ep-color').trim()){ msg.className='msg err'; msg.textContent='Escribe el color de la corona.'; return; }
+  if(entrega === 'domicilio' && !epVal('ep-dir').trim()){ msg.className='msg err'; msg.textContent='Falta la dirección de entrega.'; return; }
+  const hora = epVal('ep-hora') || '11:00';
+  const cambios = {
+    nombre_cliente: nombre,
+    telefono: epVal('ep-tel').trim(),
+    categoria: cat,
+    tamano_o_sabor: cat === 'pastel' ? epVal('ep-tam').trim() : cat,
+    sabor: epVal('ep-sabor').trim(),
+    corona_tipo: cor || null,
+    corona_color: cor === 'color' ? epVal('ep-color').trim() : null,
+    fecha_entrega: new Date(`${fecha}T${hora}:00`).toISOString(),
+    entrega,
+    direccion: entrega === 'domicilio' ? epVal('ep-dir').trim() : '',
+    recibe_nombre: entrega === 'domicilio' ? (epVal('ep-rnombre').trim() || null) : null,
+    recibe_telefono: entrega === 'domicilio' ? (epVal('ep-rtel').trim() || null) : null,
+    precio: Number(epVal('ep-precio')) || 0,
+    anticipo: Number(epVal('ep-anticipo')) || 0,
+    metodo_pago: epVal('ep-metodo'),
+    notas: epVal('ep-notas')
+  };
+  const btn = document.getElementById('ep-guardar'); btn.disabled = true; btn.textContent = 'Guardando...';
+  const { data, error } = await sb.from('pedidos').update(cambios).eq('id', p.id).select();
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+  if(error){ msg.className='msg err'; msg.textContent='No se pudo guardar: ' + error.message; return; }
+  if(!data || !data.length){ msg.className='msg err'; msg.textContent='No se guardó. Revisa que ya se haya corrido el SQL de permisos para editar pedidos.'; return; }
+  cerrarEditarPedido();
+  refrescarVistaActual();
+}
+async function borrarPedido(){
+  const p = pedidoEditando; if(!p) return;
+  if(!confirm(`¿Borrar el pedido de ${p.nombre_cliente || 'este cliente'}? Esto no se puede deshacer.`)) return;
+  const msg = document.getElementById('ep-msg'); msg.className = 'msg';
+  const { data, error } = await sb.from('pedidos').delete().eq('id', p.id).select();
+  if(error){ msg.className='msg err'; msg.textContent='No se pudo borrar: ' + error.message; return; }
+  if(!data || !data.length){ msg.className='msg err'; msg.textContent='No se borró. Revisa que ya se haya corrido el SQL de permisos para editar pedidos.'; return; }
+  cerrarEditarPedido();
+  refrescarVistaActual();
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && pedidoEditando) cerrarEditarPedido(); });
+
+cargarSesion();
+</script>
+
+</body>
+</html>

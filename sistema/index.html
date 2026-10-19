@@ -475,6 +475,14 @@
   .btn-cerrar-ep{padding:12px 16px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
   @media (max-width:520px){ .ep-grid{grid-template-columns:1fr} }
 
+  .cd-layout{display:grid; grid-template-columns:1fr; gap:24px;}
+  @media (min-width:900px){ .cd-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:36px; align-items:start;} }
+  .hp-card{display:block; width:100%; text-align:left; background:var(--paper); border:1.5px solid var(--line); border-radius:10px; padding:11px 14px; margin-bottom:8px; cursor:pointer; font-family:'Inter',sans-serif; color:var(--cocoa);}
+  .hp-card:active{background:var(--cream);}
+  .hp-top{display:flex; justify-content:space-between; gap:10px; font-size:13px; color:var(--cocoa-soft);}
+  .hp-top b{color:var(--cocoa); font-size:14.5px;}
+  .hp-det{font-size:13.5px; margin-top:3px;}
+  .hp-pago{font-size:12.5px; color:var(--muted); margin-top:3px;}
   .link-accion{color:var(--jam-deep); font-weight:700; font-size:14px; text-decoration:none; display:inline-block; margin-bottom:14px;}
   .elim-card{background:var(--paper); border:1.5px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
   .elim-card .el-info{font-size:13.5px; color:var(--cocoa-soft);}
@@ -821,9 +829,12 @@
   <!-- VISTA: CLIENTE (DETALLE) -->
   <section id="view-cliente-detalle" class="view">
     <a href="#" class="link-accion" onclick="abrirClientes(); return false;">← Clientes</a>
-    <div style="max-width:640px;">
-      <div class="field"><label>Nombre *</label><input type="text" id="cd-nombre"></div>
-      <div class="field"><label>Apellido *</label><input type="text" id="cd-apellido"></div>
+    <div class="cd-layout">
+    <div>
+      <div class="row2">
+        <div class="field"><label>Nombre *</label><input type="text" id="cd-nombre"></div>
+        <div class="field"><label>Apellido *</label><input type="text" id="cd-apellido"></div>
+      </div>
       <div class="field"><label>Teléfono *</label><input type="tel" id="cd-telefono" inputmode="tel"></div>
       <div class="sub-titulo">Dirección (opcional)</div>
       <div id="cd-direccion" class="form-dir"></div>
@@ -832,8 +843,12 @@
       </div>
       <div class="msg" id="cd-msg" style="margin:0 0 10px;"></div>
     </div>
-    <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin:22px 0 10px;">Historial de pedidos</div>
-    <div id="cd-pedidos" class="loading">Cargando pedidos...</div>
+    <div>
+      <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin:0 0 6px;">Historial de pedidos</div>
+      <div id="cd-resumen" class="hint" style="margin:0 0 12px;"></div>
+      <div id="cd-pedidos" class="loading">Cargando pedidos...</div>
+    </div>
+    </div>
   </section>
 
   <!-- VISTA: PRODUCTOS DEL DIA (HUB) -->
@@ -3414,9 +3429,29 @@ async function cargarPedidosCliente(){
   let q = sb.from('pedidos').select('*').order('fecha_entrega', {ascending:false});
   q = tel ? q.or(`cliente_id.eq.${Number(c.id)},telefono.eq."${tel}"`) : q.eq('cliente_id', c.id);
   const { data, error } = await q;
+  const res = document.getElementById('cd-resumen'); res.textContent = '';
   if(error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar los pedidos: ' + error.message; return; }
   if(!data || !data.length){ cont.className = 'empty'; cont.textContent = 'Este cliente todavía no tiene pedidos.'; return; }
-  pintarPedidosPorDia(data, cont);
+  const total = data.reduce((a,p)=>a+(Number(p.precio)||0),0);
+  const falta = data.reduce((a,p)=>a+Math.max(0,(Number(p.precio)||0)-(Number(p.anticipo)||0)),0);
+  res.textContent = `${data.length} pedido${data.length===1?'':'s'} · Total ${fmtDinero(total)}` + (falta>0 ? ` · Falta por pagar ${fmtDinero(falta)}` : '');
+  cont.className = ''; cont.innerHTML = '';
+  data.forEach(p=>{
+    pedidosPorId[p.id] = p;
+    const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria || '';
+    const det = p.categoria === 'pastel'
+      ? [formatNombre(p.tamano_o_sabor), formatNombre(p.sabor), textoCorona(p)].filter(Boolean).join(' · ')
+      : (p.sabor || '');
+    const fecha = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleString('es-MX',{weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : 'Sin fecha';
+    const tot = Number(p.precio)||0, pag = Number(p.anticipo)||0, fal = Math.max(0, tot-pag);
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hp-card'; b.title = 'Toca para ver o editar';
+    b.innerHTML = `<div class="hp-top"><span>${escHtml(fecha)}</span><b>${fmtDinero(tot)}</b></div>
+      <div class="hp-det"><b>${escHtml(producto)}</b>${det ? ' — ' + escHtml(det) : ''}</div>
+      <div class="hp-pago">${fal<=0 ? 'Pagado' : 'Pagó ' + fmtDinero(pag) + ' · Falta <span style="color:var(--jam-deep);font-weight:700;">' + fmtDinero(fal) + '</span>'}</div>`;
+    b.onclick = () => abrirEditarPedido(p.id);
+    cont.appendChild(b);
+  });
 }
 
 // ---------- Pedidos eliminados (solo directora) ----------

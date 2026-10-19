@@ -4279,17 +4279,14 @@ async function abrirPorHacer(){
   const bloqueCor = `<div class="ph-sec"><h3>Coronas ámbar</h3>
     <div class="tabla-wrap" style="max-width:640px;"><table class="tabla-pedidos"><thead><tr><th>Tipo</th><th class="n">Debe haber</th><th class="n">Hay</th><th class="n">Hacer</th></tr></thead>
     <tbody>${filasCor}</tbody></table></div></div>`;
-  const meta = metasData[hoy.getDay()];
-  const avisoDia = !DIAS_METAS.some(d=>d[0] === hoy.getDay()) ? 'Hoy no hay producción de pasteles y cupcakes programada (solo de martes a sábado).'
-    : (!meta ? 'Todavía no se capturan las metas de pasteles y cupcakes de este día.' : '');
-  if(avisoDia){ cont.className = ''; cont.innerHTML = `<div class="ph-sec"><h3>Pasteles y cupcakes</h3><div class="empty" style="padding:16px; text-align:left;">${avisoDia}</div></div>${bloqueCor}`; return; }
+  // Días sin meta (domingo, lunes o sin capturar): todo sale en 0
+  const meta = metasData[hoy.getDay()] && DIAS_METAS.some(d=>d[0] === hoy.getDay()) ? metasData[hoy.getDay()] : { pasteles:{}, cupcakes:{} };
 
   const hacer = (m, sobro) => { const h = Math.max(0, (Number(m)||0) - sobro); return `<span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span>`; };
   // Pasteles
   let filasP = '';
   PASTEL_SABORES.forEach(n=>{
     const m = meta.pasteles[n] || {};
-    if(!(Number(m.mini) > 0) && !(Number(m.chico) > 0)) return;
     const sm = base.pasteles[n + '|mini'] || 0, sc = base.pasteles[n + '|chico'] || 0;
     filasP += `<tr><td class="nombre">${escHtml(n)}</td>
       <td class="n">${Number(m.mini)||0}</td><td class="n">${sm}</td><td class="n">${hacer(m.mini, sm)}</td>
@@ -4299,7 +4296,6 @@ async function abrirPorHacer(){
   let filasC = '';
   CUPCAKE_SABORES.forEach(n=>{
     const m = Number(meta.cupcakes[n]) || 0;
-    if(!(m > 0)) return;
     const so = base.cupcakes[n + '|'] || 0;
     filasC += `<tr><td class="nombre">${escHtml(n)}</td><td class="n">${m}</td><td class="n">${so}</td><td class="n">${hacer(m, so)}</td></tr>`;
   });

@@ -1048,7 +1048,7 @@
       <div class="solo-director" style="display:flex; gap:8px;">
         <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('pasteles')">Metas de pasteles</button>
         <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('cupcakes')">Metas de cupcakes</button>
-        <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('coronas')">Metas de coronas</button>
+        <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('coronas')">Metas de coronas ámbar</button>
       </div>
     </div>
     <div class="hint" style="margin:0 0 14px;">Por hacer = lo que debe haber hoy − lo que sobró del último día.</div>
@@ -1129,7 +1129,7 @@
         <div>›</div>
       </div>
       <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('coronas')">
-        <div class="cart-row-name">Coronas <span id="check-coronas"></span></div>
+        <div class="cart-row-name">Coronas ámbar <span id="check-coronas"></span></div>
         <div>›</div>
       </div>
       <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('caja')">
@@ -2503,7 +2503,7 @@ function abrirSeccion(tipo){
   }
   seccionActual = tipo;
   nivelSeccion = 'chooser';
-  const nombres = {cupcakes:'Cupcakes', individuales:'Individuales', pasteles:'Pasteles', panques:'Panqués', coronas:'Coronas'};
+  const nombres = {cupcakes:'Cupcakes', individuales:'Individuales', pasteles:'Pasteles', panques:'Panqués', coronas:'Coronas ámbar'};
   document.getElementById('seccion-titulo').textContent = nombres[tipo];
   document.getElementById('btn-guardar-seccion').style.display = 'none';
   document.getElementById('btn-finalizar-seccion').style.display = 'none';
@@ -2621,7 +2621,7 @@ async function abrirModoSeccion(modo){
   catch(e){ cont.innerHTML = `<div class="empty">No se pudieron calcular las existencias: ${escHtml(e.message)}</div>`; return; }
 
   document.getElementById('seccion-titulo').textContent =
-    ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués', coronas:'Coronas'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
+    ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués', coronas:'Coronas ámbar'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
   cont.innerHTML = '';
   const gris = 'background:var(--cream-deep); color:var(--muted);';
 
@@ -4263,7 +4263,7 @@ async function abrirPorHacer(){
     const h = Math.max(0, m - hay);
     filasCor += `<tr><td class="nombre">${t}</td><td class="n">${m}</td><td class="n">${hay}</td><td class="n"><span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span></td></tr>`;
   });
-  const bloqueCor = `<div><div style="font-family:'Tinos',Georgia,serif; font-size:21px; margin-bottom:8px;">Coronas</div>
+  const bloqueCor = `<div><div style="font-family:'Tinos',Georgia,serif; font-size:21px; margin-bottom:8px;">Coronas ámbar</div>
     <div class="tabla-wrap"><table class="tabla-pedidos"><thead><tr><th>Tipo</th><th class="n">Debe haber</th><th class="n">Hay</th><th class="n">Hacer</th></tr></thead>
     <tbody>${filasCor}</tbody></table></div></div>`;
   const meta = metasData[hoy.getDay()];
@@ -4311,7 +4311,7 @@ async function abrirMetas(cat){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-metas').classList.add('active');
   window.scrollTo(0,0);
-  document.getElementById('metas-titulo').textContent = cat === 'pasteles' ? 'Metas de pasteles' : cat === 'coronas' ? 'Metas de coronas' : 'Metas de cupcakes';
+  document.getElementById('metas-titulo').textContent = cat === 'pasteles' ? 'Metas de pasteles' : cat === 'coronas' ? 'Metas de coronas ámbar' : 'Metas de cupcakes';
   document.getElementById('metas-msg').className = 'msg';
   try { await cargarMetas(); }
   catch(e){ document.getElementById('metas-contenido').innerHTML = `<div class="empty">No se pudo cargar: ${escHtml(e.message)}</div>`; return; }
@@ -4413,7 +4413,8 @@ function preguntarCorona(nombre, tam){
     b.onclick = fn; cont.appendChild(b);
   };
   const tamPrecio = tam === 'mini' ? 'mini' : 'normal';
-  [['ambar','Corona ámbar'],['color','Corona de color']].forEach(([tipo, etiqueta])=>{
+  // En el local solo se venden coronas ámbar (las de color son solo para pedidos)
+  [['ambar','Corona ámbar']].forEach(([tipo, etiqueta])=>{
     const precio = incluida ? 0 : precioCorona(tipo, tamPrecio);
     boton(etiqueta, quedan <= 0 ? 'Ya no hay coronas ' + tipoCor.toLowerCase() : (incluida ? 'Incluida, sin costo' : '+ ' + fmtDinero(precio)),
       ()=>{ cerrarPreguntaCorona(); agregarAVenta('pasteles', nombre, tam); agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio); }, quedan <= 0);

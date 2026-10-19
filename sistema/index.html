@@ -536,7 +536,12 @@
   @media (max-width:900px){ .pos-grid{grid-template-columns:1fr;} .pos-ticket{position:static; max-height:none;} .pos-prow{grid-template-columns:1fr 1fr; } }
   body:not(.rol-director) .solo-director{display:none !important;}
   .ph-grid{display:grid; grid-template-columns:1fr; gap:18px;}
-  @media (min-width:900px){ main:has(#view-porhacer.active), main:has(#view-metas.active){max-width:1180px;} .ph-grid{grid-template-columns:1.4fr 1fr;} }
+  @media (min-width:900px){ main:has(#view-porhacer.active){max-width:1180px;} }
+  .ph-tabs{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:0 0 26px;}
+  .ph-tabs button{font-family:inherit; font-size:16px; font-weight:700; padding:14px 26px; border-radius:999px; border:1.5px solid var(--cocoa); background:#fff; color:var(--cocoa); cursor:pointer; min-width:150px;}
+  .ph-tabs button.sel{background:var(--cocoa); color:var(--yeso);}
+  .ph-sec{margin-bottom:26px;}
+  .ph-sec h3{font-family:'Tinos',Georgia,serif; font-weight:400; font-size:22px; margin:0 0 8px;}
   .ph-hacer{font-family:'Tinos',Georgia,serif; font-size:20px; color:var(--cocoa);}
   .ph-cero{color:var(--muted);}
   .metas-tabla input{max-width:90px; text-align:center; padding:8px;}
@@ -1041,29 +1046,28 @@
     </div>
   </section>
 
-  <!-- VISTA: POR HACER HOY (producción y directora) -->
+  <!-- VISTA: POR HACER (producción y directora) -->
   <section id="view-porhacer" class="view">
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:6px;">
-      <div><div class="sub-titulo" id="ph-fecha" style="color:var(--amber); margin:0;"></div><div style="font-family:'Tinos',Georgia,serif; font-size:28px;">Por hacer hoy</div></div>
-      <div class="solo-director" style="display:flex; gap:8px;">
-        <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('pasteles')">Metas de pasteles</button>
-        <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('cupcakes')">Metas de cupcakes</button>
-        <button type="button" class="btn-secundario" style="margin:0;" onclick="abrirMetas('coronas')">Metas de coronas ámbar</button>
-      </div>
+    <div class="ph-tabs solo-director" id="ph-tabs">
+      <button type="button" data-ph="resumen" class="sel">Por hacer hoy</button>
+      <button type="button" data-ph="pasteles">Pasteles</button>
+      <button type="button" data-ph="cupcakes">Cupcakes</button>
+      <button type="button" data-ph="coronas">Coronas ámbar</button>
     </div>
-    <div class="hint" style="margin:0 0 14px;">Por hacer = lo que debe haber hoy − lo que sobró del último día.</div>
-    <div id="ph-contenido" class="loading">Cargando...</div>
-  </section>
-
-  <!-- VISTA: METAS DE PRODUCCIÓN (directora) -->
-  <section id="view-metas" class="view">
-    <a href="#" class="link-accion" onclick="abrirPorHacer(); return false;">← Por hacer</a>
-    <div style="font-family:'Tinos',Georgia,serif; font-size:28px; margin-bottom:4px;" id="metas-titulo"></div>
-    <div class="hint" style="margin:0 0 12px;">Cuántos debe haber cada día. Se capturan una vez y se usan todas las semanas.</div>
-    <div class="chip-group" id="metas-dias" style="margin-bottom:14px;"></div>
-    <div id="metas-contenido"></div>
-    <button type="button" class="primary" id="btn-guardar-metas" style="max-width:320px;" onclick="guardarMetas()">Guardar</button>
-    <div class="msg" id="metas-msg"></div>
+    <div id="ph-panel-resumen">
+      <div class="sub-titulo" id="ph-fecha" style="color:var(--amber); margin:0;"></div>
+      <div style="font-family:'Tinos',Georgia,serif; font-size:28px;">Por hacer hoy</div>
+      <div class="hint" style="margin:2px 0 16px;">Por hacer = lo que debe haber − lo que hay.</div>
+      <div id="ph-contenido" class="loading">Cargando...</div>
+    </div>
+    <div id="ph-panel-metas" style="display:none;">
+      <div style="font-family:'Tinos',Georgia,serif; font-size:28px;" id="metas-titulo"></div>
+      <div class="hint" id="metas-sub" style="margin:2px 0 12px;"></div>
+      <div class="chip-group" id="metas-dias" style="margin-bottom:14px;"></div>
+      <div id="metas-contenido"></div>
+      <button type="button" class="primary" id="btn-guardar-metas" style="max-width:320px;" onclick="guardarMetas()">Guardar</button>
+      <div class="msg" id="metas-msg"></div>
+    </div>
   </section>
 
   <!-- VISTA: PEDIDOS ELIMINADOS -->
@@ -4233,12 +4237,21 @@ async function cargarMetas(){
   (data||[]).forEach(r=> metasData[r.dia] = { pasteles: r.pasteles || {}, cupcakes: r.cupcakes || {}, coronas: r.coronas || {} });
 }
 
+function ponerTabPH(t){
+  document.querySelectorAll('#ph-tabs button').forEach(b=>b.classList.toggle('sel', b.dataset.ph === t));
+  document.getElementById('ph-panel-resumen').style.display = t === 'resumen' ? 'block' : 'none';
+  document.getElementById('ph-panel-metas').style.display = t === 'resumen' ? 'none' : 'block';
+}
+document.querySelectorAll('#ph-tabs button').forEach(b=> b.addEventListener('click', ()=>{
+  if(b.dataset.ph === 'resumen') abrirPorHacer(); else abrirMetas(b.dataset.ph);
+}));
+
 async function abrirPorHacer(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-porhacer').classList.add('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-porhacer').classList.add('active');
-  window.scrollTo(0,0);
+  ponerTabPH('resumen');
   const hoy = new Date();
   const f = hoy.toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'long'});
   document.getElementById('ph-fecha').textContent = f;
@@ -4263,13 +4276,13 @@ async function abrirPorHacer(){
     const h = Math.max(0, m - hay);
     filasCor += `<tr><td class="nombre">${t}</td><td class="n">${m}</td><td class="n">${hay}</td><td class="n"><span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span></td></tr>`;
   });
-  const bloqueCor = `<div><div style="font-family:'Tinos',Georgia,serif; font-size:21px; margin-bottom:8px;">Coronas ámbar</div>
-    <div class="tabla-wrap"><table class="tabla-pedidos"><thead><tr><th>Tipo</th><th class="n">Debe haber</th><th class="n">Hay</th><th class="n">Hacer</th></tr></thead>
+  const bloqueCor = `<div class="ph-sec"><h3>Coronas ámbar</h3>
+    <div class="tabla-wrap" style="max-width:640px;"><table class="tabla-pedidos"><thead><tr><th>Tipo</th><th class="n">Debe haber</th><th class="n">Hay</th><th class="n">Hacer</th></tr></thead>
     <tbody>${filasCor}</tbody></table></div></div>`;
   const meta = metasData[hoy.getDay()];
   const avisoDia = !DIAS_METAS.some(d=>d[0] === hoy.getDay()) ? 'Hoy no hay producción de pasteles y cupcakes programada (solo de martes a sábado).'
     : (!meta ? 'Todavía no se capturan las metas de pasteles y cupcakes de este día.' : '');
-  if(avisoDia){ cont.className = 'ph-grid'; cont.innerHTML = `<div class="empty" style="padding:20px;">${avisoDia}</div>${bloqueCor}`; return; }
+  if(avisoDia){ cont.className = ''; cont.innerHTML = `<div class="ph-sec"><h3>Pasteles y cupcakes</h3><div class="empty" style="padding:16px; text-align:left;">${avisoDia}</div></div>${bloqueCor}`; return; }
 
   const hacer = (m, sobro) => { const h = Math.max(0, (Number(m)||0) - sobro); return `<span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span>`; };
   // Pasteles
@@ -4290,28 +4303,27 @@ async function abrirPorHacer(){
     const so = base.cupcakes[n + '|'] || 0;
     filasC += `<tr><td class="nombre">${escHtml(n)}</td><td class="n">${m}</td><td class="n">${so}</td><td class="n">${hacer(m, so)}</td></tr>`;
   });
-  cont.className = 'ph-grid';
+  cont.className = '';
   cont.innerHTML = `
-    <div><div style="font-family:'Tinos',Georgia,serif; font-size:21px; margin-bottom:8px;">Pasteles</div>
+    <div class="ph-sec"><h3>Pasteles</h3>
       ${filasP ? `<div class="tabla-wrap"><table class="tabla-pedidos">
         <thead><tr><th rowspan="2">Sabor</th><th colspan="3" class="c">Mini</th><th colspan="3" class="c">Chico</th></tr>
         <tr><th class="n">Debe haber</th><th class="n">Sobró</th><th class="n">Hacer</th><th class="n">Debe haber</th><th class="n">Sobró</th><th class="n">Hacer</th></tr></thead>
-        <tbody>${filasP}</tbody></table></div>` : '<div class="empty" style="padding:20px;">Sin metas de pasteles para hoy.</div>'}
+        <tbody>${filasP}</tbody></table></div>` : '<div class="empty" style="padding:16px; text-align:left;">Sin metas de pasteles para hoy.</div>'}
     </div>
-    <div><div style="font-family:'Tinos',Georgia,serif; font-size:21px; margin-bottom:8px;">Cupcakes</div>
-      ${filasC ? `<div class="tabla-wrap"><table class="tabla-pedidos">
+    <div class="ph-sec"><h3>Cupcakes</h3>
+      ${filasC ? `<div class="tabla-wrap" style="max-width:640px;"><table class="tabla-pedidos">
         <thead><tr><th>Sabor</th><th class="n">Debe haber</th><th class="n">Sobró</th><th class="n">Hacer</th></tr></thead>
-        <tbody>${filasC}</tbody></table></div>` : '<div class="empty" style="padding:20px;">Sin metas de cupcakes para hoy.</div>'}
-      <div style="margin-top:18px;">${bloqueCor}</div>
-    </div>`;
+        <tbody>${filasC}</tbody></table></div>` : '<div class="empty" style="padding:16px; text-align:left;">Sin metas de cupcakes para hoy.</div>'}
+    </div>
+    ${bloqueCor}`;
 }
 
 async function abrirMetas(cat){
   metasCat = cat;
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-metas').classList.add('active');
-  window.scrollTo(0,0);
-  document.getElementById('metas-titulo').textContent = cat === 'pasteles' ? 'Metas de pasteles' : cat === 'coronas' ? 'Metas de coronas ámbar' : 'Metas de cupcakes';
+  ponerTabPH(cat);
+  document.getElementById('metas-titulo').textContent = cat === 'pasteles' ? 'Pasteles' : cat === 'coronas' ? 'Coronas ámbar' : 'Cupcakes';
+  document.getElementById('metas-sub').textContent = cat === 'coronas' ? 'Cuántas debe haber siempre (aplica todos los días).' : 'Cuántos debe haber cada día. Se capturan una vez y se usan todas las semanas.';
   document.getElementById('metas-msg').className = 'msg';
   try { await cargarMetas(); }
   catch(e){ document.getElementById('metas-contenido').innerHTML = `<div class="empty">No se pudo cargar: ${escHtml(e.message)}</div>`; return; }
@@ -4347,7 +4359,7 @@ function pintarMetas(){
     CORONA_TIPOS.forEach((n, i)=>{
       filas += `<tr><td class="nombre">${n}</td><td class="c"><input type="number" inputmode="numeric" id="mt_${i}_c" value="${v(m[n])}"></td></tr>`;
     });
-    document.getElementById('metas-contenido').innerHTML = `<div class="hint" style="margin:0 0 10px;">Esta meta es general: aplica todos los días.</div><div class="tabla-wrap metas-tabla" style="max-width:420px; margin-bottom:14px;"><table class="tabla-pedidos">
+    document.getElementById('metas-contenido').innerHTML = `<div class="tabla-wrap metas-tabla" style="max-width:420px; margin-bottom:14px;"><table class="tabla-pedidos">
       <thead><tr><th>Corona</th><th class="c">Debe haber</th></tr></thead><tbody>${filas}</tbody></table></div>`;
   } else {
     CUPCAKE_SABORES.forEach((n, i)=>{

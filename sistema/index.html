@@ -461,6 +461,8 @@
   .ep-velo.on{display:block}
   .ep-hoja{position:fixed;z-index:91;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:92vh;overflow-y:auto;background:var(--cream);border-radius:18px;padding:20px 20px 16px;display:none;box-shadow:0 20px 50px rgba(0,0,0,.25)}
   .ep-hoja.on{display:block}
+  .ep-hoja{overscroll-behavior:contain; -webkit-overflow-scrolling:touch;}
+  .ep-velo{touch-action:none;}
   .ep-hoja h2{font-family:'Tinos',Georgia,serif;color:var(--jam-deep);margin:0 0 2px;font-size:22px}
   .ep-hoja .ep-sub{font-size:12.5px;color:var(--muted);margin-bottom:14px}
   .ep-sec{font-size:12px;font-weight:700;color:var(--cocoa-soft);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:12px}
@@ -1284,13 +1286,10 @@
     <div class="ep-dom"><label for="ep-rtel">Recibe (teléfono)</label><input id="ep-rtel" type="tel" maxlength="20"></div>
   </div>
 
-  <div class="ep-sec">Pago</div>
+  <div class="ep-sec">Precio</div>
   <div class="ep-grid">
-    <div><label for="ep-precio">Total</label><input id="ep-precio" type="number" inputmode="numeric"></div>
-    <div><label for="ep-anticipo">Pagado</label><input id="ep-anticipo" type="number" inputmode="numeric"></div>
-    <div><label for="ep-metodo">Método de pago</label>
-      <select id="ep-metodo"><option value="">Sin pago</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="terminal">Terminal</option></select></div>
-    <div><label>Falta por pagar</label><div id="ep-falta" style="font-weight:700;padding:9px 0;color:var(--jam-deep)">$0</div></div>
+    <div><label for="ep-precio">Total del pedido</label><input id="ep-precio" type="number" inputmode="numeric"></div>
+    <div class="hint" style="align-self:end; margin:0 0 10px;">Los pagos se registran con "Ingresar monto pagado".</div>
   </div>
 
   <div class="ep-sec">Comentarios</div>
@@ -3715,10 +3714,9 @@ function epActualizarUI(){
   const dom = epVal('ep-entrega') === 'domicilio';
   document.querySelectorAll('.ep-dom').forEach(e => e.style.display = dom ? 'block' : 'none');
   const extra = pedidoEditando ? (Number(pedidoEditando.pago_entrega)||0) + (Number(pedidoEditando.descuento_entrega)||0) + sumaPagos(pedidoEditando) : 0;
-  const falta = Math.max(0, (Number(epVal('ep-precio'))||0) - (Number(epVal('ep-anticipo'))||0) - extra);
-  document.getElementById('ep-falta').textContent = falta <= 0 ? 'Pagado' : fmtDinero(falta);
+
 }
-['ep-cat','ep-cor','ep-entrega','ep-precio','ep-anticipo'].forEach(id=>{
+['ep-cat','ep-cor','ep-entrega'].forEach(id=>{
   document.getElementById(id).addEventListener('input', epActualizarUI);
   document.getElementById(id).addEventListener('change', epActualizarUI);
 });
@@ -3741,7 +3739,7 @@ function abrirEditarPedido(id){
   epSet('ep-fecha', f); epSet('ep-hora', h);
   epSet('ep-entrega', p.entrega === 'local' ? 'recoger' : (p.entrega || 'recoger'));
   epSet('ep-dir', p.direccion); epSet('ep-rnombre', p.recibe_nombre); epSet('ep-rtel', p.recibe_telefono);
-  epSet('ep-precio', p.precio); epSet('ep-anticipo', p.anticipo); epSet('ep-metodo', p.metodo_pago || '');
+  epSet('ep-precio', p.precio);
   epSet('ep-notas', p.notas);
   document.getElementById('ep-msg').className = 'msg';
   epActualizarUI();
@@ -3785,8 +3783,6 @@ async function guardarEdicionPedido(){
     recibe_nombre: entrega === 'domicilio' ? (epVal('ep-rnombre').trim() || null) : null,
     recibe_telefono: entrega === 'domicilio' ? (epVal('ep-rtel').trim() || null) : null,
     precio: Number(epVal('ep-precio')) || 0,
-    anticipo: Number(epVal('ep-anticipo')) || 0,
-    metodo_pago: epVal('ep-metodo'),
     notas: epVal('ep-notas')
   };
   const btn = document.getElementById('ep-guardar'); btn.disabled = true; btn.textContent = 'Guardando...';
@@ -4640,6 +4636,23 @@ async function guardarPagoPedido(){
   cerrarModal('pg');
   refrescarVistaActual();
 }
+
+// ---------- Mientras haya una ventana abierta, la página de atrás no se mueve ----------
+let scrollGuardado = null;
+function actualizarBloqueoScroll(){
+  const abierta = !!document.querySelector('.ep-hoja.on');
+  const b = document.body;
+  if(abierta && scrollGuardado === null){
+    scrollGuardado = window.scrollY;
+    b.style.position = 'fixed'; b.style.top = (-scrollGuardado) + 'px'; b.style.left = '0'; b.style.right = '0'; b.style.width = '100%';
+  } else if(!abierta && scrollGuardado !== null){
+    b.style.position = ''; b.style.top = ''; b.style.left = ''; b.style.right = ''; b.style.width = '';
+    window.scrollTo(0, scrollGuardado);
+    scrollGuardado = null;
+  }
+}
+const observadorHojas = new MutationObserver(actualizarBloqueoScroll);
+document.querySelectorAll('.ep-hoja').forEach(h=> observadorHojas.observe(h, { attributes:true, attributeFilter:['class'] }));
 
 cargarSesion();
 </script>

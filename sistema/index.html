@@ -1049,7 +1049,7 @@
   <!-- VISTA: POR HACER (producción y directora) -->
   <section id="view-porhacer" class="view">
     <div class="ph-tabs solo-director" id="ph-tabs">
-      <button type="button" data-ph="resumen" class="sel">Por hacer hoy</button>
+      <button type="button" data-ph="resumen" class="sel">Inicio</button>
       <button type="button" data-ph="pasteles">Pasteles</button>
       <button type="button" data-ph="cupcakes">Cupcakes</button>
       <button type="button" data-ph="coronas">Coronas ámbar</button>
@@ -2242,13 +2242,13 @@ function pintarPedidosPorDia(data, cont){
 
     g.innerHTML = `
       <h3>${fecha.charAt(0).toUpperCase() + fecha.slice(1)}</h3>
-      <div class="resumen-dia">
+      ${rolActual === 'director' ? `<div class="resumen-dia">
         <span>Efectivo <b>${dinero(cobrado.efectivo)}</b></span>
         <span>Transferencia <b>${dinero(cobrado.transferencia)}</b></span>
         <span>Terminal <b>${dinero(cobrado.terminal)}</b></span>
         <span>Total <b>${dinero(totalDia)}</b></span>
         <span>Falta pago <b>${dinero(faltaDia)}</b></span>
-      </div>
+      </div>` : ''}
       <div class="tabla-wrap">
         <table class="tabla-pedidos">
           <thead>

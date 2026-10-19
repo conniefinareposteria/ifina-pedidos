@@ -2277,6 +2277,8 @@ function pintarPedidosPorDia(data, cont){
 
   cont.className = '';
   cont.innerHTML = '';
+  // Dentro de cada día, los pedidos van en orden alfabético por nombre del cliente
+  Object.values(grupos).forEach(lista=> lista.sort((x, y)=> (x.nombre_cliente||'').localeCompare(y.nombre_cliente||'', 'es', {sensitivity:'base'})));
   Object.keys(grupos).forEach(fecha=>{
     const g = document.createElement('div');
     g.className = 'day-group';

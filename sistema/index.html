@@ -1041,6 +1041,10 @@
             <div class="pos-chip" data-m="transferencia">Transferencia</div>
             <div class="pos-chip" data-m="terminal">Terminal</div>
           </div>
+          <div id="pos-efectivo-wrap" style="display:none; margin-top:8px;">
+            <div class="pos-row"><span>Recibe</span><input type="number" id="pos-recibe" inputmode="decimal" placeholder="0"></div>
+            <div class="pos-row"><span>Cambio</span><b id="pos-cambio" style="font-family:'Tinos',Georgia,serif; font-size:24px; font-weight:400; color:var(--amber-l);">$0</b></div>
+          </div>
           <button type="button" class="primary pos-cobrar" id="pos-cobrar" onclick="cobrarVenta()">Cobrar</button>
           <div class="msg" id="pos-msg" style="margin:8px 0 0;"></div>
           <a href="#" class="pos-vaciar" onclick="vaciarVenta(); return false;">Vaciar venta</a>
@@ -1053,6 +1057,9 @@
           <div class="pos-tab" data-t="individuales">Cuchareables</div>
           <div class="pos-tab" data-t="panques">Panqués</div>
           <div class="pos-tab" data-t="pedidos">Pedidos de hoy<span class="pos-badge" id="pos-badge-ped" style="display:none;"></span></div>
+        </div>
+        <div id="pos-buscar-wrap" style="display:none; margin-bottom:12px;">
+          <input type="text" id="pos-buscar" placeholder="Buscar pedido de otro día por nombre o teléfono" autocomplete="off">
         </div>
         <div id="pos-contenido" class="loading">Cargando...</div>
       </div>
@@ -4034,6 +4041,7 @@ document.querySelectorAll('#pos-tabs .pos-tab').forEach(el=> el.addEventListener
 function pintarCatalogoPOS(){
   document.querySelectorAll('#pos-tabs .pos-tab').forEach(el=>el.classList.toggle('sel', el.dataset.t === posTab));
   const cont = document.getElementById('pos-contenido');
+  document.getElementById('pos-buscar-wrap').style.display = posTab === 'pedidos' ? 'block' : 'none';
   if(posTab === 'pedidos') return pintarPedidosPOS(cont);
   if(!posHayCierre){
     cont.className = 'empty';
@@ -4095,31 +4103,55 @@ function detallePedidoPOS(p){
   return producto + (det ? ' · ' + det : '');
 }
 
+let posBusqueda = null;   // resultados de búsqueda de pedidos de otros días
+let posBuscarTimer = null;
+document.getElementById('pos-buscar').addEventListener('input', ()=>{
+  clearTimeout(posBuscarTimer);
+  posBuscarTimer = setTimeout(buscarPedidosPOS, 250);
+});
+async function buscarPedidosPOS(){
+  const texto = document.getElementById('pos-buscar').value.trim();
+  if(texto.length < 2){ posBusqueda = null; if(posTab === 'pedidos') pintarCatalogoPOS(); return; }
+  const { data, error } = await sb.rpc('buscar_pedidos_pos', { q: texto });
+  if(document.getElementById('pos-buscar').value.trim() !== texto) return;
+  posBusqueda = error ? { error: error.message } : (data || []);
+  if(posTab === 'pedidos') pintarCatalogoPOS();
+}
+function filaPedidoPOS(p, conFecha){
+  const tot = Number(p.precio)||0, falta = Math.max(0, tot - pagadoDe(p));
+  const enVenta = posVenta.some(x=>x.tipo==='pedido' && x.pedido_id === p.id);
+  const d = p.fecha_entrega ? new Date(p.fecha_entrega) : null;
+  const hora = d ? d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
+  const fecha = d && conFecha ? d.toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '';
+  const sub = p.entregado
+    ? 'Entregado ' + (p.entregado_at ? new Date(p.entregado_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '') + (p.metodo_entrega && Number(p.pago_entrega) > 0 ? ' · ' + formatNombre(p.metodo_entrega) : '')
+    : [textoCorona(p), p.notas].filter(Boolean).join(' · ');
+  const est = p.entregado ? '<span class="pos-est ok">✓ Finalizado</span>'
+    : enVenta ? '<span class="pos-est sel">En la venta</span>'
+    : falta > 0 ? '<span class="pos-est pend">Pendiente</span>' : '<span class="pos-est pend">Por entregar</span>';
+  const row = document.createElement('div');
+  row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
+  row.innerHTML = `<div><b>${fecha ? escHtml(fecha) : hora}</b>${fecha ? `<small>${hora}</small>` : ''}</div>
+    <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${escHtml(p.telefono || '')}</small></div>
+    <div>${escHtml(detallePedidoPOS(p))}<small>${escHtml(sub)}</small></div>
+    <div class="m">${fmtDinero(tot)}<small>Total</small></div>
+    <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--jam-deep)' : 'var(--sage)'};">${fmtDinero(p.entregado ? 0 : falta)}<small>${falta > 0 && !p.entregado ? 'Falta' : 'Pagado'}</small></div>
+    ${est}`;
+  if(!p.entregado) row.onclick = ()=> alternarPedidoEnVenta(p);
+  return row;
+}
+
 function pintarPedidosPOS(cont){
-  if(!posPedidos.length){ cont.className = 'empty'; cont.textContent = 'No hay pedidos para recoger en el local hoy.'; return; }
   cont.className = 'pos-plist'; cont.innerHTML = '';
-  posPedidos.forEach(p=>{
-    const tot = Number(p.precio)||0, falta = Math.max(0, tot - pagadoDe(p));
-    const enVenta = posVenta.some(x=>x.tipo==='pedido' && x.pedido_id === p.id);
-    const d = p.fecha_entrega ? new Date(p.fecha_entrega) : null;
-    const hora = d ? d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
-    const sub = p.entregado
-      ? 'Entregado ' + (p.entregado_at ? new Date(p.entregado_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '') + (p.metodo_entrega && Number(p.pago_entrega) > 0 ? ' · ' + formatNombre(p.metodo_entrega) : '')
-      : [textoCorona(p), p.notas].filter(Boolean).join(' · ');
-    const est = p.entregado ? '<span class="pos-est ok">✓ Finalizado</span>'
-      : enVenta ? '<span class="pos-est sel">En la venta</span>'
-      : falta > 0 ? '<span class="pos-est pend">Pendiente</span>' : '<span class="pos-est pend">Por entregar</span>';
-    const row = document.createElement('div');
-    row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
-    row.innerHTML = `<div><b>${hora}</b></div>
-      <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${escHtml(p.telefono || '')}</small></div>
-      <div>${escHtml(detallePedidoPOS(p))}<small>${escHtml(sub)}</small></div>
-      <div class="m">${fmtDinero(tot)}<small>Total</small></div>
-      <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--jam-deep)' : 'var(--sage)'};">${fmtDinero(p.entregado ? 0 : falta)}<small>${falta > 0 && !p.entregado ? 'Falta' : 'Pagado'}</small></div>
-      ${est}`;
-    if(!p.entregado) row.onclick = ()=> alternarPedidoEnVenta(p);
-    cont.appendChild(row);
-  });
+  if(posBusqueda){
+    const t = document.createElement('div'); t.className = 'sub-titulo'; t.textContent = 'Resultados de la búsqueda'; cont.appendChild(t);
+    if(posBusqueda.error){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No se pudo buscar: ' + posBusqueda.error; cont.appendChild(e); }
+    else if(!posBusqueda.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No se encontraron pedidos pendientes con ese nombre o teléfono.'; cont.appendChild(e); }
+    else posBusqueda.forEach(p=> cont.appendChild(filaPedidoPOS(p, true)));
+    const t2 = document.createElement('div'); t2.className = 'sub-titulo'; t2.style.marginTop = '14px'; t2.textContent = 'Pedidos de hoy'; cont.appendChild(t2);
+  }
+  if(!posPedidos.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hay pedidos para recoger en el local hoy.'; cont.appendChild(e); return; }
+  posPedidos.forEach(p=> cont.appendChild(filaPedidoPOS(p, false)));
 }
 
 function alternarPedidoEnVenta(p){
@@ -4127,8 +4159,12 @@ function alternarPedidoEnVenta(p){
   if(i >= 0) posVenta.splice(i, 1);
   else {
     const tot = Number(p.precio)||0;
+    const finHoy = new Date(); finHoy.setHours(23,59,59,999);
+    // Si el pedido es para hoy o ya pasó, se entrega; si es de días adelante, solo se cobra (se puede cambiar)
+    const entregar = !p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy;
     posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),
-      total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)) });
+      total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)), entregar,
+      fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
   }
   posTotalManual = false;
   pintarVenta(); pintarCatalogoPOS();
@@ -4173,9 +4209,11 @@ function pintarVenta(){
       if(it.tipo === 'pedido'){
         div.className = 'pos-it ped';
         div.innerHTML = `<div class="n">Pedido de ${escHtml(it.nombre)} <span class="pos-tag ped">Pedido</span>
-          <small>${escHtml(it.detalle)} · Total ${fmtDinero(it.total)}${it.anticipo ? ' · Anticipo ' + fmtDinero(it.anticipo) : ''}</small></div>
+          <small>${escHtml(it.detalle)}${it.fecha ? ' · Para el ' + escHtml(it.fecha) : ''} · Total ${fmtDinero(it.total)}${it.anticipo ? ' · Anticipo ' + fmtDinero(it.anticipo) : ''}</small>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin-top:5px; color:#E6DCCB; cursor:pointer;"><input type="checkbox" class="pos-entregar" ${it.entregar ? 'checked' : ''} style="width:auto; margin:0;"> Entregar ahora</label></div>
           <div class="p">${fmtDinero(it.falta)}</div><button type="button" class="pos-x" title="Quitar">×</button>`;
         div.querySelector('.pos-x').onclick = ()=> quitarDeVentaPOS(idx);
+        div.querySelector('.pos-entregar').onchange = (e)=>{ it.entregar = e.target.checked; actualizarBotonCobrar(); };
       } else {
         div.className = 'pos-it';
         div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.incluida ? 'Incluida con el pastel' : it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small></div>
@@ -4216,13 +4254,30 @@ document.querySelectorAll('#pos-metodos .pos-chip').forEach(el=> el.addEventList
   actualizarBotonCobrar();
 }));
 
+function actualizarCambioPOS(){
+  const wrap = document.getElementById('pos-efectivo-wrap');
+  wrap.style.display = posMetodo === 'efectivo' ? 'block' : 'none';
+  if(posMetodo !== 'efectivo') return;
+  const total = leerNum('pos-total');
+  const v = document.getElementById('pos-recibe').value;
+  const el = document.getElementById('pos-cambio');
+  if(v === ''){ el.textContent = '—'; el.style.color = 'var(--amber-l)'; return; }
+  const dif = (Number(v)||0) - total;
+  if(dif >= 0){ el.textContent = fmtDinero(dif); el.style.color = 'var(--amber-l)'; }
+  else { el.textContent = 'Faltan ' + fmtDinero(-dif); el.style.color = '#F2B8AC'; }
+}
+document.getElementById('pos-recibe').addEventListener('input', actualizarCambioPOS);
+
 function actualizarBotonCobrar(){
+  actualizarCambioPOS();
   const btn = document.getElementById('pos-cobrar');
   const total = leerNum('pos-total');
-  const nPed = posVenta.filter(x=>x.tipo==='pedido').length;
+  const nPed = posVenta.filter(x=>x.tipo==='pedido' && x.entregar).length;
   const entregar = nPed ? (nPed === 1 ? ' y entregar pedido' : ` y entregar ${nPed} pedidos`) : '';
   if(!posVenta.length){ btn.disabled = true; btn.textContent = 'Cobrar'; return; }
-  if(total <= 0 && nPed && !posVenta.some(x=>x.tipo==='local')){ btn.disabled = posGuardando; btn.textContent = nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`; return; }
+  if(total <= 0 && !posVenta.some(x=>x.tipo==='local')){
+    btn.disabled = posGuardando || !nPed;
+    btn.textContent = !nPed ? 'No hay nada que cobrar' : (nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`); return; }
   if(!posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
   btn.disabled = posGuardando;
   btn.textContent = `Cobrar ${fmtDinero(total)}${entregar}`;
@@ -4230,6 +4285,7 @@ function actualizarBotonCobrar(){
 
 function vaciarVenta(){
   posVenta = []; posMetodo = null; posTotalManual = false;
+  document.getElementById('pos-recibe').value = '';
   document.getElementById('pos-descuento').value = '';
   document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=>c.classList.remove('sel'));
   document.getElementById('pos-msg').className = 'msg';
@@ -4253,7 +4309,7 @@ async function cobrarVenta(){
     const esUltimo = it === pedidos[pedidos.length-1];
     const cobrado = esUltimo ? restante : Math.round(it.falta * factor * 100) / 100;
     if(!esUltimo) restante = Math.round((restante - cobrado) * 100) / 100;
-    return { tipo:'pedido', pedido_id:it.pedido_id, nombre:it.nombre, detalle:it.detalle, falta:it.falta, cobrado: Math.max(0, cobrado) };
+    return { tipo:'pedido', pedido_id:it.pedido_id, nombre:it.nombre, detalle:it.detalle, falta:it.falta, cobrado: Math.max(0, cobrado), entregar: !!it.entregar };
   });
   posGuardando = true; actualizarBotonCobrar();
   const { error } = await sb.rpc('registrar_venta', {
@@ -4267,6 +4323,7 @@ async function cobrarVenta(){
   msg.className = 'msg ok'; msg.textContent = texto;
   setTimeout(()=>{ if(msg.textContent === texto) msg.className = 'msg'; }, 4000);
   await cargarDatosPOS();
+  if(posBusqueda) buscarPedidosPOS();
 }
 
 // ---------- Productos por hacer (producción) ----------

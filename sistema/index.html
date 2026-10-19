@@ -347,7 +347,8 @@
   main:has(#view-lista.active),
   main:has(#view-resumen.active),
   main:has(#view-historial.active),
-  main:has(#view-historial-detalle.active){max-width:1240px;}
+  main:has(#view-historial-detalle.active),
+  main:has(#view-cliente-detalle.active){max-width:1240px;}
   #view-resumen > .chip-group, #view-resumen > .row2, #view-resumen > button.primary{max-width:640px;}
 
   /* Líneas verticales y detalles de tabla */
@@ -474,6 +475,11 @@
   .btn-cerrar-ep{padding:12px 16px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
   @media (max-width:520px){ .ep-grid{grid-template-columns:1fr} }
 
+  .link-accion{color:var(--jam-deep); font-weight:700; font-size:14px; text-decoration:none; display:inline-block; margin-bottom:14px;}
+  .elim-card{background:var(--paper); border:1.5px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
+  .elim-card .el-info{font-size:13.5px; color:var(--cocoa-soft);}
+  .elim-card .el-info b{color:var(--cocoa); font-size:14.5px;}
+  .elim-card button{margin:0; width:auto; padding:10px 14px; flex-shrink:0;}
   .empty{
     text-align:center;
     padding:40px 20px;
@@ -551,6 +557,7 @@
   <button id="tab-productos" onclick="abrirProductosDia()" style="display:none;">Productos del día</button>
   <button id="tab-historial" onclick="abrirHistorial()" style="display:none;">Historial</button>
   <button id="tab-resumen" onclick="abrirResumen()" style="display:none;">Resumen</button>
+  <button id="tab-clientes" onclick="abrirClientes()" style="display:none;">Clientes</button>
 </nav>
 <div id="debug-banner" style="display:none; background:#F7E4E8; color:#8F2E44; padding:12px 18px; font-size:13px; font-weight:600; border-bottom:1px solid #E0A8B5;"></div>
 
@@ -578,9 +585,10 @@
         </div>
         <div id="cliente-seleccionado" class="cliente-card" style="display:none;"></div>
         <div id="cliente-nuevo-wrap" class="cliente-nuevo" style="display:none;">
-          <div class="field"><label>Nombre</label><input type="text" id="cn-nombre"></div>
-          <div class="field"><label>Teléfono</label><input type="tel" id="cn-telefono" inputmode="tel"></div>
-          <div class="sub-titulo">Dirección (se puede dejar vacía si no pide a domicilio)</div>
+          <div class="field"><label>Nombre *</label><input type="text" id="cn-nombre"></div>
+          <div class="field"><label>Apellido *</label><input type="text" id="cn-apellido"></div>
+          <div class="field"><label>Teléfono *</label><input type="tel" id="cn-telefono" inputmode="tel"></div>
+          <div class="sub-titulo">Dirección (opcional)</div>
           <div id="cn-direccion" class="form-dir"></div>
           <div class="botones-fila">
             <button type="button" class="primary" id="btn-guardar-cliente" onclick="guardarClienteNuevo()">Guardar cliente</button>
@@ -791,6 +799,41 @@
       </div>
     </div>
     <div id="lista-contenido" class="loading">Cargando pedidos...</div>
+    <div style="margin-top:22px;"><a href="#" class="link-accion" onclick="abrirEliminados(); return false;">Ver pedidos eliminados</a></div>
+  </section>
+
+  <!-- VISTA: PEDIDOS ELIMINADOS -->
+  <section id="view-eliminados" class="view">
+    <a href="#" class="link-accion" onclick="switchView('lista'); return false;">← Pedidos</a>
+    <div class="hint" style="margin:0 0 14px;">Aquí quedan los pedidos que se borraron. Al recuperarlo, vuelve a Pedidos tal como estaba.</div>
+    <div id="eliminados-contenido" class="loading">Cargando...</div>
+  </section>
+
+  <!-- VISTA: CLIENTES -->
+  <section id="view-clientes" class="view">
+    <div class="field" style="margin-bottom:12px;">
+      <label>Buscar cliente</label>
+      <input type="text" id="clientes-busqueda" placeholder="Nombre, apellido o teléfono" autocomplete="off">
+    </div>
+    <div id="clientes-contenido" class="loading">Cargando clientes...</div>
+  </section>
+
+  <!-- VISTA: CLIENTE (DETALLE) -->
+  <section id="view-cliente-detalle" class="view">
+    <a href="#" class="link-accion" onclick="abrirClientes(); return false;">← Clientes</a>
+    <div style="max-width:640px;">
+      <div class="field"><label>Nombre *</label><input type="text" id="cd-nombre"></div>
+      <div class="field"><label>Apellido *</label><input type="text" id="cd-apellido"></div>
+      <div class="field"><label>Teléfono *</label><input type="tel" id="cd-telefono" inputmode="tel"></div>
+      <div class="sub-titulo">Dirección (opcional)</div>
+      <div id="cd-direccion" class="form-dir"></div>
+      <div class="botones-fila">
+        <button type="button" class="primary" id="btn-cd-guardar" onclick="guardarClienteEditado()">Guardar cambios</button>
+      </div>
+      <div class="msg" id="cd-msg" style="margin:0 0 10px;"></div>
+    </div>
+    <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin:22px 0 10px;">Historial de pedidos</div>
+    <div id="cd-pedidos" class="loading">Cargando pedidos...</div>
   </section>
 
   <!-- VISTA: PRODUCTOS DEL DIA (HUB) -->
@@ -968,6 +1011,7 @@ function switchView(view){
   document.getElementById('tab-productos').classList.remove('active');
   document.getElementById('tab-historial').classList.remove('active');
   document.getElementById('tab-resumen').classList.remove('active');
+  document.getElementById('tab-clientes').classList.remove('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-nuevo').classList.toggle('active', view==='nuevo');
   document.getElementById('view-lista').classList.toggle('active', view==='lista');
@@ -1247,6 +1291,11 @@ function direccionDeCliente(c){
   return d;
 }
 
+function nombreCompleto(c){
+  if(!c) return '';
+  return [c.nombre, c.apellido].map(x=>(x||'').trim()).filter(Boolean).join(' ');
+}
+
 let clienteActual = null;
 let dirOpcion = null;
 let busquedaTimer = null;
@@ -1267,7 +1316,7 @@ async function buscarClientes(){
     .select('*')
     // Nombre que empieza con lo escrito, o cualquier palabra del nombre (apellido) que empiece igual,
     // o teléfono que contenga los números escritos
-    .or(`nombre.ilike."${q}*",nombre.ilike."* ${q}*",telefono.ilike."*${q}*"`)
+    .or(`nombre.ilike."${q}*",nombre.ilike."* ${q}*",apellido.ilike."${q}*",apellido.ilike."* ${q}*",telefono.ilike."*${q}*"`)
     .order('nombre')
     .limit(12);
 
@@ -1287,7 +1336,7 @@ async function buscarClientes(){
     b.type = 'button';
     b.className = 'resultado-cliente';
     const dir = direccionDeCliente(c);
-    b.innerHTML = `<div class="rc-nombre">${escHtml(c.nombre)}</div>
+    b.innerHTML = `<div class="rc-nombre">${escHtml(nombreCompleto(c))}</div>
       <div class="rc-sub">${escHtml(c.telefono || 'Sin teléfono')}${dir && dir.colonia ? ' · ' + escHtml(dir.colonia) : ''}</div>`;
     b.onclick = () => seleccionarCliente(c);
     cont.appendChild(b);
@@ -1311,7 +1360,7 @@ function seleccionarCliente(c){
   const dir = direccionDeCliente(c);
   const card = document.getElementById('cliente-seleccionado');
   card.innerHTML = `
-    <div class="cc-nombre">${escHtml(c.nombre)}</div>
+    <div class="cc-nombre">${escHtml(nombreCompleto(c))}</div>
     <div class="cc-linea">${escHtml(c.telefono || 'Sin teléfono')}</div>
     <div class="cc-linea">${dir ? escHtml(textoDireccion(dir)) : 'Sin dirección guardada'}</div>
     <a href="#" onclick="quitarCliente(); return false;">Cambiar cliente</a>`;
@@ -1348,6 +1397,7 @@ function abrirClienteNuevo(){
 
 function limpiarFormCliente(){
   document.getElementById('cn-nombre').value = '';
+  document.getElementById('cn-apellido').value = '';
   document.getElementById('cn-telefono').value = '';
   CAMPOS_DIR.forEach(c=>{ document.getElementById(`cn-${c.k}`).value = c.k === 'ciudad' ? 'Culiacán' : ''; });
   document.getElementById('cn-msg').className = 'msg';
@@ -1363,8 +1413,10 @@ async function guardarClienteNuevo(){
   const msg = document.getElementById('cn-msg');
   msg.className = 'msg';
   const nombre = document.getElementById('cn-nombre').value.trim();
+  const apellido = document.getElementById('cn-apellido').value.trim();
   const telefono = document.getElementById('cn-telefono').value.trim();
   if(!nombre){ msg.className = 'msg err'; msg.textContent = 'Falta el nombre del cliente.'; return; }
+  if(!apellido){ msg.className = 'msg err'; msg.textContent = 'Falta el apellido del cliente.'; return; }
   if(!telefono){ msg.className = 'msg err'; msg.textContent = 'Falta el teléfono.'; return; }
 
   const dir = leerDireccion('cn');
@@ -1378,7 +1430,7 @@ async function guardarClienteNuevo(){
     }
   }
 
-  const nuevo = { nombre, telefono };
+  const nuevo = { nombre, apellido, telefono };
   CAMPOS_DIR.forEach(c=>{ nuevo[c.k] = conDireccion ? (dir[c.k] || null) : null; });
 
   const btn = document.getElementById('btn-guardar-cliente');
@@ -1649,7 +1701,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
 
   const pedido = {
     cliente_id: clienteActual.id,
-    nombre_cliente: clienteActual.nombre,
+    nombre_cliente: nombreCompleto(clienteActual),
     telefono: clienteActual.telefono || '',
     categoria: categoriaActual,
     tamano_o_sabor: tamano_o_sabor,
@@ -2009,6 +2061,7 @@ async function cargarSesion(){
   document.getElementById('tab-productos').style.display = rolActual === 'colaborador' ? 'inline-block' : 'none';
   document.getElementById('tab-historial').style.display = rolActual === 'director' ? 'inline-block' : 'none';
   document.getElementById('tab-resumen').style.display = rolActual === 'director' ? 'inline-block' : 'none';
+  document.getElementById('tab-clientes').style.display = rolActual === 'director' ? 'inline-block' : 'none';
   document.body.classList.toggle('rol-colaborador', rolActual === 'colaborador');
   if(rolActual === 'colaborador') irInicio();
   else switchView('lista'); // la directora entra directo a Pedidos
@@ -3215,6 +3268,7 @@ function cerrarEditarPedido(){
 }
 function refrescarVistaActual(){
   if(document.getElementById('view-resumen') && document.getElementById('view-resumen').classList.contains('active')) generarResumen();
+  else if(document.getElementById('view-cliente-detalle').classList.contains('active')) cargarPedidosCliente();
   else cargarPedidos();
 }
 async function guardarEdicionPedido(){
@@ -3258,7 +3312,7 @@ async function guardarEdicionPedido(){
 }
 async function borrarPedido(){
   const p = pedidoEditando; if(!p) return;
-  if(!confirm(`¿Borrar el pedido de ${p.nombre_cliente || 'este cliente'}? Esto no se puede deshacer.`)) return;
+  if(!confirm(`¿Borrar el pedido de ${p.nombre_cliente || 'este cliente'}? Podrás recuperarlo en "Ver pedidos eliminados".`)) return;
   const msg = document.getElementById('ep-msg'); msg.className = 'msg';
   const { data, error } = await sb.from('pedidos').delete().eq('id', p.id).select();
   if(error){ msg.className='msg err'; msg.textContent='No se pudo borrar: ' + error.message; return; }
@@ -3267,6 +3321,141 @@ async function borrarPedido(){
   refrescarVistaActual();
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && pedidoEditando) cerrarEditarPedido(); });
+
+// ---------- Clientes (solo directora) ----------
+let clientesTimer = null;
+let clienteEditando = null;
+
+function activarVistaDirectora(tabId, viewId){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  if(tabId) document.getElementById(tabId).classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function abrirClientes(){
+  activarVistaDirectora('tab-clientes', 'view-clientes');
+  cargarClientes();
+}
+
+async function cargarClientes(){
+  const cont = document.getElementById('clientes-contenido');
+  const texto = document.getElementById('clientes-busqueda').value;
+  const q = texto.replace(/[,()"\\%*]/g, ' ').replace(/\s+/g,' ').trim();
+  let consulta = sb.from('clientes').select('*').order('nombre').limit(300);
+  if(q) consulta = consulta.or(`nombre.ilike."${q}*",nombre.ilike."* ${q}*",apellido.ilike."${q}*",apellido.ilike."* ${q}*",telefono.ilike."*${q}*"`);
+  const { data, error } = await consulta;
+  if(document.getElementById('clientes-busqueda').value !== texto) return;
+  if(error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar los clientes: ' + error.message; return; }
+  if(!data || !data.length){ cont.className = 'empty'; cont.textContent = q ? 'No se encontró ningún cliente.' : 'Todavía no hay clientes guardados.'; return; }
+  cont.className = 'lista-resultados visible';
+  cont.innerHTML = '';
+  data.forEach(c=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'resultado-cliente';
+    const dir = direccionDeCliente(c);
+    b.innerHTML = `<div class="rc-nombre">${escHtml(nombreCompleto(c))}</div>
+      <div class="rc-sub">${escHtml(c.telefono || 'Sin teléfono')}${dir && dir.colonia ? ' · ' + escHtml(dir.colonia) : ''}</div>`;
+    b.onclick = () => abrirClienteDetalle(c);
+    cont.appendChild(b);
+  });
+}
+document.getElementById('clientes-busqueda').addEventListener('input', ()=>{
+  clearTimeout(clientesTimer);
+  clientesTimer = setTimeout(cargarClientes, 150);
+});
+
+document.getElementById('cd-direccion').innerHTML = htmlFormDireccion('cd');
+
+function abrirClienteDetalle(c){
+  clienteEditando = c;
+  document.getElementById('cd-nombre').value = c.nombre || '';
+  document.getElementById('cd-apellido').value = c.apellido || '';
+  document.getElementById('cd-telefono').value = c.telefono || '';
+  CAMPOS_DIR.forEach(x=>{ document.getElementById(`cd-${x.k}`).value = c[x.k] || (x.k === 'ciudad' ? 'Culiacán' : ''); });
+  document.getElementById('cd-msg').className = 'msg';
+  activarVistaDirectora('tab-clientes', 'view-cliente-detalle');
+  cargarPedidosCliente();
+}
+
+async function guardarClienteEditado(){
+  const c = clienteEditando; if(!c) return;
+  const msg = document.getElementById('cd-msg'); msg.className = 'msg';
+  const nombre = document.getElementById('cd-nombre').value.trim();
+  const apellido = document.getElementById('cd-apellido').value.trim();
+  const telefono = document.getElementById('cd-telefono').value.trim();
+  if(!nombre){ msg.className = 'msg err'; msg.textContent = 'Falta el nombre del cliente.'; return; }
+  if(!apellido){ msg.className = 'msg err'; msg.textContent = 'Falta el apellido del cliente.'; return; }
+  if(!telefono){ msg.className = 'msg err'; msg.textContent = 'Falta el teléfono.'; return; }
+  const dir = leerDireccion('cd');
+  const conDireccion = !direccionVacia(dir);
+  if(conDireccion){
+    const faltan = faltaEnDireccion(dir);
+    if(faltan.length){ msg.className = 'msg err'; msg.textContent = 'A la dirección le falta: ' + faltan.join(', ') + '. Complétala o déjala vacía.'; return; }
+  }
+  const cambios = { nombre, apellido, telefono };
+  CAMPOS_DIR.forEach(x=>{ cambios[x.k] = conDireccion ? (dir[x.k] || null) : null; });
+  const btn = document.getElementById('btn-cd-guardar'); btn.disabled = true; btn.textContent = 'Guardando...';
+  const { data, error } = await sb.from('clientes').update(cambios).eq('id', c.id).select();
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message; return; }
+  if(!data || !data.length){ msg.className = 'msg err'; msg.textContent = 'No se guardó. Revisa que ya se haya corrido el SQL de clientes.'; return; }
+  clienteEditando = data[0];
+  msg.className = 'msg ok'; msg.textContent = 'Cliente guardado.';
+}
+
+async function cargarPedidosCliente(){
+  const c = clienteEditando; if(!c) return;
+  const cont = document.getElementById('cd-pedidos');
+  cont.className = 'loading'; cont.textContent = 'Cargando pedidos...';
+  const tel = (c.telefono || '').replace(/[,()"\\%*]/g, '').trim();
+  let q = sb.from('pedidos').select('*').order('fecha_entrega', {ascending:false});
+  q = tel ? q.or(`cliente_id.eq.${Number(c.id)},telefono.eq."${tel}"`) : q.eq('cliente_id', c.id);
+  const { data, error } = await q;
+  if(error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar los pedidos: ' + error.message; return; }
+  if(!data || !data.length){ cont.className = 'empty'; cont.textContent = 'Este cliente todavía no tiene pedidos.'; return; }
+  pintarPedidosPorDia(data, cont);
+}
+
+// ---------- Pedidos eliminados (solo directora) ----------
+async function abrirEliminados(){
+  activarVistaDirectora('tab-lista', 'view-eliminados');
+  const cont = document.getElementById('eliminados-contenido');
+  cont.className = 'loading'; cont.textContent = 'Cargando...';
+  const { data, error } = await sb.from('pedidos_eliminados').select('*').order('eliminado_at', {ascending:false}).limit(200);
+  if(error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar: ' + error.message + ' (revisa que ya se haya corrido el SQL).'; return; }
+  if(!data || !data.length){ cont.className = 'empty'; cont.textContent = 'No hay pedidos eliminados.'; return; }
+  cont.className = ''; cont.innerHTML = '';
+  data.forEach(e=>{
+    const p = e.pedido || {};
+    const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria || '';
+    const det = p.categoria === 'pastel' ? [formatNombre(p.tamano_o_sabor), formatNombre(p.sabor)].filter(Boolean).join(' · ') : (p.sabor || '');
+    const entrega = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleString('es-MX', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : 'Sin fecha';
+    const borrado = new Date(e.eliminado_at).toLocaleString('es-MX', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+    const card = document.createElement('div');
+    card.className = 'elim-card';
+    card.innerHTML = `<div class="el-info"><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b> · ${escHtml(fmtDinero(p.precio))}<br>
+      ${escHtml(producto)}${det ? ' — ' + escHtml(det) : ''}<br>
+      Entrega: ${escHtml(entrega)}<br>
+      <span style="color:var(--muted); font-size:12.5px;">Borrado el ${escHtml(borrado)}</span></div>`;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'primary'; btn.textContent = 'Recuperar';
+    btn.onclick = () => recuperarPedido(e, btn);
+    card.appendChild(btn);
+    cont.appendChild(card);
+  });
+}
+
+async function recuperarPedido(e, btn){
+  const p = e.pedido || {};
+  if(!confirm(`¿Recuperar el pedido de ${p.nombre_cliente || 'este cliente'}?`)) return;
+  btn.disabled = true; btn.textContent = 'Recuperando...';
+  const { error } = await sb.rpc('recuperar_pedido', { eliminado_id: e.id });
+  if(error){ btn.disabled = false; btn.textContent = 'Recuperar'; alert('No se pudo recuperar: ' + error.message); return; }
+  abrirEliminados();
+}
 
 cargarSesion();
 </script>

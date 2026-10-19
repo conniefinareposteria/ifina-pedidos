@@ -475,6 +475,65 @@
   .btn-cerrar-ep{padding:12px 16px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
   @media (max-width:520px){ .ep-grid{grid-template-columns:1fr} }
 
+  main:has(#view-pos.active){max-width:none; padding-top:12px;}
+  .pos-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; min-height:20px;}
+  .pos-grid{display:grid; grid-template-columns:360px minmax(0,1fr); gap:18px; align-items:start;}
+  .pos-ticket{position:sticky; top:70px; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; max-height:calc(100vh - 90px);}
+  .pos-h2{font-family:'Fraunces',serif; font-size:19px; font-weight:600; margin-bottom:6px;}
+  .pos-items{flex:1; overflow-y:auto; min-height:80px;}
+  .pos-vacio{color:var(--muted); font-size:13.5px; padding:16px 0;}
+  .pos-it{display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px;}
+  .pos-it .n{flex:1; min-width:0;} .pos-it .n small{display:block; color:var(--muted); font-size:12px; margin-top:1px;}
+  .pos-it .p{min-width:58px; text-align:right; font-weight:600;}
+  .pos-it.ped{background:var(--caramel-bg); margin:0 -16px; padding:9px 16px;}
+  .pos-qty{display:flex; align-items:center; gap:5px;}
+  .pos-qty b{min-width:20px; text-align:center;}
+  .pos-qb{width:30px; height:30px; border-radius:8px; border:1.5px solid var(--line); background:var(--cream); font-weight:700; color:var(--cocoa-soft); font-size:16px; cursor:pointer; padding:0;}
+  .pos-x{border:none; background:none; color:var(--muted); font-size:18px; cursor:pointer; padding:0 2px;}
+  .pos-tag{display:inline-block; font-size:10.5px; font-weight:700; border-radius:10px; padding:1px 7px; margin-left:4px; vertical-align:1px;}
+  .pos-tag.loc{background:var(--sage-bg); color:var(--sage);} .pos-tag.ped{background:var(--jam-bg); color:var(--jam-deep);}
+  .pos-tot{border-top:1.5px solid var(--line); padding-top:8px; font-size:14px;}
+  .pos-row{display:flex; justify-content:space-between; align-items:center; margin:5px 0;}
+  .pos-row input{width:110px; text-align:right; font-size:15px; padding:7px 9px; border:1.5px solid var(--line); border-radius:8px; font-family:inherit; color:var(--cocoa); background:#fff;}
+  .pos-big{font-family:'Fraunces',serif; font-size:22px; font-weight:700; color:var(--jam-deep); margin-top:8px;}
+  .pos-big input{font-family:'Fraunces',serif; font-size:21px; font-weight:700; color:var(--jam-deep); width:140px;}
+  .pos-lbl{font-size:12px; font-weight:700; color:var(--cocoa-soft); text-transform:uppercase; letter-spacing:.03em; margin:10px 0 7px;}
+  .pos-chips{display:flex; gap:7px;}
+  .pos-chip{flex:1; text-align:center; padding:10px 4px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; font-weight:600; color:var(--cocoa-soft); background:var(--cream); cursor:pointer;}
+  .pos-chip.sel{border-color:var(--jam); background:var(--jam-bg); color:var(--jam-deep);}
+  .pos-cobrar{margin-top:12px !important;}
+  .pos-vaciar{display:block; text-align:center; font-size:13px; color:var(--muted); margin-top:8px;}
+  .pos-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+  .pos-tab{padding:10px 18px; border-radius:22px; border:1.5px solid var(--line); background:var(--paper); font-weight:600; font-size:14.5px; color:var(--cocoa-soft); cursor:pointer;}
+  .pos-tab.sel{background:var(--cocoa); border-color:var(--cocoa); color:#fff;}
+  .pos-badge{display:inline-block; background:var(--jam); color:#fff; border-radius:10px; font-size:11px; padding:1px 7px; margin-left:6px;}
+  .pos-pgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px;}
+  .pos-card{background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:13px 14px; min-height:96px; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; text-align:left; font-family:inherit; color:var(--cocoa);}
+  .pos-card:active{background:var(--cream);}
+  .pos-card .nm{font-weight:700; font-size:15px;}
+  .pos-card .pr{font-family:'Fraunces',serif; font-size:18px; font-weight:700; color:var(--jam-deep);}
+  .pos-card .st{font-size:12px; color:var(--muted);}
+  .pos-card .bt{display:flex; justify-content:space-between; align-items:flex-end; margin-top:8px;}
+  .pos-card.en{border-color:var(--jam); box-shadow:0 0 0 2px var(--jam-bg);}
+  .pos-card .bdg{background:var(--jam); color:#fff; border-radius:12px; font-size:12px; font-weight:700; padding:2px 8px;}
+  .pos-card.agotado{opacity:.45; cursor:default;}
+  .pos-pastel{background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:12px 14px;}
+  .pos-pastel .nm{font-weight:700; font-size:15px; margin-bottom:8px;}
+  .pos-tam{display:flex; gap:8px;}
+  .pos-tam button{flex:1; border:1.5px solid var(--line); border-radius:10px; padding:8px 4px; text-align:center; background:var(--cream); font-size:13px; font-family:inherit; color:var(--cocoa); cursor:pointer;}
+  .pos-tam button b{display:block; font-family:'Fraunces',serif; font-size:16px; color:var(--jam-deep);}
+  .pos-tam button small{color:var(--muted); font-size:11.5px;}
+  .pos-tam button.en{border-color:var(--jam); background:var(--jam-bg);}
+  .pos-tam button:disabled{opacity:.4; cursor:default;}
+  .pos-plist{display:flex; flex-direction:column; gap:10px;}
+  .pos-prow{display:grid; grid-template-columns:64px minmax(0,1.3fr) minmax(0,2fr) 84px 84px 112px; gap:12px; align-items:center; background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:12px 16px; font-size:14px; cursor:pointer;}
+  .pos-prow small{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
+  .pos-prow .m{text-align:right;}
+  .pos-prow.sel{border-color:var(--jam); box-shadow:0 0 0 2px var(--jam-bg);}
+  .pos-prow.fin{background:var(--sage-bg); border-color:#C8D9C2; cursor:default;}
+  .pos-est{justify-self:end; font-size:12.5px; font-weight:700; border-radius:20px; padding:5px 11px; white-space:nowrap;}
+  .pos-est.pend{background:var(--caramel-bg); color:#9A6A23;} .pos-est.sel{background:var(--jam); color:#fff;} .pos-est.ok{background:var(--sage); color:#fff;}
+  @media (max-width:900px){ .pos-grid{grid-template-columns:1fr;} .pos-ticket{position:static; max-height:none;} .pos-prow{grid-template-columns:1fr 1fr; } }
   .cd-grid{display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); column-gap:14px;}
   .cd-grid .field{margin-bottom:14px;}
   .cd-grid .c3{grid-column:span 3;} .cd-grid .c4{grid-column:span 4;} .cd-grid .c6{grid-column:span 6;} .cd-grid .c9{grid-column:span 9;} .cd-grid .c12{grid-column:1/-1;}
@@ -562,6 +621,7 @@
   <button id="tab-historial" onclick="abrirHistorial()" style="display:none;">Historial</button>
   <button id="tab-resumen" onclick="abrirResumen()" style="display:none;">Resumen</button>
   <button id="tab-clientes" onclick="abrirClientes()" style="display:none;">Clientes</button>
+  <button id="tab-pos" onclick="abrirPOS()" style="display:none;">Punto de venta</button>
 </nav>
 <div id="debug-banner" style="display:none; background:#F7E4E8; color:#8F2E44; padding:12px 18px; font-size:13px; font-weight:600; border-bottom:1px solid #E0A8B5;"></div>
 
@@ -570,6 +630,7 @@
   <!-- VISTA: INICIO (colaborador) -->
   <section id="view-inicio" class="view">
     <div class="inicio-botones">
+      <button type="button" class="btn-inicio" onclick="abrirPOS()">Punto de venta<span>Vender en mostrador y entregar pedidos del día</span></button>
       <button type="button" class="btn-inicio" onclick="irNuevoPedido()">Nuevo pedido<span>Capturar el pedido de un cliente</span></button>
       <button type="button" class="btn-inicio" onclick="abrirProductosDia()">Productos del día<span>Inicio y cierre de producto, corte de caja</span></button>
     </div>
@@ -806,6 +867,44 @@
     <div id="lista-contenido" class="loading">Cargando pedidos...</div>
   </section>
 
+  <!-- VISTA: PUNTO DE VENTA (colaborador) -->
+  <section id="view-pos" class="view">
+    <div class="pos-top">
+      <a href="#" class="link-accion solo-colab" style="margin:0;" onclick="irInicio(); return false;">← Inicio</a>
+      <span id="pos-fecha" class="hint" style="margin:0;"></span>
+    </div>
+    <div class="pos-grid">
+      <aside class="pos-ticket">
+        <div class="pos-h2">Venta actual</div>
+        <div id="pos-items" class="pos-items"></div>
+        <div class="pos-tot">
+          <div class="pos-row"><span>Subtotal</span><span id="pos-subtotal">$0</span></div>
+          <div class="pos-row"><span>Descuento</span><input type="number" id="pos-descuento" inputmode="decimal" placeholder="0"></div>
+          <div class="pos-row pos-big"><span>Total</span><input type="number" id="pos-total" inputmode="decimal"></div>
+          <div class="pos-lbl">Método de pago</div>
+          <div class="pos-chips" id="pos-metodos">
+            <div class="pos-chip" data-m="efectivo">Efectivo</div>
+            <div class="pos-chip" data-m="transferencia">Transferencia</div>
+            <div class="pos-chip" data-m="terminal">Terminal</div>
+          </div>
+          <button type="button" class="primary pos-cobrar" id="pos-cobrar" onclick="cobrarVenta()">Cobrar</button>
+          <div class="msg" id="pos-msg" style="margin:8px 0 0;"></div>
+          <a href="#" class="pos-vaciar" onclick="vaciarVenta(); return false;">Vaciar venta</a>
+        </div>
+      </aside>
+      <div class="pos-cat">
+        <div class="pos-tabs" id="pos-tabs">
+          <div class="pos-tab" data-t="pasteles">Pasteles</div>
+          <div class="pos-tab" data-t="cupcakes">Cupcakes</div>
+          <div class="pos-tab" data-t="individuales">Cuchareables</div>
+          <div class="pos-tab" data-t="panques">Panqués</div>
+          <div class="pos-tab" data-t="pedidos">Pedidos de hoy<span class="pos-badge" id="pos-badge-ped" style="display:none;"></span></div>
+        </div>
+        <div id="pos-contenido" class="loading">Cargando...</div>
+      </div>
+    </div>
+  </section>
+
   <!-- VISTA: PEDIDOS ELIMINADOS -->
   <section id="view-eliminados" class="view">
     <a href="#" class="link-accion" onclick="switchView('lista'); return false;">← Pedidos</a>
@@ -1023,6 +1122,7 @@ function switchView(view){
   document.getElementById('tab-historial').classList.remove('active');
   document.getElementById('tab-resumen').classList.remove('active');
   document.getElementById('tab-clientes').classList.remove('active');
+  document.getElementById('tab-pos').classList.remove('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-nuevo').classList.toggle('active', view==='nuevo');
   document.getElementById('view-lista').classList.toggle('active', view==='lista');
@@ -1793,6 +1893,8 @@ function cambiarRangoPedidos(){
 function escHtml(s){
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+// Lo que ya está cubierto de un pedido: anticipo + lo cobrado al entregar + descuento al entregar
+function pagadoDe(p){ return (Number(p.anticipo)||0) + (Number(p.pago_entrega)||0) + (Number(p.descuento_entrega)||0); }
 function fmtDinero(n){ return '$' + (Number(n)||0).toLocaleString('es-MX'); }
 
 
@@ -1811,7 +1913,7 @@ function armarTextoRepartidor(fechaTitulo, pedidos){
   lineas.push(`${pedidos.length} ${pedidos.length === 1 ? 'entrega' : 'entregas'}`);
   pedidos.forEach((p, i)=>{
     const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
-    const falta = Math.max(0, (Number(p.precio)||0) - (Number(p.anticipo)||0));
+    const falta = Math.max(0, (Number(p.precio)||0) - pagadoDe(p));
     lineas.push('');
     if(p.recibe_nombre){
       lineas.push(`*${i+1}. Entregar a: ${p.recibe_nombre}*${hora ? ' — ' + hora : ''}`);
@@ -1918,10 +2020,11 @@ function pintarPedidosPorDia(data, cont){
     let totalDia = 0, faltaDia = 0;
     grupos[fecha].forEach(p=>{
       const total = Number(p.precio)||0;
-      const pagado = Number(p.anticipo)||0;
+      const pagado = pagadoDe(p);
       totalDia += total;
       faltaDia += Math.max(0, total - pagado);
-      if(p.metodo_pago && p.metodo_pago in cobrado) cobrado[p.metodo_pago] += pagado;
+      if(p.metodo_pago && p.metodo_pago in cobrado) cobrado[p.metodo_pago] += Number(p.anticipo)||0;
+      if(p.metodo_entrega && p.metodo_entrega in cobrado) cobrado[p.metodo_entrega] += Number(p.pago_entrega)||0;
     });
 
     let filas = '';
@@ -1935,10 +2038,11 @@ function pintarPedidosPorDia(data, cont){
         : 'Recoge en local';
       const direccion = p.entrega === 'domicilio' && p.direccion ? `<span class="sub">${esc(p.direccion)}</span>` : '';
       const total = Number(p.precio)||0;
-      const pagado = Number(p.anticipo)||0;
+      const pagado = pagadoDe(p);
       const falta = Math.max(0, total - pagado);
-      const metodo = pagado > 0 && p.metodo_pago ? `<span class="sub">${esc(formatNombre(p.metodo_pago))}</span>` : '';
-      const faltaHtml = falta <= 0 ? '<span class="falta-ok">Pagado</span>' : `<span class="falta-pend">${dinero(falta)}</span>`;
+      const metodos = [Number(p.anticipo) > 0 ? p.metodo_pago : '', Number(p.pago_entrega) > 0 ? p.metodo_entrega : ''].filter(Boolean).map(formatNombre);
+      const metodo = metodos.length ? `<span class="sub">${esc([...new Set(metodos)].join(' + '))}</span>` : '';
+      const faltaHtml = (falta <= 0 ? '<span class="falta-ok">Pagado</span>' : `<span class="falta-pend">${dinero(falta)}</span>`) + (p.entregado ? '<span class="sub">Entregado</span>' : '');
 
       pedidosPorId[p.id] = p;
       filas += `
@@ -2073,6 +2177,7 @@ async function cargarSesion(){
   document.getElementById('tab-historial').style.display = rolActual === 'director' ? 'inline-block' : 'none';
   document.getElementById('tab-resumen').style.display = rolActual === 'director' ? 'inline-block' : 'none';
   document.getElementById('tab-clientes').style.display = rolActual === 'director' ? 'inline-block' : 'none';
+  document.getElementById('tab-pos').style.display = rolActual === 'colaborador' ? 'inline-block' : 'none';
   document.body.classList.toggle('rol-colaborador', rolActual === 'colaborador');
   if(rolActual === 'colaborador') irInicio();
   else switchView('lista'); // la directora entra directo a Pedidos
@@ -2958,7 +3063,7 @@ async function generarResumen(){
   let pedidosTotal = 0, pedidosCobrado = 0, pedidosFalta = 0;
   pedidosRango.forEach(p=>{
     const total = Number(p.precio)||0;
-    const pagado = Number(p.anticipo)||0;
+    const pagado = pagadoDe(p);
     if(ped[p.categoria]){ ped[p.categoria].n++; ped[p.categoria].$ += total; }
     pedidosTotal += total;
     pedidosCobrado += Math.min(pagado, total);
@@ -3242,7 +3347,8 @@ function epActualizarUI(){
   document.getElementById('ep-color-wrap').style.display = esPastel && epVal('ep-cor') === 'color' ? 'block' : 'none';
   const dom = epVal('ep-entrega') === 'domicilio';
   document.querySelectorAll('.ep-dom').forEach(e => e.style.display = dom ? 'block' : 'none');
-  const falta = Math.max(0, (Number(epVal('ep-precio'))||0) - (Number(epVal('ep-anticipo'))||0));
+  const extra = pedidoEditando ? (Number(pedidoEditando.pago_entrega)||0) + (Number(pedidoEditando.descuento_entrega)||0) : 0;
+  const falta = Math.max(0, (Number(epVal('ep-precio'))||0) - (Number(epVal('ep-anticipo'))||0) - extra);
   document.getElementById('ep-falta').textContent = falta <= 0 ? 'Pagado' : fmtDinero(falta);
 }
 ['ep-cat','ep-cor','ep-entrega','ep-precio','ep-anticipo'].forEach(id=>{
@@ -3256,7 +3362,8 @@ function abrirEditarPedido(id){
   pedidoEditando = p;
   const {f, h} = fechaLocalPartes(p.fecha_entrega);
   document.getElementById('ep-titulo').textContent = p.nombre_cliente || 'Pedido';
-  document.getElementById('ep-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'long'}) : '');
+  document.getElementById('ep-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'long'}) : '')
+    + (p.entregado ? ' · Entregado' + (Number(p.pago_entrega) > 0 ? `, cobró ${fmtDinero(p.pago_entrega)} al entregar (${formatNombre(p.metodo_entrega || '')})` : '') + (Number(p.descuento_entrega) > 0 ? `, descuento ${fmtDinero(p.descuento_entrega)}` : '') : '');
   epSet('ep-nombre', p.nombre_cliente); epSet('ep-tel', p.telefono);
   epSet('ep-cat', p.categoria || 'pastel');
   epSet('ep-tam', p.categoria === 'pastel' ? p.tamano_o_sabor : '');
@@ -3428,7 +3535,7 @@ async function cargarPedidosCliente(){
   if(error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar los pedidos: ' + error.message; return; }
   if(!data || !data.length){ cont.className = 'empty'; cont.textContent = 'Este cliente todavía no tiene pedidos.'; return; }
   const total = data.reduce((a,p)=>a+(Number(p.precio)||0),0);
-  const falta = data.reduce((a,p)=>a+Math.max(0,(Number(p.precio)||0)-(Number(p.anticipo)||0)),0);
+  const falta = data.reduce((a,p)=>a+Math.max(0,(Number(p.precio)||0)-pagadoDe(p)),0);
   res.textContent = `${data.length} pedido${data.length===1?'':'s'} · Total ${fmtDinero(total)}` + (falta>0 ? ` · Falta por pagar ${fmtDinero(falta)}` : '');
   let filas = '';
   data.forEach(p=>{
@@ -3440,7 +3547,7 @@ async function cargarPedidosCliente(){
     const tamano = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '—';
     const sabor = p.categoria === 'pastel' ? formatNombre(p.sabor) + (textoCorona(p) ? ' · ' + textoCorona(p) : '') : (p.sabor || '');
     const entrega = p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoge en local';
-    const tot = Number(p.precio)||0, pag = Number(p.anticipo)||0, fal = Math.max(0, tot-pag);
+    const tot = Number(p.precio)||0, pag = pagadoDe(p), fal = Math.max(0, tot-pag);
     const metodo = pag > 0 && p.metodo_pago ? `<span class="sub">${escHtml(formatNombre(p.metodo_pago))}</span>` : '';
     filas += `<tr class="click" onclick="abrirEditarPedido(${Number(p.id)})" title="Toca para ver o editar">
       <td class="nowrap">${escHtml(fecha)}</td><td class="nowrap">${hora}</td><td class="nowrap">${producto}</td>
@@ -3492,6 +3599,339 @@ async function recuperarPedido(e, btn){
   const { error } = await sb.rpc('recuperar_pedido', { eliminado_id: e.id });
   if(error){ btn.disabled = false; btn.textContent = 'Recuperar'; alert('No se pudo recuperar: ' + error.message); return; }
   abrirEliminados();
+}
+
+// ---------- Punto de venta (colaborador) ----------
+const POS_CATS = {
+  cupcakes:     { titulo:'Cupcakes',     tipo:'cupcake' },
+  individuales: { titulo:'Cuchareables', tipo:'individual' },
+  panques:      { titulo:'Panqués',      tipo:'panque' },
+  pasteles:     { titulo:'Pasteles',     tipo:'pastel' }
+};
+let posTab = 'cupcakes';
+let posVenta = [];          // [{tipo:'local', cat, clave, tam, nombre, precio, cantidad} | {tipo:'pedido', pedido_id, nombre, detalle, total, falta}]
+let posMetodo = null;
+let posStock = {};          // posStock[cat][clave|tam] = disponibles (sin contar la venta actual)
+let posHayCierre = false;
+let posPedidos = [];
+let posTotalManual = false;
+let posGuardando = false;
+
+function posKey(it){ return it.cat + '|' + it.clave + '|' + (it.tam || ''); }
+function posPrecio(cat, nombre, tam){
+  if(cat === 'cupcakes') return (individualesData.find(r=>r.nombre==='cupcake')||{}).precio ?? null;
+  if(cat === 'individuales') return buscarPrecioIndividualCatalogo(nombre);
+  if(cat === 'panques'){ const r = panquesData.find(x=>formatNombre(x.nombre) === nombre); return r ? r.precio : null; }
+  if(cat === 'pasteles'){ const r = tamanosData.find(x=>x.tamano === tam); return r ? r.precio : null; }
+  return null;
+}
+function posItemsCat(cat){
+  if(cat === 'cupcakes') return CUPCAKE_SABORES;
+  if(cat === 'individuales') return INDIVIDUAL_PRODUCTOS;
+  if(cat === 'panques') return PANQUE_PRODUCTOS;
+  return PASTEL_SABORES;
+}
+function posEnVenta(cat, clave, tam){
+  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===clave && (x.tam||'')===(tam||''));
+  return it ? it.cantidad : 0;
+}
+function posDisponible(cat, clave, tam){
+  const base = ((posStock[cat]||{})[clave + '|' + (tam||'')]) || 0;
+  return base - posEnVenta(cat, clave, tam);
+}
+function rangoHoyISO(){
+  const d = new Date(); const ini = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const fin = new Date(ini); fin.setDate(fin.getDate()+1);
+  return [ini.toISOString(), fin.toISOString()];
+}
+
+async function abrirPOS(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-pos').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-pos').classList.add('active');
+  window.scrollTo(0,0);
+  document.getElementById('pos-fecha').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long', day:'numeric', month:'long'});
+  pintarVenta();
+  await cargarDatosPOS();
+}
+
+async function cargarDatosPOS(){
+  const cont = document.getElementById('pos-contenido');
+  cont.className = 'loading'; cont.textContent = 'Cargando...';
+  if(catalogosListos) await catalogosListos;
+  const fecha = fechaHoyStr();
+  const [rango0, rango1] = rangoHoyISO();
+  const [cierre, ventas, peds] = await Promise.all([
+    sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle(),
+    sb.from('ventas').select('items').eq('fecha', fecha),
+    sb.rpc('pedidos_entrega_hoy', { desde: rango0, hasta: rango1 })
+  ]);
+  if(ventas.error || peds.error){
+    cont.className = 'empty';
+    cont.textContent = 'No se pudo cargar el punto de venta: ' + (ventas.error || peds.error).message + ' (revisa que ya se haya corrido el SQL del punto de venta).';
+    return;
+  }
+  // Existencia = Exis + IN de hoy, menos lo ya vendido hoy en el punto de venta
+  posStock = {}; posHayCierre = !!cierre.data;
+  Object.keys(POS_CATS).forEach(cat=>{
+    posStock[cat] = {};
+    const datos = (cierre.data && cierre.data[cat]) || {};
+    posItemsCat(cat).forEach(nombre=>{
+      if(cat === 'pasteles'){
+        ['mini','chico'].forEach(tam=>{
+          const d = (datos[nombre]||{})[tam] || {};
+          posStock[cat][nombre + '|' + tam] = (Number(d.exis)||0) + (Number(d.in)||0);
+        });
+      } else {
+        const d = datos[nombre] || {};
+        posStock[cat][nombre + '|'] = (Number(d.exis)||0) + (Number(d.in)||0);
+      }
+    });
+  });
+  (ventas.data||[]).forEach(v=>(v.items||[]).forEach(it=>{
+    if(it.tipo !== 'local' || !posStock[it.cat]) return;
+    const k = it.clave + '|' + (it.tam||'');
+    posStock[it.cat][k] = (posStock[it.cat][k]||0) - (Number(it.cantidad)||0);
+  }));
+  posPedidos = peds.data || [];
+  const pend = posPedidos.filter(p=>!p.entregado).length;
+  const b = document.getElementById('pos-badge-ped');
+  b.style.display = pend ? 'inline-block' : 'none'; b.textContent = pend;
+  pintarCatalogoPOS();
+}
+
+function ponerTabPOS(t){ posTab = t; pintarCatalogoPOS(); }
+document.querySelectorAll('#pos-tabs .pos-tab').forEach(el=> el.addEventListener('click', ()=> ponerTabPOS(el.dataset.t)));
+
+function pintarCatalogoPOS(){
+  document.querySelectorAll('#pos-tabs .pos-tab').forEach(el=>el.classList.toggle('sel', el.dataset.t === posTab));
+  const cont = document.getElementById('pos-contenido');
+  if(posTab === 'pedidos') return pintarPedidosPOS(cont);
+  if(!posHayCierre){
+    cont.className = 'empty';
+    cont.textContent = 'Todavía no se captura el Inicio de hoy en Productos del día. En cuanto se capture, aquí aparecen los productos disponibles.';
+    return;
+  }
+  cont.className = 'pos-pgrid'; cont.innerHTML = '';
+  const cat = posTab;
+  let hay = 0;
+  posItemsCat(cat).forEach(nombre=>{
+    if(cat === 'pasteles'){
+      const dm = posDisponible(cat, nombre, 'mini'), dc = posDisponible(cat, nombre, 'chico');
+      const baseM = (posStock[cat][nombre+'|mini']||0), baseC = (posStock[cat][nombre+'|chico']||0);
+      if(baseM <= 0 && baseC <= 0) return;
+      hay++;
+      const card = document.createElement('div'); card.className = 'pos-pastel';
+      card.innerHTML = `<div class="nm">${escHtml(nombre)}</div><div class="pos-tam"></div>`;
+      const wrap = card.querySelector('.pos-tam');
+      [['mini','Mini',dm],['chico','Chico',dc]].forEach(([tam, lbl, disp])=>{
+        const precio = posPrecio(cat, nombre, tam);
+        const en = posEnVenta(cat, nombre, tam);
+        const btn = document.createElement('button'); btn.type = 'button';
+        if(en) btn.className = 'en';
+        btn.disabled = disp <= 0;
+        btn.innerHTML = `${lbl}<b>${precio == null ? 'Sin precio' : fmtDinero(precio)}</b><small>${disp <= 0 ? (en ? 'Ya no quedan' : 'Sin existencia') : (disp === 1 ? 'Queda 1' : 'Quedan ' + disp)}${en ? ' · ' + en + ' en venta' : ''}</small>`;
+        btn.onclick = ()=> agregarAVenta(cat, nombre, tam);
+        wrap.appendChild(btn);
+      });
+      cont.appendChild(card);
+    } else {
+      const base = posStock[cat][nombre+'|'] || 0;
+      if(base <= 0) return;
+      hay++;
+      const disp = posDisponible(cat, nombre, '');
+      const en = posEnVenta(cat, nombre, '');
+      const precio = posPrecio(cat, nombre, '');
+      const card = document.createElement('button'); card.type = 'button';
+      card.className = 'pos-card' + (en ? ' en' : '') + (disp <= 0 ? ' agotado' : '');
+      card.innerHTML = `<div class="nm">${escHtml(nombre)}</div><div class="bt"><div><div class="pr">${precio == null ? 'Sin precio' : fmtDinero(precio)}</div>
+        <div class="st">${disp <= 0 ? 'Ya no quedan' : (disp === 1 ? 'Queda 1' : 'Quedan ' + disp)}</div></div>${en ? `<span class="bdg">${en}</span>` : ''}</div>`;
+      card.onclick = ()=> { if(disp > 0) agregarAVenta(cat, nombre, ''); };
+      cont.appendChild(card);
+    }
+  });
+  if(!hay){ cont.className = 'empty'; cont.textContent = 'No hay ' + POS_CATS[cat].titulo.toLowerCase() + ' en existencia hoy.'; }
+}
+
+function detallePedidoPOS(p){
+  const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || '';
+  const det = p.categoria === 'pastel' ? [formatNombre(p.tamano_o_sabor), formatNombre(p.sabor)].filter(Boolean).join(' · ') : (p.sabor || '');
+  return producto + (det ? ' · ' + det : '');
+}
+
+function pintarPedidosPOS(cont){
+  if(!posPedidos.length){ cont.className = 'empty'; cont.textContent = 'No hay pedidos para recoger en el local hoy.'; return; }
+  cont.className = 'pos-plist'; cont.innerHTML = '';
+  posPedidos.forEach(p=>{
+    const tot = Number(p.precio)||0, falta = Math.max(0, tot - pagadoDe(p));
+    const enVenta = posVenta.some(x=>x.tipo==='pedido' && x.pedido_id === p.id);
+    const d = p.fecha_entrega ? new Date(p.fecha_entrega) : null;
+    const hora = d ? d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
+    const sub = p.entregado
+      ? 'Entregado ' + (p.entregado_at ? new Date(p.entregado_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '') + (p.metodo_entrega && Number(p.pago_entrega) > 0 ? ' · ' + formatNombre(p.metodo_entrega) : '')
+      : [textoCorona(p), p.notas].filter(Boolean).join(' · ');
+    const est = p.entregado ? '<span class="pos-est ok">✓ Finalizado</span>'
+      : enVenta ? '<span class="pos-est sel">En la venta</span>'
+      : falta > 0 ? '<span class="pos-est pend">Pendiente</span>' : '<span class="pos-est pend">Por entregar</span>';
+    const row = document.createElement('div');
+    row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
+    row.innerHTML = `<div><b>${hora}</b></div>
+      <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${escHtml(p.telefono || '')}</small></div>
+      <div>${escHtml(detallePedidoPOS(p))}<small>${escHtml(sub)}</small></div>
+      <div class="m">${fmtDinero(tot)}<small>Total</small></div>
+      <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--jam-deep)' : 'var(--sage)'};">${fmtDinero(p.entregado ? 0 : falta)}<small>${falta > 0 && !p.entregado ? 'Falta' : 'Pagado'}</small></div>
+      ${est}`;
+    if(!p.entregado) row.onclick = ()=> alternarPedidoEnVenta(p);
+    cont.appendChild(row);
+  });
+}
+
+function alternarPedidoEnVenta(p){
+  const i = posVenta.findIndex(x=>x.tipo==='pedido' && x.pedido_id === p.id);
+  if(i >= 0) posVenta.splice(i, 1);
+  else {
+    const tot = Number(p.precio)||0;
+    posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),
+      total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)) });
+  }
+  posTotalManual = false;
+  pintarVenta(); pintarCatalogoPOS();
+}
+
+function agregarAVenta(cat, nombre, tam){
+  if(posDisponible(cat, nombre, tam) <= 0) return;
+  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===nombre && (x.tam||'')===(tam||''));
+  if(it) it.cantidad++;
+  else {
+    const precio = posPrecio(cat, nombre, tam);
+    const etiqueta = cat === 'pasteles' ? `Pastel ${tam} ${nombre}` : cat === 'cupcakes' ? `Cupcake ${nombre}` : cat === 'panques' ? `Panqué ${nombre}` : nombre;
+    posVenta.push({ tipo:'local', cat, categoria:POS_CATS[cat].tipo, clave:nombre, tam:tam || null, nombre:etiqueta, precio:Number(precio)||0, sinPrecio: precio == null, cantidad:1 });
+  }
+  posTotalManual = false;
+  pintarVenta(); pintarCatalogoPOS();
+}
+function cambiarCantidadPOS(idx, delta){
+  const it = posVenta[idx]; if(!it) return;
+  if(delta > 0 && posDisponible(it.cat, it.clave, it.tam) <= 0) return;
+  it.cantidad += delta;
+  if(it.cantidad <= 0) posVenta.splice(idx, 1);
+  posTotalManual = false;
+  pintarVenta(); pintarCatalogoPOS();
+}
+function quitarDeVentaPOS(idx){ posVenta.splice(idx, 1); posTotalManual = false; pintarVenta(); pintarCatalogoPOS(); }
+
+function subtotalesPOS(){
+  let local = 0, ped = 0;
+  posVenta.forEach(it=>{ if(it.tipo === 'local') local += it.precio * it.cantidad; else ped += it.falta; });
+  return { local, ped, subtotal: local + ped };
+}
+function leerNum(id){ const v = document.getElementById(id).value; return v === '' ? 0 : (Number(v) || 0); }
+
+function pintarVenta(){
+  const cont = document.getElementById('pos-items');
+  if(!posVenta.length){ cont.innerHTML = '<div class="pos-vacio">Toca un producto o un pedido de hoy para agregarlo.</div>'; }
+  else {
+    cont.innerHTML = '';
+    posVenta.forEach((it, idx)=>{
+      const div = document.createElement('div');
+      if(it.tipo === 'pedido'){
+        div.className = 'pos-it ped';
+        div.innerHTML = `<div class="n">Pedido de ${escHtml(it.nombre)} <span class="pos-tag ped">Pedido</span>
+          <small>${escHtml(it.detalle)} · Total ${fmtDinero(it.total)}${it.anticipo ? ' · Anticipo ' + fmtDinero(it.anticipo) : ''}</small></div>
+          <div class="p">${fmtDinero(it.falta)}</div><button type="button" class="pos-x" title="Quitar">×</button>`;
+        div.querySelector('.pos-x').onclick = ()=> quitarDeVentaPOS(idx);
+      } else {
+        div.className = 'pos-it';
+        div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small></div>
+          <div class="pos-qty"><button type="button" class="pos-qb">−</button><b>${it.cantidad}</b><button type="button" class="pos-qb">+</button></div>
+          <div class="p">${fmtDinero(it.precio * it.cantidad)}</div>`;
+        const [menos, mas] = div.querySelectorAll('.pos-qb');
+        menos.onclick = ()=> cambiarCantidadPOS(idx, -1);
+        mas.onclick = ()=> cambiarCantidadPOS(idx, +1);
+      }
+      cont.appendChild(div);
+    });
+  }
+  const { subtotal } = subtotalesPOS();
+  document.getElementById('pos-subtotal').textContent = fmtDinero(subtotal);
+  if(!posTotalManual){
+    const desc = leerNum('pos-descuento');
+    document.getElementById('pos-total').value = Math.max(0, subtotal - desc);
+  }
+  actualizarBotonCobrar();
+}
+
+document.getElementById('pos-descuento').addEventListener('input', ()=>{
+  posTotalManual = false;
+  const { subtotal } = subtotalesPOS();
+  document.getElementById('pos-total').value = Math.max(0, subtotal - leerNum('pos-descuento'));
+  actualizarBotonCobrar();
+});
+document.getElementById('pos-total').addEventListener('input', ()=>{
+  posTotalManual = true;
+  const { subtotal } = subtotalesPOS();
+  const desc = subtotal - leerNum('pos-total');
+  document.getElementById('pos-descuento').value = desc > 0 ? desc : '';
+  actualizarBotonCobrar();
+});
+document.querySelectorAll('#pos-metodos .pos-chip').forEach(el=> el.addEventListener('click', ()=>{
+  posMetodo = el.dataset.m;
+  document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=>c.classList.toggle('sel', c === el));
+  actualizarBotonCobrar();
+}));
+
+function actualizarBotonCobrar(){
+  const btn = document.getElementById('pos-cobrar');
+  const total = leerNum('pos-total');
+  const nPed = posVenta.filter(x=>x.tipo==='pedido').length;
+  const entregar = nPed ? (nPed === 1 ? ' y entregar pedido' : ` y entregar ${nPed} pedidos`) : '';
+  if(!posVenta.length){ btn.disabled = true; btn.textContent = 'Cobrar'; return; }
+  if(total <= 0 && nPed && !posVenta.some(x=>x.tipo==='local')){ btn.disabled = posGuardando; btn.textContent = nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`; return; }
+  if(!posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
+  btn.disabled = posGuardando;
+  btn.textContent = `Cobrar ${fmtDinero(total)}${entregar}`;
+}
+
+function vaciarVenta(){
+  posVenta = []; posMetodo = null; posTotalManual = false;
+  document.getElementById('pos-descuento').value = '';
+  document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('pos-msg').className = 'msg';
+  pintarVenta(); pintarCatalogoPOS();
+}
+
+async function cobrarVenta(){
+  const msg = document.getElementById('pos-msg'); msg.className = 'msg';
+  if(!posVenta.length || posGuardando) return;
+  const { local, ped, subtotal } = subtotalesPOS();
+  const total = Math.max(0, leerNum('pos-total'));
+  const soloEntrega = total <= 0 && !posVenta.some(x=>x.tipo==='local');
+  if(!soloEntrega && !posMetodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
+  // El descuento (o ajuste del total) se reparte en proporción entre lo de local y lo de pedidos
+  const factor = subtotal > 0 ? total / subtotal : 0;
+  const montoLocal = Math.round(local * factor * 100) / 100;
+  let restante = Math.round((total - montoLocal) * 100) / 100;
+  const pedidos = posVenta.filter(x=>x.tipo==='pedido');
+  const items = posVenta.map(it=>{
+    if(it.tipo === 'local') return { tipo:'local', cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad };
+    const esUltimo = it === pedidos[pedidos.length-1];
+    const cobrado = esUltimo ? restante : Math.round(it.falta * factor * 100) / 100;
+    if(!esUltimo) restante = Math.round((restante - cobrado) * 100) / 100;
+    return { tipo:'pedido', pedido_id:it.pedido_id, nombre:it.nombre, detalle:it.detalle, falta:it.falta, cobrado: Math.max(0, cobrado) };
+  });
+  posGuardando = true; actualizarBotonCobrar();
+  const { error } = await sb.rpc('registrar_venta', {
+    p_fecha: fechaHoyStr(), p_items: items, p_subtotal: subtotal, p_descuento: Math.max(0, subtotal - total),
+    p_total: total, p_monto_local: montoLocal, p_metodo: soloEntrega ? null : posMetodo
+  });
+  posGuardando = false;
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo registrar: ' + error.message; actualizarBotonCobrar(); return; }
+  const texto = soloEntrega ? 'Pedido entregado.' : `Venta registrada: ${fmtDinero(total)} en ${formatNombre(posMetodo)}.`;
+  vaciarVenta();
+  msg.className = 'msg ok'; msg.textContent = texto;
+  setTimeout(()=>{ if(msg.textContent === texto) msg.className = 'msg'; }, 4000);
+  await cargarDatosPOS();
 }
 
 cargarSesion();

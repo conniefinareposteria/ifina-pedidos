@@ -848,6 +848,19 @@
             </div>
           </div>
         </div>
+        <div id="decorado-wrap" class="solo-director" style="display:none;">
+          <div class="field">
+            <label>¿El pastel es decorado?</label>
+            <div class="chip-group" id="decorado-chips">
+              <div class="chip selected" data-dec="no">No</div>
+              <div class="chip" data-dec="si">Sí</div>
+            </div>
+          </div>
+          <div class="field" id="decorado-desc-wrap" style="display:none;">
+            <label>Descripción del decorado</label>
+            <textarea id="decorado-desc" placeholder="Tema, colores, figuras, texto del pastel..."></textarea>
+          </div>
+        </div>
       </div>
 
       <div id="detalle-cupcake" style="display:none;">
@@ -877,7 +890,7 @@
           <span class="label">$</span>
           <input type="number" id="precio" style="border:none;background:none;padding:0;width:90px;font-family:'Tinos',Georgia,serif;font-size:22px;font-weight:600;color:var(--jam-deep);">
         </div>
-        <div class="hint">Puedes editarlo si es un precio especial (por ejemplo, pastel decorado)</div>
+        <div class="hint" id="precio-hint">Puedes editarlo si es un precio especial.</div>
       </div>
 
       <div class="field">
@@ -1440,13 +1453,31 @@ function precioBasePastel(){
   const opt = document.getElementById('sel-tamano').selectedOptions[0];
   return opt && opt.dataset.precio ? Number(opt.dataset.precio) : 0;
 }
+let decoradoActual = 'no';
 function recalcularPrecioPastel(){
   if(categoriaActual !== 'pastel') return;
   const base = precioBasePastel();
   let extra = 0;
   if(!saborIncluyeCorona() && coronaQuiere === 'si' && coronaTipo) extra = precioCorona(coronaTipo, coronaTamanoActual());
+  const hint = document.getElementById('precio-hint');
+  if(decoradoActual === 'si'){
+    // El decorado se cotiza: el precio lo escribe quien captura (no se llena solo)
+    hint.innerHTML = `<b style="color:var(--rojo);">Pastel decorado: escribe el precio total.</b> Referencia: pastel ${fmtDinero(base)}${extra ? ' + corona ' + fmtDinero(extra) : ''}.`;
+    return;
+  }
+  hint.textContent = 'Puedes editarlo si es un precio especial.';
   document.getElementById('precio').value = base ? base + extra : '';
 }
+function ponerDecorado(v){
+  const antes = decoradoActual;
+  decoradoActual = v;
+  document.querySelectorAll('#decorado-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.dec === v));
+  document.getElementById('decorado-desc-wrap').style.display = v === 'si' ? 'block' : 'none';
+  if(v === 'si' && antes !== 'si') document.getElementById('precio').value = '';
+  if(v !== 'si') document.getElementById('decorado-desc').value = '';
+  recalcularPrecioPastel();
+}
+document.querySelectorAll('#decorado-chips .chip').forEach(chip=> chip.addEventListener('click', ()=> ponerDecorado(chip.dataset.dec)));
 function ponerCoronaChips(){
   document.querySelectorAll('#corona-si-no-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.corona === coronaQuiere));
   document.querySelectorAll('#corona-tipo-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.coronatipo === coronaTipo));
@@ -1455,8 +1486,10 @@ function actualizarCoronaUI(){
   const tamano = document.getElementById('sel-tamano').value;
   const sabor = document.getElementById('sel-sabor-pastel').value;
   const wrap = document.getElementById('corona-wrap');
-  if(categoriaActual !== 'pastel' || !tamano || !sabor){ wrap.style.display = 'none'; recalcularPrecioPastel(); return; }
+  const decWrap = document.getElementById('decorado-wrap');
+  if(categoriaActual !== 'pastel' || !tamano || !sabor){ wrap.style.display = 'none'; decWrap.style.display = 'none'; recalcularPrecioPastel(); return; }
   wrap.style.display = 'block';
+  decWrap.style.display = rolActual === 'director' ? 'block' : 'none';
   const incluida = saborIncluyeCorona();
   document.getElementById('corona-incluida').style.display = incluida ? 'block' : 'none';
   document.getElementById('corona-pregunta').style.display = incluida ? 'none' : 'block';
@@ -1470,6 +1503,11 @@ function actualizarCoronaUI(){
   recalcularPrecioPastel();
 }
 function reiniciarCorona(){
+  decoradoActual = 'no';
+  document.querySelectorAll('#decorado-chips .chip').forEach(c=>c.classList.toggle('selected', c.dataset.dec === 'no'));
+  document.getElementById('decorado-desc').value = '';
+  document.getElementById('decorado-desc-wrap').style.display = 'none';
+  document.getElementById('decorado-wrap').style.display = 'none';
   coronaQuiere = null;
   coronaTipo = null;
   document.getElementById('corona-color').value = '';
@@ -1924,6 +1962,11 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
         coronaDatos = { corona_tipo: coronaTipo, corona_tamano: tam, corona_color: coronaTipo === 'color' ? color : null, corona_precio: precioCorona(coronaTipo, tam) };
       }
     }
+    if(decoradoActual === 'si'){
+      if(rolActual !== 'director'){ msg.className='msg err'; msg.textContent='Solo la directora puede agendar pasteles decorados.'; return; }
+      if(!document.getElementById('decorado-desc').value.trim()){ msg.className='msg err'; msg.textContent='Escribe la descripción del decorado.'; return; }
+      if(!(Number(document.getElementById('precio').value) > 0)){ msg.className='msg err'; msg.textContent='Es pastel decorado: escribe el precio total antes de guardar.'; return; }
+    }
   } else if(categoriaActual === 'cupcake' || categoriaActual === 'individual' || categoriaActual === 'panque'){
     const containerId = {cupcake:'cart-cupcake', individual:'cart-individual', panque:'cart-panque'}[categoriaActual];
     const carrito = carritos[containerId];
@@ -2000,6 +2043,8 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     direccion: direccionDetalle ? textoDireccion(direccionDetalle) : '',
     direccion_detalle: direccionDetalle,
     ...coronaDatos,
+    decorado: categoriaActual === 'pastel' && decoradoActual === 'si',
+    decorado_descripcion: (categoriaActual === 'pastel' && decoradoActual === 'si') ? document.getElementById('decorado-desc').value.trim() : null,
     recibe_nombre: recibeNombre || null,
     recibe_telefono: recibeTelefono || null,
     metodo_pago: metodoPagoActual || '',
@@ -2210,7 +2255,7 @@ function pintarPedidosPorDia(data, cont){
       const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
       const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria;
       const tamano = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '—';
-      const sabor = p.categoria === 'pastel' ? formatNombre(p.sabor) + (textoCorona(p) ? ' · ' + textoCorona(p) : '') : (p.sabor || '');
+      const sabor = p.categoria === 'pastel' ? formatNombre(p.sabor) + (textoCorona(p) ? ' · ' + textoCorona(p) : '') + (p.decorado ? ' · Decorado' : '') : (p.sabor || '');
       const entrega = p.entrega === 'domicilio' ? 'Domicilio'
         : p.entrega === 'casa' ? 'Recoger en casa'
         : 'Recoge en local';
@@ -2230,7 +2275,7 @@ function pintarPedidosPorDia(data, cont){
           <td class="nowrap">${esc(p.telefono || '')}</td>
           <td class="nowrap">${producto}</td>
           <td class="nowrap">${esc(tamano)}</td>
-          <td class="det">${esc(sabor)}</td>
+          <td class="det">${esc(sabor)}${p.decorado && p.decorado_descripcion ? `<span class="sub">${esc(p.decorado_descripcion)}</span>` : ''}</td>
           <td class="nowrap">${hora}</td>
           <td class="nowrap">${entrega}${direccion}</td>
           <td class="dinero">${dinero(total)}</td>
@@ -3639,6 +3684,7 @@ function abrirEditarPedido(id){
   const {f, h} = fechaLocalPartes(p.fecha_entrega);
   document.getElementById('ep-titulo').textContent = p.nombre_cliente || 'Pedido';
   document.getElementById('ep-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'long'}) : '')
+    + (p.decorado ? ' · Decorado: ' + (p.decorado_descripcion || '') : '')
     + (p.entregado ? ' · Entregado' + (Number(p.pago_entrega) > 0 ? `, cobró ${fmtDinero(p.pago_entrega)} al entregar (${formatNombre(p.metodo_entrega || '')})` : '') + (Number(p.descuento_entrega) > 0 ? `, descuento ${fmtDinero(p.descuento_entrega)}` : '') : '');
   epSet('ep-nombre', p.nombre_cliente); epSet('ep-tel', p.telefono);
   epSet('ep-cat', p.categoria || 'pastel');

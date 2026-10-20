@@ -3712,7 +3712,7 @@ async function abrirHistorial(){
     <div class="tabla-wrap">
       <table class="tabla-pedidos">
         <thead><tr>
-          <th>Fecha</th><th>Estado</th><th class="c">Cupcakes</th><th class="c">Individuales</th><th class="c">Pasteles</th><th class="c">Panqués</th><th class="c">Caja</th><th class="n">Ventas (sin ajustar fondo)</th><th></th>
+          <th>Fecha</th><th>Estado</th><th class="c">Cupcakes</th><th class="c">Individuales</th><th class="c">Pasteles</th><th class="c">Panqués</th><th class="c">Caja</th><th class="n">Ventas del día</th><th></th>
         </tr></thead>
         <tbody>${filas}</tbody>
       </table>
@@ -4857,7 +4857,7 @@ function preguntarCorona(nombre, tam){
 function agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio){
   if(posDisponible('coronas', tipoCor, '') <= 0) return;
   const variante = tipo + (incluida ? '-incluida' : '');
-  const it = posVenta.find(x=>x.tipo==='local' && x.cat==='coronas' && x.clave===tipoCor && x.variante===variante);
+  const it = posVenta.find(x=>x.tipo==='local' && x.cat==='coronas' && x.clave===tipoCor && x.variante===variante && !x.cortesia);
   if(it) it.cantidad++;
   else posVenta.push({ tipo:'local', cat:'coronas', categoria:'corona', clave:tipoCor, tam:null, variante, incluida,
     nombre: `${etiqueta} ${tipoCor.toLowerCase()}${incluida ? ' (incluida)' : ''}`, precio: Number(precio)||0, sinPrecio:false, cantidad:1 });

@@ -4507,7 +4507,7 @@ function pintarVenta(){
         div.className = 'pos-it ped';
         div.innerHTML = `<div class="n">Pedido de ${escHtml(it.nombre)} <span class="pos-tag ped">Pedido</span>
           <small>${escHtml(it.detalle)}${it.fecha ? ' · Para el ' + escHtml(it.fecha) : ''} · Total ${fmtDinero(it.total)} · Falta ${fmtDinero(it.falta)}</small>
-          ${it.abono != null ? `<div style="font-size:12.5px; margin-top:5px; color:var(--amber-l); font-weight:700;">Anticipo ${fmtDinero(it.abono)} · después faltará ${fmtDinero(it.falta - it.abono)} <a href="#" class="pos-quitar-ant" style="color:#E6DCCB; margin-left:6px;">quitar</a></div>`
+          ${it.abono != null ? `<div style="font-size:12.5px; margin-top:5px; color:var(--amber-l); font-weight:700;">Anticipo ${fmtDinero(it.abono)} · Falta de pago ${fmtDinero(it.falta - it.abono)} <a href="#" class="pos-quitar-ant" style="color:#E6DCCB; margin-left:6px;">quitar</a></div>`
             : posModoAnticipo ? '<button type="button" class="pos-mini-btn pos-poner-ant">Poner anticipo</button>'
             : it.esLocal ? `<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin-top:5px; color:#E6DCCB; cursor:pointer;"><input type="checkbox" class="pos-entregar" ${it.entregar ? 'checked' : ''} style="width:auto; margin:0;"> Entregar ahora</label>` : `<div style="font-size:12.5px; margin-top:5px; color:#E6DCCB;">${escHtml(it.tipoEntrega)}: solo se cobra</div>`}</div>
           <div class="p">${fmtDinero(it.abono != null ? it.abono : it.falta)}</div><button type="button" class="pos-x" title="Quitar">×</button>`;

@@ -689,6 +689,7 @@
   .pos-pcts button.sel{background:var(--yeso); color:var(--cocoa); border-color:var(--yeso);}
   .pos-extra{display:flex; gap:8px; margin-top:8px;}
   .pos-extra button{flex:1; font-family:inherit; font-size:14px; font-weight:700; padding:11px; border-radius:999px; border:1px solid rgba(217,206,187,.45); background:transparent; color:var(--yeso); cursor:pointer;}
+  .pos-extra button:disabled{opacity:.35; cursor:default;}
   .pos-extra button.on{background:var(--yeso); color:var(--cocoa);}
   .pos-it.cort .p{text-decoration:line-through; opacity:.7;}
   .pos-mini-btn{font-family:inherit; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; border:1px solid var(--amber-l); background:transparent; color:var(--amber-l); cursor:pointer; margin-top:5px;}
@@ -1068,6 +1069,7 @@
           <div class="pos-extra">
             <button type="button" id="pos-btn-cortesia" onclick="alternarModoCortesia()">Cortesía</button>
             <button type="button" id="pos-btn-merma" onclick="registrarMerma()">Merma</button>
+            <button type="button" id="pos-btn-anticipo" onclick="botonAnticipo()" disabled>Anticipo</button>
           </div>
           <div class="msg" id="pos-msg" style="margin:8px 0 0;"></div>
           <a href="#" class="pos-vaciar" onclick="vaciarVenta(); return false;">Vaciar venta</a>
@@ -4394,10 +4396,37 @@ function subtotalesPOS(){
   let local = 0, ped = 0, cort = 0;
   posVenta.forEach(it=>{
     if(it.tipo === 'local'){ local += it.precio * it.cantidad; if(it.cortesia) cort += it.precio * it.cantidad; }
-    else ped += it.falta;
+    else ped += (it.abono != null ? it.abono : it.falta);
   });
   return { local, ped, cort, subtotal: local + ped, base: local + ped - cort };
 }
+let posModoAnticipo = false;
+function botonAnticipo(){
+  const peds = posVenta.filter(x=>x.tipo==='pedido');
+  if(!peds.length) return;
+  if(peds.length === 1){ pedirAnticipo(posVenta.indexOf(peds[0])); return; }
+  posModoAnticipo = !posModoAnticipo;
+  const b = document.getElementById('pos-btn-anticipo');
+  b.classList.toggle('on', posModoAnticipo);
+  b.textContent = posModoAnticipo ? 'Listo' : 'Anticipo';
+  pintarVenta();
+}
+function pedirAnticipo(idx){
+  const it = posVenta[idx]; if(!it || it.tipo !== 'pedido') return;
+  if(it.falta <= 0){ alert('Este pedido ya está pagado.'); return; }
+  const v = prompt(`Anticipo para el pedido de ${it.nombre} (falta ${fmtDinero(it.falta)}). ¿Cuánto deja?`, it.abono != null ? it.abono : '');
+  if(v === null) return;
+  const n = Number(v);
+  if(!(n > 0)){ alert('Escribe una cantidad mayor a 0.'); return; }
+  if(n > it.falta){ alert('El anticipo no puede ser mayor a lo que falta (' + fmtDinero(it.falta) + ').'); return; }
+  it.abono = n;
+  it.entregar = false;
+  if(posModoAnticipo) botonAnticipo();
+  posTotalManual = false;
+  pintarVenta();
+}
+function quitarAnticipo(idx){ const it = posVenta[idx]; if(!it) return; delete it.abono; posTotalManual = false; pintarVenta(); }
+
 function alternarModoCortesia(){
   posModoCortesia = !posModoCortesia;
   const b = document.getElementById('pos-btn-cortesia');
@@ -4474,10 +4503,14 @@ function pintarVenta(){
       if(it.tipo === 'pedido'){
         div.className = 'pos-it ped';
         div.innerHTML = `<div class="n">Pedido de ${escHtml(it.nombre)} <span class="pos-tag ped">Pedido</span>
-          <small>${escHtml(it.detalle)}${it.fecha ? ' · Para el ' + escHtml(it.fecha) : ''} · Total ${fmtDinero(it.total)}${it.anticipo ? ' · Anticipo ' + fmtDinero(it.anticipo) : ''}</small>
-          ${it.esLocal ? `<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin-top:5px; color:#E6DCCB; cursor:pointer;"><input type="checkbox" class="pos-entregar" ${it.entregar ? 'checked' : ''} style="width:auto; margin:0;"> Entregar ahora</label>` : `<div style="font-size:12.5px; margin-top:5px; color:#E6DCCB;">${escHtml(it.tipoEntrega)}: solo se cobra</div>`}</div>
-          <div class="p">${fmtDinero(it.falta)}</div><button type="button" class="pos-x" title="Quitar">×</button>`;
+          <small>${escHtml(it.detalle)}${it.fecha ? ' · Para el ' + escHtml(it.fecha) : ''} · Total ${fmtDinero(it.total)} · Falta ${fmtDinero(it.falta)}</small>
+          ${it.abono != null ? `<div style="font-size:12.5px; margin-top:5px; color:var(--amber-l); font-weight:700;">Anticipo ${fmtDinero(it.abono)} · después faltará ${fmtDinero(it.falta - it.abono)} <a href="#" class="pos-quitar-ant" style="color:#E6DCCB; margin-left:6px;">quitar</a></div>`
+            : posModoAnticipo ? '<button type="button" class="pos-mini-btn pos-poner-ant">Poner anticipo</button>'
+            : it.esLocal ? `<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin-top:5px; color:#E6DCCB; cursor:pointer;"><input type="checkbox" class="pos-entregar" ${it.entregar ? 'checked' : ''} style="width:auto; margin:0;"> Entregar ahora</label>` : `<div style="font-size:12.5px; margin-top:5px; color:#E6DCCB;">${escHtml(it.tipoEntrega)}: solo se cobra</div>`}</div>
+          <div class="p">${fmtDinero(it.abono != null ? it.abono : it.falta)}</div><button type="button" class="pos-x" title="Quitar">×</button>`;
         div.querySelector('.pos-x').onclick = ()=> quitarDeVentaPOS(idx);
+        const qa = div.querySelector('.pos-quitar-ant'); if(qa) qa.onclick = (e)=>{ e.preventDefault(); quitarAnticipo(idx); };
+        const pa = div.querySelector('.pos-poner-ant'); if(pa) pa.onclick = ()=> pedirAnticipo(idx);
         const chk = div.querySelector('.pos-entregar');
         if(chk) chk.onchange = (e)=>{ it.entregar = e.target.checked; actualizarBotonCobrar(); };
       } else if(it.cortesia){
@@ -4547,6 +4580,8 @@ document.getElementById('pos-recibe').addEventListener('input', actualizarCambio
 
 function actualizarBotonCobrar(){
   actualizarCambioPOS();
+  const ba = document.getElementById('pos-btn-anticipo');
+  if(ba) ba.disabled = !posVenta.some(x=>x.tipo==='pedido');
   const btn = document.getElementById('pos-cobrar');
   const total = leerNum('pos-total');
   const nPed = posVenta.filter(x=>x.tipo==='pedido' && x.entregar).length;
@@ -4565,6 +4600,7 @@ function vaciarVenta(){
   posVenta = []; posMetodo = null; posTotalManual = false;
   limpiarPct();
   if(posModoCortesia) alternarModoCortesia();
+  if(posModoAnticipo){ posModoAnticipo = false; const b = document.getElementById('pos-btn-anticipo'); b.classList.remove('on'); b.textContent = 'Anticipo'; }
   document.getElementById('pos-recibe').value = '';
   document.getElementById('pos-descuento').value = '';
   document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=>c.classList.remove('sel'));
@@ -4588,9 +4624,11 @@ async function cobrarVenta(){
   const items = posVenta.map(it=>{
     if(it.tipo === 'local') return { tipo:'local', cortesia: !!it.cortesia, cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad };
     const esUltimo = it === pedidos[pedidos.length-1];
-    const cobrado = esUltimo ? restante : Math.round(it.falta * factor * 100) / 100;
+    const monto = it.abono != null ? it.abono : it.falta;
+    const cobrado = esUltimo ? restante : Math.round(monto * factor * 100) / 100;
     if(!esUltimo) restante = Math.round((restante - cobrado) * 100) / 100;
-    return { tipo:'pedido', pedido_id:it.pedido_id, nombre:it.nombre, detalle:it.detalle, falta:it.falta, cobrado: Math.max(0, cobrado), entregar: !!it.entregar };
+    return { tipo:'pedido', pedido_id:it.pedido_id, nombre:it.nombre, detalle:it.detalle, falta:it.falta, cobrado: Math.max(0, cobrado),
+      anticipo: it.abono != null, entregar: it.abono != null ? false : !!it.entregar };
   });
   posGuardando = true; actualizarBotonCobrar();
   const { error } = await sb.rpc('registrar_venta', {

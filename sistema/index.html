@@ -4999,16 +4999,8 @@ document.addEventListener('pointerdown', e=>{
 
 // ---------- Imprimir hoja de pedidos del día (carta horizontal) ----------
 function imprimirPedidosDia(titulo, pedidos){
-  const e = escHtml, $ = fmtDinero;
+  const e = escHtml;
   const lista = pedidos.slice().sort((a,b)=> (a.nombre_cliente||'').localeCompare(b.nombre_cliente||'', 'es', {sensitivity:'base'}));
-  const cobrado = { efectivo:0, transferencia:0, terminal:0 };
-  let total = 0, falta = 0;
-  lista.forEach(p=>{
-    const t = Number(p.precio)||0; total += t; falta += Math.max(0, t - pagadoDe(p));
-    if(p.metodo_pago in cobrado) cobrado[p.metodo_pago] += Number(p.anticipo)||0;
-    if(p.metodo_entrega in cobrado) cobrado[p.metodo_entrega] += Number(p.pago_entrega)||0;
-    pagosDe(p).forEach(x=>{ if(x.metodo in cobrado) cobrado[x.metodo] += Number(x.monto)||0; });
-  });
   const filas = lista.map((p, i)=>{
     const prod = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || '';
     const tam = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '';
@@ -5017,8 +5009,6 @@ function imprimirPedidosDia(titulo, pedidos){
       : (p.sabor || '');
     const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
     const ent = p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Local';
-    const t = Number(p.precio)||0, pag = pagadoDe(p), f = Math.max(0, t - pag);
-    const mets = [...new Set([Number(p.anticipo) > 0 ? p.metodo_pago : '', Number(p.pago_entrega) > 0 ? p.metodo_entrega : '', ...pagosDe(p).map(x=>x.metodo)].filter(Boolean).map(formatNombre))].join(' + ');
     return `<tr>
       <td class="c">${i+1}</td>
       <td><b>${e(p.nombre_cliente || '')}</b>${p.recibe_nombre ? `<small>Recibe: ${e(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + e(p.recibe_telefono) : ''}</small>` : ''}</td>
@@ -5027,41 +5017,36 @@ function imprimirPedidosDia(titulo, pedidos){
       <td>${e(det)}</td>
       <td class="c">${hora}</td>
       <td>${ent}${p.entrega === 'domicilio' && p.direccion ? `<small>${e(p.direccion)}</small>` : ''}</td>
-      <td class="n">${$(t)}</td>
-      <td class="n">${$(pag)}${mets ? `<small>${e(mets)}</small>` : ''}</td>
-      <td class="n">${f > 0 ? '<b>' + $(f) + '</b>' : 'Pagado'}${p.entregado ? '<small>Entregado</small>' : ''}</td>
       <td>${e(p.notas || '')}</td>
     </tr>`;
   }).join('');
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Pedidos ${e(titulo)}</title>
 <style>
-  @page{size:letter landscape; margin:9mm;}
+  @page{size:letter landscape; margin:6mm 7mm;}
   *{box-sizing:border-box}
-  body{font-family:Arial,Helvetica,sans-serif; color:#111; margin:0; font-size:10.5px;}
+  body{font-family:Arial,Helvetica,sans-serif; color:#000; margin:0; font-size:15px; line-height:1.25;}
   table{width:100%; border-collapse:collapse;}
   thead{display:table-header-group;}
   tr{page-break-inside:avoid;}
-  .cab td{border:none; padding:0 0 8px;}
-  .cab-in{display:flex; justify-content:space-between; align-items:flex-end;}
-  .fecha{font-family:Georgia,'Times New Roman',serif; font-size:24px; font-weight:bold; font-variant:small-caps;}
-  .tot{font-family:Georgia,serif; font-variant:small-caps; font-size:12px; line-height:1.45;}
-  .tot b{font-family:Arial,sans-serif; font-variant:normal; margin-left:6px;}
+  .cab td{border:none; padding:0 0 5px;}
+  .cab-in{display:flex; justify-content:space-between; align-items:center;}
+  .fecha{font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:bold;}
   .marca{text-align:center; line-height:1;}
-  .marca .n{font-family:Georgia,serif; font-size:30px; letter-spacing:1px;}
-  .marca .s{font-size:8px; letter-spacing:4px; margin-top:3px;}
-  th{background:#a6a6a6; border:1.6px solid #000; padding:6px 4px; font-family:Georgia,serif; font-variant:small-caps; font-size:12.5px;}
-  td{border:1.6px solid #000; padding:5px 5px; vertical-align:top;}
-  td small{display:block; font-size:9px; color:#333; margin-top:2px;}
-  .c{text-align:center} .n{text-align:right; white-space:nowrap}
+  .marca .n{font-family:Georgia,serif; font-size:28px; letter-spacing:1px;}
+  .marca .s{font-size:9px; letter-spacing:4px; margin-top:2px;}
+  th{background:#bdbdbd; border:2px solid #000; padding:6px 5px; font-size:15px; font-weight:bold; text-align:left;}
+  td{border:2px solid #000; padding:7px 6px; vertical-align:top;}
+  td b{font-size:16px;}
+  td small{display:block; font-size:13px; margin-top:3px;}
+  .c{text-align:center}
 </style></head><body>
 <table>
   <thead>
-    <tr class="cab"><td colspan="11"><div class="cab-in">
-      <div class="fecha">Fecha: ${e(titulo)}</div>
-      <div class="tot">Efectivo:<b>${$(cobrado.efectivo)}</b><br>Transferencia:<b>${$(cobrado.transferencia)}</b><br>Terminal:<b>${$(cobrado.terminal)}</b><br>Total:<b>${$(total)}</b> &nbsp; Falta pago:<b>${$(falta)}</b></div>
+    <tr class="cab"><td colspan="8"><div class="cab-in">
+      <div class="fecha">${e(titulo)}</div>
       <div class="marca"><div class="n">CONNIE</div><div class="s">FINA REPOSTERÍA</div></div>
     </div></td></tr>
-    <tr><th style="width:3%">No</th><th style="width:13%">Nombre</th><th style="width:8%">Teléfono</th><th style="width:7%">Producto</th><th style="width:15%">Sabor / detalle</th><th style="width:6.5%">Hora</th><th style="width:12%">Entrega</th><th style="width:6%">Total</th><th style="width:7%">Pagó</th><th style="width:6%">Falta</th><th>Comentarios</th></tr>
+    <tr><th style="width:4%" class="c">No</th><th style="width:16%">Nombre</th><th style="width:10%">Teléfono</th><th style="width:9%">Producto</th><th style="width:17%">Sabor / detalle</th><th style="width:10%" class="c">Hora</th><th style="width:14%">Entrega</th><th>Comentarios</th></tr>
   </thead>
   <tbody>${filas}</tbody>
 </table>

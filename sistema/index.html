@@ -4151,8 +4151,8 @@ async function buscarPedidosPOS(){
   if(texto.length < 2){ posBusqueda = null; if(posTab === 'pedidos') pintarCatalogoPOS(); return; }
   const { data, error } = await sb.rpc('buscar_pedidos_pos', { q: texto });
   if(document.getElementById('pos-buscar').value.trim() !== texto) return;
-  // Solo pedidos que se recogen en el local
-  posBusqueda = error ? { error: error.message } : (data || []).filter(p=> !p.entrega || p.entrega === 'recoger' || p.entrega === 'local');
+  // En la búsqueda salen todos (también domicilio y casa) para poder cobrarlos
+  posBusqueda = error ? { error: error.message } : (data || []);
   if(posTab === 'pedidos') pintarCatalogoPOS();
 }
 function filaPedidoPOS(p, conFecha){
@@ -4199,9 +4199,12 @@ function alternarPedidoEnVenta(p){
     const tot = Number(p.precio)||0;
     const finHoy = new Date(); finHoy.setHours(23,59,59,999);
     // Si el pedido es para hoy o ya pasó, se entrega; si es de días adelante, solo se cobra (se puede cambiar)
-    const entregar = !p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy;
+    const esLocal = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
+    // Domicilio o casa: solo se cobra, nunca se entrega desde el punto de venta
+    const entregar = esLocal && (!p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy);
     posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),
-      total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)), entregar,
+      total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)), entregar, esLocal,
+      tipoEntrega: p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : '',
       fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
   }
   posTotalManual = false;
@@ -4248,10 +4251,11 @@ function pintarVenta(){
         div.className = 'pos-it ped';
         div.innerHTML = `<div class="n">Pedido de ${escHtml(it.nombre)} <span class="pos-tag ped">Pedido</span>
           <small>${escHtml(it.detalle)}${it.fecha ? ' · Para el ' + escHtml(it.fecha) : ''} · Total ${fmtDinero(it.total)}${it.anticipo ? ' · Anticipo ' + fmtDinero(it.anticipo) : ''}</small>
-          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin-top:5px; color:#E6DCCB; cursor:pointer;"><input type="checkbox" class="pos-entregar" ${it.entregar ? 'checked' : ''} style="width:auto; margin:0;"> Entregar ahora</label></div>
+          ${it.esLocal ? `<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin-top:5px; color:#E6DCCB; cursor:pointer;"><input type="checkbox" class="pos-entregar" ${it.entregar ? 'checked' : ''} style="width:auto; margin:0;"> Entregar ahora</label>` : `<div style="font-size:12.5px; margin-top:5px; color:#E6DCCB;">${escHtml(it.tipoEntrega)}: solo se cobra</div>`}</div>
           <div class="p">${fmtDinero(it.falta)}</div><button type="button" class="pos-x" title="Quitar">×</button>`;
         div.querySelector('.pos-x').onclick = ()=> quitarDeVentaPOS(idx);
-        div.querySelector('.pos-entregar').onchange = (e)=>{ it.entregar = e.target.checked; actualizarBotonCobrar(); };
+        const chk = div.querySelector('.pos-entregar');
+        if(chk) chk.onchange = (e)=>{ it.entregar = e.target.checked; actualizarBotonCobrar(); };
       } else {
         div.className = 'pos-it';
         div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.incluida ? 'Incluida con el pastel' : it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small></div>

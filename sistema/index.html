@@ -1105,7 +1105,7 @@
     <div id="ph-panel-resumen">
       <div class="sub-titulo" id="ph-fecha" style="color:var(--amber); margin:0;"></div>
       <div style="font-family:'Tinos',Georgia,serif; font-size:28px;">Por hacer hoy</div>
-      <div class="hint" style="margin:2px 0 16px;">Por hacer = lo que debe haber − lo que hay.</div>
+      <div class="hint solo-director" style="margin:2px 0 16px;">Por hacer = lo que debe haber − lo que hay.</div>
       <div id="ph-contenido" class="loading">Cargando...</div>
     </div>
     <div id="ph-panel-metas" style="display:none;">
@@ -4739,6 +4739,34 @@ async function abrirPorHacer(){
         <tbody>${filasC}</tbody></table></div>` : '<div class="empty" style="padding:16px; text-align:left;">Sin metas de cupcakes para hoy.</div>'}
     </div>
     ${bloqueCor}`;
+
+  // Producción: solo lo que hay que hacer (sin debe haber, sobró ni hay)
+  if(rolActual !== 'director'){
+    const cel = h => `<td class="n"><span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span></td>`;
+    const hx = (m, sob) => Math.max(0, (Number(m)||0) - sob);
+    let fp = '', fc = '', fk = '';
+    PASTEL_SABORES.forEach(n=>{
+      const m = meta.pasteles[n] || {};
+      const hm = hx(m.mini, base.pasteles[n + '|mini'] || 0), hc = hx(m.chico, base.pasteles[n + '|chico'] || 0);
+      if(hm || hc) fp += `<tr><td class="nombre">${escHtml(n)}</td>${cel(hm)}${cel(hc)}</tr>`;
+    });
+    CUPCAKE_SABORES.forEach(n=>{
+      const h = hx(meta.cupcakes[n], base.cupcakes[n + '|'] || 0);
+      if(h) fc += `<tr><td class="nombre">${escHtml(n)}</td>${cel(h)}</tr>`;
+    });
+    CORONA_TIPOS.forEach(t=>{
+      const d = ((cierreHoy.coronas)||{})[t] || {};
+      const k = t + '|', mv = x => ((vendHoy[x].coronas)||{})[k]||0;
+      const hay = Math.max(0, (base.coronas[k]||0) + (Number(d.in)||0) - mv('v') - Math.max(Number(d.merma)||0, mv('m')) - Math.max(Number(d.cortesia)||0, mv('c')));
+      const h = hx(metaCor[t], hay);
+      if(h) fk += `<tr><td class="nombre">${t}</td>${cel(h)}</tr>`;
+    });
+    const nada = '<div class="empty" style="padding:14px; text-align:left;">Nada por hacer.</div>';
+    cont.innerHTML = `
+      <div class="ph-sec"><h3>Pasteles por hacer</h3>${fp ? `<div class="tabla-wrap" style="max-width:640px;"><table class="tabla-pedidos"><thead><tr><th>Sabor</th><th class="n">Mini</th><th class="n">Chico</th></tr></thead><tbody>${fp}</tbody></table></div>` : nada}</div>
+      <div class="ph-sec"><h3>Cupcakes por hacer</h3>${fc ? `<div class="tabla-wrap" style="max-width:640px;"><table class="tabla-pedidos"><thead><tr><th>Sabor</th><th class="n">Hacer</th></tr></thead><tbody>${fc}</tbody></table></div>` : nada}</div>
+      <div class="ph-sec"><h3>Coronas ámbar por hacer</h3>${fk ? `<div class="tabla-wrap" style="max-width:640px;"><table class="tabla-pedidos"><thead><tr><th>Tipo</th><th class="n">Hacer</th></tr></thead><tbody>${fk}</tbody></table></div>` : nada}</div>`;
+  }
 }
 
 async function abrirMetas(cat){

@@ -4171,7 +4171,7 @@ function filaPedidoPOS(p, conFecha){
   row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
   row.innerHTML = `<div><b>${fecha ? escHtml(fecha) : hora}</b>${fecha ? `<small>${hora}</small>` : ''}</div>
     <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${escHtml(p.telefono || '')}</small></div>
-    <div>${escHtml(detallePedidoPOS(p))}<small>${escHtml(sub)}</small></div>
+    <div>${escHtml(detallePedidoPOS(p))}<small><b style="color:var(--cocoa);">${p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoge en local'}</b>${sub ? ' · ' + escHtml(sub) : ''}</small></div>
     <div class="m">${fmtDinero(tot)}<small>Total · pagó ${fmtDinero(pagadoDe(p))}</small></div>
     <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--rojo)' : 'var(--sage)'};">${falta > 0 && !p.entregado ? fmtDinero(falta) + '<small>Falta</small>' : '✓ Pagado<small>Falta $0</small>'}</div>
     ${est}`;

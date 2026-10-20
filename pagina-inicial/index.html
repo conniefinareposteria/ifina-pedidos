@@ -349,7 +349,7 @@ async function cargar(){
   if(err){ document.getElementById('cat-cont').innerHTML = '<div class="cargando">No pudimos cargar el catálogo. Intenta de nuevo en un momento.</div>'; document.getElementById('lista-linea').innerHTML=''; console.error(err.error); return; }
   D.tam = (t.data||[]).sort((a,b)=>pos(a.tamano)-pos(b.tamano));
   D.sab = (sp.data||[]).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
-  const ORDEN_CUP=['limon','pistache','bicajeta','whitevelvet','especial','biespecial','coco','caramelo','chocolate','chocophila','zanahoria','platano','chococajeta','chococaramelo'];
+  const ORDEN_CUP=['limon','pistache','bicajeta','cajeta','whitevelvet','especial','biespecial','coco','caramelo','chocolate','chocophila','zanahoria','platano','chococajeta','chococaramelo'];
   const kc=t=>(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'').replace(/^cupcake/,'').replace('chocofiladelfia','chocophila');
   const oc=t=>{const i=ORDEN_CUP.indexOf(kc(t));return i<0?999:i};
   D.cup = (sc.data||[]).sort((a,b)=>oc(a.nombre)-oc(b.nombre)||(a.nombre||'').localeCompare(b.nombre||''));

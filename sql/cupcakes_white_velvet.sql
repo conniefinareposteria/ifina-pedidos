@@ -1,11 +1,10 @@
--- Connie Repostería Fina — Agregar cupcake White velvet al catálogo
--- (el orden de los cupcakes ya lo pone el sistema; esto solo agrega el sabor nuevo)
--- Se puede correr varias veces sin riesgo.
+-- Connie Repostería Fina — Agregar cupcakes White velvet y Cajeta al catálogo
+-- (el orden de los cupcakes lo pone el sistema). Se puede correr varias veces sin riesgo.
 insert into sabores_cupcakes (nombre)
-select 'White velvet'
+select v.nombre from (values ('White velvet'), ('Cajeta')) as v(nombre)
 where not exists (
-  select 1 from sabores_cupcakes
-  where regexp_replace(lower(nombre), '[^a-z]', '', 'g') = 'whitevelvet'
+  select 1 from sabores_cupcakes s
+  where regexp_replace(lower(s.nombre), '[^a-z]', '', 'g') = regexp_replace(lower(v.nombre), '[^a-z]', '', 'g')
 );
 
 -- Revisión: lista de sabores de cupcake

@@ -5005,18 +5005,23 @@ function imprimirPedidosDia(titulo, pedidos){
     const prod = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || '';
     const tam = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '';
     const det = p.categoria === 'pastel'
-      ? [formatNombre(p.sabor), textoCorona(p), p.decorado ? 'Decorado' + (p.decorado_descripcion ? ': ' + p.decorado_descripcion : '') : ''].filter(Boolean).join(' · ')
+      ? [formatNombre(p.sabor), p.decorado ? 'Decorado' + (p.decorado_descripcion ? ': ' + p.decorado_descripcion : '') : ''].filter(Boolean).join(' · ')
       : (p.sabor || '');
     const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
-    const ent = p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Local';
+    const ent = p.entrega === 'domicilio' ? `<b>Domicilio${hora ? ' · ' + hora : ''}</b>` : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoger en local';
+    const corona = p.categoria === 'pastel' ? (textoCorona(p) || 'Sin corona') : '';
+    const pagado = pagadoDe(p), falta = Math.max(0, (Number(p.precio)||0) - pagado);
+    const pago = falta <= 0 ? '<b>Pagado</b>'
+      : pagado > 0 ? `Anticipo ${fmtDinero(pagado)}<small><b>Falta ${fmtDinero(falta)}</b></small>`
+      : `<b>No ha pagado</b><small>Falta ${fmtDinero(falta)}</small>`;
     return `<tr>
       <td class="c">${i+1}</td>
-      <td><b>${e(p.nombre_cliente || '')}</b>${p.recibe_nombre ? `<small>Recibe: ${e(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + e(p.recibe_telefono) : ''}</small>` : ''}</td>
-      <td>${e(p.telefono || '')}</td>
+      <td><b>${e(p.nombre_cliente || '')}</b>${p.telefono ? `<small class="tel">${e(String(p.telefono).replace(/\s+/g,''))}</small>` : ''}${p.recibe_nombre ? `<small>Recibe: ${e(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + e(p.recibe_telefono) : ''}</small>` : ''}</td>
       <td>${e(prod)}${tam ? `<small>${e(tam)}</small>` : ''}</td>
       <td>${e(det)}</td>
-      <td class="c">${hora}</td>
+      <td>${e(corona)}</td>
       <td>${ent}${p.entrega === 'domicilio' && p.direccion ? `<small>${e(p.direccion)}</small>` : ''}</td>
+      <td>${pago}</td>
       <td>${e(p.notas || '')}</td>
     </tr>`;
   }).join('');
@@ -5038,6 +5043,7 @@ function imprimirPedidosDia(titulo, pedidos){
   td{border:2px solid #000; padding:7px 6px; vertical-align:top;}
   td b{font-size:16px;}
   td small{display:block; font-size:13px; margin-top:3px;}
+  td small.tel{font-size:14px; white-space:nowrap;}
   .c{text-align:center}
 </style></head><body>
 <table>
@@ -5046,7 +5052,7 @@ function imprimirPedidosDia(titulo, pedidos){
       <div class="fecha">${e(titulo)}</div>
       <div class="marca"><div class="n">CONNIE</div><div class="s">FINA REPOSTERÍA</div></div>
     </div></td></tr>
-    <tr><th style="width:4%" class="c">No</th><th style="width:16%">Nombre</th><th style="width:10%">Teléfono</th><th style="width:9%">Producto</th><th style="width:17%">Sabor / detalle</th><th style="width:10%" class="c">Hora</th><th style="width:14%">Entrega</th><th>Comentarios</th></tr>
+    <tr><th style="width:4%" class="c">No</th><th style="width:15%">Nombre</th><th style="width:8%">Producto</th><th style="width:16%">Sabor / detalle</th><th style="width:9%">Corona</th><th style="width:15%">Entrega</th><th style="width:12%">Pago</th><th>Comentarios</th></tr>
   </thead>
   <tbody>${filas}</tbody>
 </table>

@@ -1349,6 +1349,17 @@ let carritos = {
   'cart-panque': { items: [], qtys: {} }
 };
 
+// Nombre sin acentos, guiones ni espacios, y sin prefijos (cc, cheesecake, cuchareable) para comparar
+function claveNombre(t){
+  const ignorar = ['de','del','la','el','los','las','y','cc','cheesecake','cuchareable','individual','cupcake','panque'];
+  return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .split(/[^a-z0-9]+/).filter(w => w && !ignorar.includes(w)).map(w => w.length > 3 ? w.replace(/s$/, '') : w).join('');
+}
+// Convierte un nombre viejo del historial al nombre actual del catálogo (o null si ya no existe)
+function nombreActual(n, lista){
+  const k = claveNombre(n); if(!k) return null;
+  return lista.find(x => claveNombre(x) === k) || lista.find(x => { const c = claveNombre(x); return c && (c.includes(k) || k.includes(c)); }) || null;
+}
 function formatNombre(s){
   if(!s) return '';
   let t = s.replace(/^cc_/i, '');
@@ -1447,7 +1458,8 @@ async function cargarCatalogos(){
   });
 
   const cupcakePrecio = (individualesData.find(r=>r.nombre==='cupcake')||{}).precio || 0;
-  carritos['cart-cupcake'].items = saboresCupcakesData.map(r=>({nombre:r.nombre, precio:cupcakePrecio}));
+  const ordenCup = n => { const i = (typeof CUPCAKE_SABORES !== 'undefined' ? CUPCAKE_SABORES : []).findIndex(x => claveNombre(x) === claveNombre(n)); return i < 0 ? 999 : i; };
+  carritos['cart-cupcake'].items = saboresCupcakesData.slice().sort((a,b)=> ordenCup(a.nombre) - ordenCup(b.nombre) || (a.nombre||'').localeCompare(b.nombre||'')).map(r=>({nombre:r.nombre, precio:cupcakePrecio}));
   carritos['cart-individual'].items = individualesData.filter(r=>r.nombre!=='cupcake').map(r=>({nombre:r.nombre, precio:r.precio}));
   carritos['cart-panque'].items = panquesData.map(r=>({nombre:r.nombre, precio:r.precio}));
 }
@@ -2530,7 +2542,8 @@ sb.auth.onAuthStateChange((event, session) => {
   }
 });
 
-const CUPCAKE_SABORES = ["Limón","Pistache","Bi-cajeta","Especial","Bi-especial","Coco","Caramelo","Choco caramelo","Chocolate","Choco cajeta","Choco phila","Zanahoria","Plátano"];
+// Orden oficial de los cupcakes (los tres últimos ya no se hacen seguido, van hasta abajo)
+const CUPCAKE_SABORES = ["Limón","Pistache","Bi-cajeta","White velvet","Especial","Bi-especial","Coco","Caramelo","Chocolate","Choco phila","Zanahoria","Plátano","Choco cajeta","Choco caramelo"];
 const PASTEL_SABORES = ["White velvet","Bi-cajeta","Bi-especial","Bi-chocolate","Pistache","Limón","Marmoleado","Vintage","Chocolate","Caramelo","Cajeta","Especial","Rayado","Zanahoria","Cheesecakes"];
 
 let cierreDiaActual = null;
@@ -3411,7 +3424,7 @@ async function generarResumenBase(){
   }
 
   if(catalogosListos) await catalogosListos;
-  const LISTA_IND = [...new Set([...INDIVIDUAL_PRODUCTOS, ...data.flatMap(d => Object.keys(d.individuales || {}))])];
+  const LISTA_IND = INDIVIDUAL_PRODUCTOS.slice();
   const cupcakePrecio = (individualesData.find(r=>r.nombre==='cupcake')||{}).precio || 0;
   const precioMini = (tamanosData.find(r=>r.tamano==='mini')||{}).precio || 0;
   const precioChico = (tamanosData.find(r=>r.tamano==='chico')||{}).precio || 0;
@@ -3420,7 +3433,7 @@ async function generarResumenBase(){
   CUPCAKE_SABORES.forEach(n=>vendidosCupcakes[n]=0);
   const vendidosIndividuales = {};
   LISTA_IND.forEach(n=>vendidosIndividuales[n]=0);
-  const LISTA_PAN = [...new Set([...PANQUE_PRODUCTOS, ...data.flatMap(d => Object.keys(d.panques || {}))])];
+  const LISTA_PAN = PANQUE_PRODUCTOS.slice();
   const vendidosPanques = {};
   LISTA_PAN.forEach(n=>vendidosPanques[n]=0);
   const vendidosPasteles = {};
@@ -3437,13 +3450,14 @@ async function generarResumenBase(){
       vendidosCupcakes[nombre] += Math.max(0, (it.exis||0)+(it.in||0)-(it.cierre||0)-(it.merma||0)-(it.cortesia||0));
     });
 
-    LISTA_IND.forEach(nombre=>{
-      const it = (dia.individuales && dia.individuales[nombre]) || {};
+    // Los nombres viejos del historial se juntan con el nombre actual; los que ya no existen se ignoran
+    Object.entries(dia.individuales || {}).forEach(([n, it])=>{
+      const nombre = nombreActual(n, LISTA_IND); if(!nombre) return;
       vendidosIndividuales[nombre] += Math.max(0, (it.exis||0)+(it.in||0)-(it.cierre||0)-(it.merma||0)-(it.cortesia||0));
     });
 
-    LISTA_PAN.forEach(nombre=>{
-      const it = (dia.panques && dia.panques[nombre]) || {};
+    Object.entries(dia.panques || {}).forEach(([n, it])=>{
+      const nombre = nombreActual(n, LISTA_PAN); if(!nombre) return;
       vendidosPanques[nombre] += Math.max(0, (it.exis||0)+(it.in||0)-(it.cierre||0)-(it.merma||0)-(it.cortesia||0));
     });
 

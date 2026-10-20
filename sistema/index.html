@@ -694,6 +694,9 @@
   .pos-it.cort .p{text-decoration:line-through; opacity:.7;}
   .pos-mini-btn{font-family:inherit; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; border:1px solid var(--amber-l); background:transparent; color:var(--amber-l); cursor:pointer; margin-top:5px;}
   .pos-tag.cort{background:var(--amber-l); color:var(--cocoa);}
+  /* La venta crece hacia abajo con cada producto (sin lista con scroll propio) */
+  .pos-ticket{position:static !important; max-height:none !important;}
+  .pos-items{flex:none !important; overflow:visible !important; max-height:none !important;}
   .pos-ticket .msg.ok{background:rgba(227,238,229,.95);}
   .pos-tab{border-radius:999px; border:1px solid rgba(61,58,47,.2); background:#fff; color:var(--cocoa);}
   .pos-tab.sel{background:var(--cocoa); color:var(--yeso);}

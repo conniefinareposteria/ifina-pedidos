@@ -684,6 +684,15 @@
   .pos-cobrar{background:var(--amber-l) !important; color:var(--cocoa) !important;}
   .pos-cobrar:disabled{background:rgba(217,206,187,.25) !important; color:#B4AC9C !important;}
   .pos-vaciar{color:#B4AC9C;}
+  .pos-pcts{display:flex; gap:6px; justify-content:flex-end; margin:2px 0 4px;}
+  .pos-pcts button{font-family:inherit; font-size:12.5px; font-weight:700; padding:6px 10px; border-radius:999px; border:1px solid rgba(217,206,187,.4); background:transparent; color:#D6CEBF; cursor:pointer;}
+  .pos-pcts button.sel{background:var(--yeso); color:var(--cocoa); border-color:var(--yeso);}
+  .pos-extra{display:flex; gap:8px; margin-top:8px;}
+  .pos-extra button{flex:1; font-family:inherit; font-size:14px; font-weight:700; padding:11px; border-radius:999px; border:1px solid rgba(217,206,187,.45); background:transparent; color:var(--yeso); cursor:pointer;}
+  .pos-extra button.on{background:var(--yeso); color:var(--cocoa);}
+  .pos-it.cort .p{text-decoration:line-through; opacity:.7;}
+  .pos-mini-btn{font-family:inherit; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; border:1px solid var(--amber-l); background:transparent; color:var(--amber-l); cursor:pointer; margin-top:5px;}
+  .pos-tag.cort{background:var(--amber-l); color:var(--cocoa);}
   .pos-ticket .msg.ok{background:rgba(227,238,229,.95);}
   .pos-tab{border-radius:999px; border:1px solid rgba(61,58,47,.2); background:#fff; color:var(--cocoa);}
   .pos-tab.sel{background:var(--cocoa); color:var(--yeso);}
@@ -1039,7 +1048,11 @@
         <div id="pos-items" class="pos-items"></div>
         <div class="pos-tot">
           <div class="pos-row"><span>Subtotal</span><span id="pos-subtotal">$0</span></div>
+          <div class="pos-row" id="pos-cort-row" style="display:none;"><span>Cortesía</span><span id="pos-cort">−$0</span></div>
           <div class="pos-row"><span>Descuento</span><input type="number" id="pos-descuento" inputmode="decimal" placeholder="0"></div>
+          <div class="pos-pcts" id="pos-pcts">
+            <button type="button" data-p="10">10%</button><button type="button" data-p="15">15%</button><button type="button" data-p="20">20%</button><button type="button" data-p="25">25%</button><button type="button" data-p="otro">Otro</button>
+          </div>
           <div class="pos-row pos-big"><span>Total</span><input type="number" id="pos-total" inputmode="decimal"></div>
           <div class="pos-lbl">Método de pago</div>
           <div class="pos-chips" id="pos-metodos">
@@ -1052,6 +1065,10 @@
             <div class="pos-row"><span>Cambio</span><b id="pos-cambio" style="font-family:'Tinos',Georgia,serif; font-size:24px; font-weight:400; color:var(--amber-l);">$0</b></div>
           </div>
           <button type="button" class="primary pos-cobrar" id="pos-cobrar" onclick="cobrarVenta()">Cobrar</button>
+          <div class="pos-extra">
+            <button type="button" id="pos-btn-cortesia" onclick="alternarModoCortesia()">Cortesía</button>
+            <button type="button" id="pos-btn-merma" onclick="registrarMerma()">Merma</button>
+          </div>
           <div class="msg" id="pos-msg" style="margin:8px 0 0;"></div>
           <a href="#" class="pos-vaciar" onclick="vaciarVenta(); return false;">Vaciar venta</a>
         </div>
@@ -2634,10 +2651,13 @@ function invDato(dia, cat, n, tam){
   if(!it) return {};
   return tam ? (it[tam] || {}) : it;
 }
-function vendidosPorDia(ventas){
+// clase: 'v' = vendido, 'm' = merma, 'c' = cortesía (todo sale del punto de venta)
+function claseLinea(it){ return it.merma ? 'm' : it.cortesia ? 'c' : 'v'; }
+function vendidosPorDia(ventas, clase){
+  clase = clase || 'v';
   const m = {};
   (ventas||[]).forEach(v=>(v.items||[]).forEach(it=>{
-    if(it.tipo !== 'local') return;
+    if(it.tipo !== 'local' || claseLinea(it) !== clase) return;
     const f = (m[v.fecha] = m[v.fecha] || {});
     const c = (f[it.cat] = f[it.cat] || {});
     const k = it.clave + '|' + (it.tam || '');
@@ -2651,12 +2671,13 @@ async function existenciaInicial(fecha){
     .lt('fecha', fecha).order('fecha', {ascending:false}).limit(21);
   if(error) throw error;
   const lista = (dias||[]).slice().reverse();
-  let vend = {};
+  let vend = {}, mer = {}, cor = {};
   if(lista.length){
     const { data: ventas, error: e2 } = await sb.from('ventas').select('fecha,items').gte('fecha', lista[0].fecha).lt('fecha', fecha);
     if(e2) throw e2;
-    vend = vendidosPorDia(ventas);
+    vend = vendidosPorDia(ventas, 'v'); mer = vendidosPorDia(ventas, 'm'); cor = vendidosPorDia(ventas, 'c');
   }
+  const deDia = (mapa, f, cat, k) => ((((mapa[f]||{})[cat])||{})[k]||0);
   const stock = {}; INV_CATS.forEach(c=> stock[c] = {});
   lista.forEach((dia, idx)=>{
     INV_CATS.forEach(cat=>{
@@ -2666,7 +2687,8 @@ async function existenciaInicial(fecha){
         const exis = idx === 0 ? (Number(d.exis)||0) : (stock[cat][k]||0);
         let queda;
         if(dia[cat + '_listo'] && d.cierre !== undefined && d.cierre !== null) queda = Number(d.cierre)||0;
-        else queda = exis + (Number(d.in)||0) - ((((vend[dia.fecha]||{})[cat])||{})[k]||0) - (Number(d.merma)||0) - (Number(d.cortesia)||0);
+        else queda = exis + (Number(d.in)||0) - deDia(vend, dia.fecha, cat, k)
+          - Math.max(Number(d.merma)||0, deDia(mer, dia.fecha, cat, k)) - Math.max(Number(d.cortesia)||0, deDia(cor, dia.fecha, cat, k));
         stock[cat][k] = Math.max(0, queda);
       });
     });
@@ -2674,19 +2696,27 @@ async function existenciaInicial(fecha){
   return stock;
 }
 async function vendidosHoy(){
+  const t = await movimientosHoy();
+  return t.v;
+}
+async function movimientosHoy(){
   const fecha = fechaHoyStr();
   const { data, error } = await sb.from('ventas').select('fecha,items').eq('fecha', fecha);
   if(error) throw error;
-  return vendidosPorDia(data)[fecha] || {};
+  return { v: vendidosPorDia(data,'v')[fecha] || {}, m: vendidosPorDia(data,'m')[fecha] || {}, c: vendidosPorDia(data,'c')[fecha] || {} };
 }
 
 let invBase = {};      // existencia con la que arranca hoy, por sección
 let invVendHoy = {};   // vendido hoy en el punto de venta, por sección
+let invMermaHoy = {};  // merma registrada hoy en el punto de venta
+let invCortHoy = {};   // cortesías registradas hoy en el punto de venta
 
 async function cargarInventarioSeccion(cat){
-  const [base, vend] = await Promise.all([existenciaInicial(fechaHoyStr()), vendidosHoy()]);
+  const [base, mov] = await Promise.all([existenciaInicial(fechaHoyStr()), movimientosHoy()]);
   invBase = base[cat] || {};
-  invVendHoy = vend[cat] || {};
+  invVendHoy = mov.v[cat] || {};
+  invMermaHoy = mov.m[cat] || {};
+  invCortHoy = mov.c[cat] || {};
 }
 
 function recalcQueda(i){
@@ -2732,8 +2762,8 @@ async function abrirModoSeccion(modo){
       const vend = invVendHoy[nombre + '|'] || 0;
       camposHtml += `<div><label class="mini-label">IN</label><input type="number" class="mini-input" id="f_${i}_in_0" value="${prev.in || 0}" disabled style="${gris}"></div>`;
       camposHtml += `<div><label class="mini-label">Vendido</label><input type="number" class="mini-input" id="f_${i}_vend" value="${vend}" disabled style="${gris}"></div>`;
-      camposHtml += `<div><label class="mini-label">M</label>${campoConBorrar(`f_${i}_merma`, prev.merma || '', `oninput="recalcQueda(${i})"`)}</div>`;
-      camposHtml += `<div><label class="mini-label">Cortesía</label>${campoConBorrar(`f_${i}_cortesia`, prev.cortesia || '', `oninput="recalcQueda(${i})"`)}</div>`;
+      camposHtml += `<div><label class="mini-label">M</label><input type="number" class="mini-input" id="f_${i}_merma" value="${invMermaHoy[nombre + '|'] || 0}" disabled style="${gris}"></div>`;
+      camposHtml += `<div><label class="mini-label">Cortesía</label><input type="number" class="mini-input" id="f_${i}_cortesia" value="${invCortHoy[nombre + '|'] || 0}" disabled style="${gris}"></div>`;
       camposHtml += `<div><label class="mini-label">Queda</label><input type="number" class="mini-input" id="f_${i}_queda" disabled style="${gris} font-weight:700;"></div>`;
     }
 
@@ -2751,7 +2781,7 @@ async function abrirModoSeccion(modo){
     const nota = document.createElement('div');
     nota.className = 'hint';
     nota.style.margin = '4px 0 10px';
-    nota.textContent = 'Vendido sale solo del punto de venta. Solo captura merma y cortesía; lo que queda pasa como existencia al siguiente día.';
+    nota.textContent = 'Vendido, merma y cortesía salen solos del punto de venta. Lo que queda pasa como existencia al siguiente día.';
     cont.prepend(nota);
   }
 
@@ -2795,8 +2825,8 @@ function campoPastelHtml(idx, tam, modo, prevTam, exis, vend){
   } else {
     html += `<div><label class="mini-label">IN</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_in" value="${prevTam.in || 0}" disabled style="${gris}"></div>`;
     html += `<div><label class="mini-label">Vendido</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_vend" value="${vend}" disabled style="${gris}"></div>`;
-    html += `<div><label class="mini-label">M</label>${campoConBorrar(`fp_${idx}_${tam}_merma`, prevTam.merma || '', `oninput="recalcQuedaPastel(${idx}, '${tam}')"`)}</div>`;
-    html += `<div><label class="mini-label">Cortesía</label>${campoConBorrar(`fp_${idx}_${tam}_cortesia`, prevTam.cortesia || '', `oninput="recalcQuedaPastel(${idx}, '${tam}')"`)}</div>`;
+    html += `<div><label class="mini-label">M</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_merma" value="${prevTam._merma || 0}" disabled style="${gris}"></div>`;
+    html += `<div><label class="mini-label">Cortesía</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_cortesia" value="${prevTam._cortesia || 0}" disabled style="${gris}"></div>`;
     html += `<div><label class="mini-label">Queda</label><input type="number" class="mini-input" id="fp_${idx}_${tam}_queda" disabled style="${gris} font-weight:700;"></div>`;
   }
   return html;
@@ -2848,11 +2878,11 @@ async function abrirModoSeccionPasteles(modo){
     let bloques = '';
     if(modo !== 'cierre' || hayMini){
       bloques += `<div style="font-size:11px; font-weight:700; color:var(--cocoa-soft); letter-spacing:.1em; margin-bottom:3px;">MINI</div>
-      <div style="display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap;">${campoPastelHtml(i,'mini',modo,prevMini,exisMini,vendMini)}</div>`;
+      <div style="display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap;">${campoPastelHtml(i,'mini',modo,{...prevMini, _merma: invMermaHoy[nombre+'|mini']||0, _cortesia: invCortHoy[nombre+'|mini']||0},exisMini,vendMini)}</div>`;
     }
     if(modo !== 'cierre' || hayChico){
       bloques += `<div style="font-size:11px; font-weight:700; color:var(--cocoa-soft); letter-spacing:.1em; margin-bottom:3px;">CHICO</div>
-      <div style="display:flex; gap:7px; flex-wrap:wrap;">${campoPastelHtml(i,'chico',modo,prevChico,exisChico,vendChico)}</div>`;
+      <div style="display:flex; gap:7px; flex-wrap:wrap;">${campoPastelHtml(i,'chico',modo,{...prevChico, _merma: invMermaHoy[nombre+'|chico']||0, _cortesia: invCortHoy[nombre+'|chico']||0},exisChico,vendChico)}</div>`;
     }
 
     const div = document.createElement('div');
@@ -2890,10 +2920,9 @@ async function guardarSeccionPasteles(finalizar){
           t++;
         }
         nuevoItem[tam].in = inTotal;
-      } else if(modoActual === 'cierre'){
-        nuevoItem[tam].merma = parseFloat(document.getElementById(`fp_${i}_${tam}_merma`)?.value) || 0;
-        nuevoItem[tam].cortesia = parseFloat(document.getElementById(`fp_${i}_${tam}_cortesia`)?.value) || 0;
       }
+      nuevoItem[tam].merma = invMermaHoy[nombre + '|' + tam] || 0;
+      nuevoItem[tam].cortesia = invCortHoy[nombre + '|' + tam] || 0;
       // Lo que queda se calcula siempre: Exis + IN − vendido − merma − cortesía
       nuevoItem[tam].vendidos = invVendHoy[nombre + '|' + tam] || 0;
       nuevoItem[tam].cierre = Math.max(0, (nuevoItem[tam].exis||0) + (Number(nuevoItem[tam].in)||0) - nuevoItem[tam].vendidos - (Number(nuevoItem[tam].merma)||0) - (Number(nuevoItem[tam].cortesia)||0));
@@ -3120,10 +3149,9 @@ async function guardarSeccion(finalizar){
         inTotal += parseFloat(document.getElementById(`f_${i}_in_${t}`).value) || 0;
         t++;
       }
-    } else if(modoActual === 'cierre'){
-      merma = parseFloat(document.getElementById(`f_${i}_merma`).value) || 0;
-      cortesia = parseFloat(document.getElementById(`f_${i}_cortesia`).value) || 0;
     }
+    merma = invMermaHoy[nombre + '|'] || 0;
+    cortesia = invCortHoy[nombre + '|'] || 0;
     // Lo que queda se calcula siempre: Exis + IN − vendido − merma − cortesía
     const vendidos = invVendHoy[nombre + '|'] || 0;
     cierre = Math.max(0, (exis||0) + (Number(inTotal)||0) - vendidos - (Number(merma)||0) - (Number(cortesia)||0));
@@ -4213,7 +4241,7 @@ function alternarPedidoEnVenta(p){
 
 function agregarAVenta(cat, nombre, tam){
   if(posDisponible(cat, nombre, tam) <= 0) return;
-  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===nombre && (x.tam||'')===(tam||'') && !x.variante);
+  const it = posVenta.find(x=>x.tipo==='local' && x.cat===cat && x.clave===nombre && (x.tam||'')===(tam||'') && !x.variante && !x.cortesia);
   if(it) it.cantidad++;
   else {
     const precio = posPrecio(cat, nombre, tam);
@@ -4233,10 +4261,79 @@ function cambiarCantidadPOS(idx, delta){
 }
 function quitarDeVentaPOS(idx){ posVenta.splice(idx, 1); posTotalManual = false; pintarVenta(); pintarCatalogoPOS(); }
 
+let posModoCortesia = false;
+let posPct = null;
 function subtotalesPOS(){
-  let local = 0, ped = 0;
-  posVenta.forEach(it=>{ if(it.tipo === 'local') local += it.precio * it.cantidad; else ped += it.falta; });
-  return { local, ped, subtotal: local + ped };
+  let local = 0, ped = 0, cort = 0;
+  posVenta.forEach(it=>{
+    if(it.tipo === 'local'){ local += it.precio * it.cantidad; if(it.cortesia) cort += it.precio * it.cantidad; }
+    else ped += it.falta;
+  });
+  return { local, ped, cort, subtotal: local + ped, base: local + ped - cort };
+}
+function alternarModoCortesia(){
+  posModoCortesia = !posModoCortesia;
+  const b = document.getElementById('pos-btn-cortesia');
+  b.classList.toggle('on', posModoCortesia);
+  b.textContent = posModoCortesia ? 'Listo' : 'Cortesía';
+  pintarVenta();
+}
+// Pasa 1 pieza de la línea a cortesía
+function marcarCortesia(idx){
+  const it = posVenta[idx]; if(!it || it.tipo !== 'local') return;
+  let dest = posVenta.find(x=>x.tipo==='local' && x.cortesia && x.cat===it.cat && x.clave===it.clave && (x.tam||'')===(it.tam||'') && (x.variante||'')===(it.variante||''));
+  if(!dest){ dest = { ...it, cortesia:true, cantidad:0 }; posVenta.splice(idx+1, 0, dest); }
+  dest.cantidad++;
+  it.cantidad--;
+  if(it.cantidad <= 0) posVenta.splice(posVenta.indexOf(it), 1);
+  pintarVenta();
+}
+function quitarCortesia(idx){
+  const it = posVenta[idx]; if(!it || !it.cortesia) return;
+  let dest = posVenta.find(x=>x.tipo==='local' && !x.cortesia && x.cat===it.cat && x.clave===it.clave && (x.tam||'')===(it.tam||'') && (x.variante||'')===(it.variante||''));
+  if(!dest){ dest = { ...it, cortesia:false, cantidad:0 }; posVenta.splice(idx, 0, dest); }
+  dest.cantidad += it.cantidad;
+  posVenta.splice(posVenta.indexOf(it), 1);
+  pintarVenta();
+}
+function aplicarPct(p){
+  const { base } = subtotalesPOS();
+  posPct = p;
+  posTotalManual = false;
+  document.getElementById('pos-descuento').value = p ? Math.round(base * p / 100) : '';
+  document.querySelectorAll('#pos-pcts button').forEach(b=> b.classList.toggle('sel', b.dataset.p !== 'otro' ? Number(b.dataset.p) === p : !!(p && ![10,15,20,25].includes(p))));
+  pintarVenta();
+}
+document.querySelectorAll('#pos-pcts button').forEach(b=> b.addEventListener('click', ()=>{
+  if(b.dataset.p === 'otro'){
+    const v = prompt('Porcentaje de descuento (solo el número):');
+    if(v === null) return;
+    const n = Number(v);
+    if(!(n > 0 && n <= 100)){ alert('Escribe un número entre 1 y 100.'); return; }
+    aplicarPct(n);
+  } else {
+    const n = Number(b.dataset.p);
+    aplicarPct(posPct === n ? null : n);
+  }
+}));
+async function registrarMerma(){
+  const msg = document.getElementById('pos-msg'); msg.className = 'msg';
+  const locales = posVenta.filter(x=>x.tipo==='local');
+  if(!locales.length){ msg.className = 'msg err'; msg.textContent = 'Agrega los productos que se van a merma.'; return; }
+  if(posVenta.some(x=>x.tipo==='pedido')){ msg.className = 'msg err'; msg.textContent = 'Quita los pedidos de la venta antes de registrar merma.'; return; }
+  const piezas = locales.reduce((a,x)=>a + x.cantidad, 0);
+  if(!confirm(`¿Registrar ${piezas} ${piezas === 1 ? 'pieza' : 'piezas'} como merma?`)) return;
+  const items = locales.map(it=>({ tipo:'local', merma:true, cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad }));
+  const valor = items.reduce((a,x)=>a + x.subtotal, 0);
+  posGuardando = true; actualizarBotonCobrar();
+  const { error } = await sb.rpc('registrar_venta', { p_fecha: fechaHoyStr(), p_items: items, p_subtotal: valor, p_descuento: valor, p_total: 0, p_monto_local: 0, p_metodo: null });
+  posGuardando = false;
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo registrar la merma: ' + error.message; actualizarBotonCobrar(); return; }
+  vaciarVenta();
+  const texto = `Merma registrada: ${piezas} ${piezas === 1 ? 'pieza' : 'piezas'}.`;
+  msg.className = 'msg ok'; msg.textContent = texto;
+  setTimeout(()=>{ if(msg.textContent === texto) msg.className = 'msg'; }, 4000);
+  await cargarDatosPOS();
 }
 function leerNum(id){ const v = document.getElementById(id).value; return v === '' ? 0 : (Number(v) || 0); }
 
@@ -4256,37 +4353,48 @@ function pintarVenta(){
         div.querySelector('.pos-x').onclick = ()=> quitarDeVentaPOS(idx);
         const chk = div.querySelector('.pos-entregar');
         if(chk) chk.onchange = (e)=>{ it.entregar = e.target.checked; actualizarBotonCobrar(); };
+      } else if(it.cortesia){
+        div.className = 'pos-it cort';
+        div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag cort">Cortesía</span><small>${it.cantidad} × ${fmtDinero(it.precio)} · se descuenta</small></div>
+          <div class="p">${fmtDinero(it.precio * it.cantidad)}</div><button type="button" class="pos-x" title="Quitar cortesía">×</button>`;
+        div.querySelector('.pos-x').onclick = ()=> quitarCortesia(idx);
       } else {
         div.className = 'pos-it';
-        div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.incluida ? 'Incluida con el pastel' : it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small></div>
+        div.innerHTML = `<div class="n">${escHtml(it.nombre)} <span class="pos-tag loc">Local</span><small>${it.incluida ? 'Incluida con el pastel' : it.sinPrecio ? 'Sin precio en catálogo' : fmtDinero(it.precio) + ' c/u'}</small>
+          ${posModoCortesia ? '<button type="button" class="pos-mini-btn">Cortesía (1)</button>' : ''}</div>
           <div class="pos-qty"><button type="button" class="pos-qb">−</button><b>${it.cantidad}</b><button type="button" class="pos-qb">+</button></div>
           <div class="p">${fmtDinero(it.precio * it.cantidad)}</div>`;
         const [menos, mas] = div.querySelectorAll('.pos-qb');
         menos.onclick = ()=> cambiarCantidadPOS(idx, -1);
         mas.onclick = ()=> cambiarCantidadPOS(idx, +1);
+        const bc = div.querySelector('.pos-mini-btn'); if(bc) bc.onclick = ()=> marcarCortesia(idx);
       }
       cont.appendChild(div);
     });
   }
-  const { subtotal } = subtotalesPOS();
+  const { subtotal, cort, base } = subtotalesPOS();
   document.getElementById('pos-subtotal').textContent = fmtDinero(subtotal);
+  document.getElementById('pos-cort-row').style.display = cort > 0 ? 'flex' : 'none';
+  document.getElementById('pos-cort').textContent = '−' + fmtDinero(cort);
+  if(posPct) document.getElementById('pos-descuento').value = Math.round(base * posPct / 100);
   if(!posTotalManual){
     const desc = leerNum('pos-descuento');
-    document.getElementById('pos-total').value = Math.max(0, subtotal - desc);
+    document.getElementById('pos-total').value = Math.max(0, base - desc);
   }
   actualizarBotonCobrar();
 }
 
+function limpiarPct(){ posPct = null; document.querySelectorAll('#pos-pcts button').forEach(b=>b.classList.remove('sel')); }
 document.getElementById('pos-descuento').addEventListener('input', ()=>{
-  posTotalManual = false;
-  const { subtotal } = subtotalesPOS();
-  document.getElementById('pos-total').value = Math.max(0, subtotal - leerNum('pos-descuento'));
+  posTotalManual = false; limpiarPct();
+  const { base } = subtotalesPOS();
+  document.getElementById('pos-total').value = Math.max(0, base - leerNum('pos-descuento'));
   actualizarBotonCobrar();
 });
 document.getElementById('pos-total').addEventListener('input', ()=>{
-  posTotalManual = true;
-  const { subtotal } = subtotalesPOS();
-  const desc = subtotal - leerNum('pos-total');
+  posTotalManual = true; limpiarPct();
+  const { base } = subtotalesPOS();
+  const desc = base - leerNum('pos-total');
   document.getElementById('pos-descuento').value = desc > 0 ? desc : '';
   actualizarBotonCobrar();
 });
@@ -4317,9 +4425,10 @@ function actualizarBotonCobrar(){
   const nPed = posVenta.filter(x=>x.tipo==='pedido' && x.entregar).length;
   const entregar = nPed ? (nPed === 1 ? ' y entregar pedido' : ` y entregar ${nPed} pedidos`) : '';
   if(!posVenta.length){ btn.disabled = true; btn.textContent = 'Cobrar'; return; }
-  if(total <= 0 && !posVenta.some(x=>x.tipo==='local')){
-    btn.disabled = posGuardando || !nPed;
-    btn.textContent = !nPed ? 'No hay nada que cobrar' : (nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`); return; }
+  const hayLocal = posVenta.some(x=>x.tipo==='local');
+  if(total <= 0){
+    btn.disabled = posGuardando || (!nPed && !hayLocal);
+    btn.textContent = hayLocal ? 'Registrar cortesía' + entregar : (!nPed ? 'No hay nada que cobrar' : (nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`)); return; }
   if(!posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
   btn.disabled = posGuardando;
   btn.textContent = `Cobrar ${fmtDinero(total)}${entregar}`;
@@ -4327,6 +4436,8 @@ function actualizarBotonCobrar(){
 
 function vaciarVenta(){
   posVenta = []; posMetodo = null; posTotalManual = false;
+  limpiarPct();
+  if(posModoCortesia) alternarModoCortesia();
   document.getElementById('pos-recibe').value = '';
   document.getElementById('pos-descuento').value = '';
   document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=>c.classList.remove('sel'));
@@ -4337,17 +4448,18 @@ function vaciarVenta(){
 async function cobrarVenta(){
   const msg = document.getElementById('pos-msg'); msg.className = 'msg';
   if(!posVenta.length || posGuardando) return;
-  const { local, ped, subtotal } = subtotalesPOS();
+  const { local, cort, subtotal, base } = subtotalesPOS();
   const total = Math.max(0, leerNum('pos-total'));
-  const soloEntrega = total <= 0 && !posVenta.some(x=>x.tipo==='local');
+  const soloEntrega = total <= 0;
+  const habiaLocal = posVenta.some(x=>x.tipo==='local');
   if(!soloEntrega && !posMetodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
-  // El descuento (o ajuste del total) se reparte en proporción entre lo de local y lo de pedidos
-  const factor = subtotal > 0 ? total / subtotal : 0;
-  const montoLocal = Math.round(local * factor * 100) / 100;
+  // La cortesía se descuenta completa; el descuento se reparte en proporción entre lo de local y lo de pedidos
+  const factor = base > 0 ? total / base : 0;
+  const montoLocal = Math.round((local - cort) * factor * 100) / 100;
   let restante = Math.round((total - montoLocal) * 100) / 100;
   const pedidos = posVenta.filter(x=>x.tipo==='pedido');
   const items = posVenta.map(it=>{
-    if(it.tipo === 'local') return { tipo:'local', cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad };
+    if(it.tipo === 'local') return { tipo:'local', cortesia: !!it.cortesia, cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad };
     const esUltimo = it === pedidos[pedidos.length-1];
     const cobrado = esUltimo ? restante : Math.round(it.falta * factor * 100) / 100;
     if(!esUltimo) restante = Math.round((restante - cobrado) * 100) / 100;
@@ -4360,7 +4472,7 @@ async function cobrarVenta(){
   });
   posGuardando = false;
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo registrar: ' + error.message; actualizarBotonCobrar(); return; }
-  const texto = soloEntrega ? 'Pedido entregado.' : `Venta registrada: ${fmtDinero(total)} en ${formatNombre(posMetodo)}.`;
+  const texto = soloEntrega ? (habiaLocal ? 'Cortesía registrada.' : 'Pedido entregado.') : `Venta registrada: ${fmtDinero(total)} en ${formatNombre(posMetodo)}.`;
   vaciarVenta();
   msg.className = 'msg ok'; msg.textContent = texto;
   setTimeout(()=>{ if(msg.textContent === texto) msg.className = 'msg'; }, 4000);
@@ -4406,7 +4518,7 @@ async function abrirPorHacer(){
   let base, vendHoy, cierreHoy;
   try {
     let r;
-    [base, vendHoy, r] = await Promise.all([existenciaInicial(fechaHoyStr()), vendidosHoy(), sb.from('cierres_dia').select('coronas').eq('fecha', fechaHoyStr()).maybeSingle(), cargarMetas()]);
+    [base, vendHoy, r] = await Promise.all([existenciaInicial(fechaHoyStr()), movimientosHoy(), sb.from('cierres_dia').select('coronas').eq('fecha', fechaHoyStr()).maybeSingle(), cargarMetas()]);
     if(r.error) throw r.error;
     cierreHoy = r.data || {};
   }
@@ -4416,7 +4528,8 @@ async function abrirPorHacer(){
   let filasCor = '';
   CORONA_TIPOS.forEach(t=>{
     const d = ((cierreHoy.coronas)||{})[t] || {};
-    const hay = Math.max(0, (base.coronas[t + '|']||0) + (Number(d.in)||0) - (((vendHoy.coronas)||{})[t + '|']||0) - (Number(d.merma)||0) - (Number(d.cortesia)||0));
+    const k = t + '|', mv = x => ((vendHoy[x].coronas)||{})[k]||0;
+    const hay = Math.max(0, (base.coronas[k]||0) + (Number(d.in)||0) - mv('v') - Math.max(Number(d.merma)||0, mv('m')) - Math.max(Number(d.cortesia)||0, mv('c')));
     const m = Number(metaCor[t]) || 0;
     const h = Math.max(0, m - hay);
     filasCor += `<tr><td class="nombre">${t}</td><td class="n">${m}</td><td class="n">${hay}</td><td class="n"><span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span></td></tr>`;

@@ -1212,7 +1212,14 @@
       <div class="field"><label>Hasta</label><input type="date" id="resumen-hasta"></div>
     </div>
     <button class="primary" onclick="generarResumen()">Ver resumen</button>
-    <div id="resumen-contenido" style="margin-top:18px;"></div>
+    <div class="ph-tabs" id="res-tabs" style="margin:22px 0 18px;">
+      <button type="button" data-r="todo" class="sel">Todo</button>
+      <button type="button" data-r="local">Local</button>
+      <button type="button" data-r="pedidos">Pedidos</button>
+    </div>
+    <div id="res-panel-todo"><div id="res-todo-extra"></div><div id="resumen-contenido"></div></div>
+    <div id="res-panel-local" style="display:none;"></div>
+    <div id="res-panel-pedidos" style="display:none;"></div>
   </section>
 
   <!-- VISTA: HISTORIAL (LISTA) -->
@@ -3268,7 +3275,113 @@ function buscarPrecioIndividualCatalogo(nombreMostrado){
   return match ? match.precio : null;
 }
 
+function ponerTabResumen(t){
+  document.querySelectorAll('#res-tabs button').forEach(b=>b.classList.toggle('sel', b.dataset.r === t));
+  ['todo','local','pedidos'].forEach(k=> document.getElementById('res-panel-' + k).style.display = k === t ? 'block' : 'none');
+}
+document.querySelectorAll('#res-tabs button').forEach(b=> b.addEventListener('click', ()=> ponerTabResumen(b.dataset.r)));
+
 async function generarResumen(){
+  generarResumenTickets();
+  return generarResumenBase();
+}
+
+// Resumen basado en los tickets del punto de venta (Local) y en los pedidos agendados (Pedidos)
+async function generarResumenTickets(){
+  const desde = document.getElementById('resumen-desde').value;
+  const hasta = document.getElementById('resumen-hasta').value;
+  const pL = document.getElementById('res-panel-local'), pP = document.getElementById('res-panel-pedidos'), pT = document.getElementById('res-todo-extra');
+  if(!desde || !hasta){ pL.innerHTML = pP.innerHTML = pT.innerHTML = ''; return; }
+  pL.innerHTML = pP.innerHTML = pT.innerHTML = '<div class="loading">Calculando...</div>';
+  const ini = new Date(desde + 'T00:00:00').toISOString(), fin = new Date(hasta + 'T23:59:59').toISOString();
+  const [rv, rp] = await Promise.all([
+    sb.from('ventas').select('*').gte('fecha', desde).lte('fecha', hasta),
+    sb.from('pedidos').select('*').gte('fecha_entrega', ini).lte('fecha_entrega', fin)
+  ]);
+  if(rv.error || rp.error){ const m = '<div class="empty">No se pudo calcular: ' + escHtml((rv.error||rp.error).message) + '</div>'; pL.innerHTML = pP.innerHTML = pT.innerHTML = m; return; }
+  const ventas = rv.data || [], pedidos = rp.data || [];
+
+  // ---- LOCAL: solo lo que se vende en mostrador (sin lo pagado de pedidos agendados)
+  let ventaLocal = 0, tickets = 0, ticketsConPedido = 0;
+  const met = { efectivo:0, terminal:0, transferencia:0 };
+  const prod = {}; let cortN = 0, cort$ = 0, merN = 0, mer$ = 0;
+  ventas.forEach(v=>{
+    const items = v.items || [];
+    const vendidos = items.filter(i=> i.tipo === 'local' && !i.merma && !i.cortesia);
+    items.filter(i=> i.tipo === 'local').forEach(i=>{
+      const q = Number(i.cantidad)||0, $ = (Number(i.precio)||0) * q;
+      if(i.merma){ merN += q; mer$ += $; return; }
+      if(i.cortesia){ cortN += q; cort$ += $; return; }
+      const k = i.nombre || i.clave; (prod[k] = prod[k] || { q:0, $:0 }); prod[k].q += q; prod[k].$ += $;
+    });
+    const ml = Number(v.monto_local)||0;
+    if(vendidos.length && ml > 0){
+      tickets++; ventaLocal += ml;
+      if(v.metodo_pago in met) met[v.metodo_pago] += ml;
+      if(items.some(i=> i.tipo === 'pedido')) ticketsConPedido++;
+    }
+  });
+  const promLocal = tickets ? ventaLocal / tickets : 0;
+  const ranking = Object.entries(prod).sort((a,b)=> b[1].q - a[1].q);
+  const tile = (l, v, sub, azul) => `<div class="total-box${azul ? '' : ' caramelo'}"><div class="tb-label">${l}</div><div class="tb-monto">${v}</div>${sub ? `<div class="tb-sub">${sub}</div>` : ''}</div>`;
+  const filasProd = ranking.map(([n, x], i)=> `<tr><td class="num">${i+1}</td><td class="nombre">${escHtml(n)}</td><td class="n">${x.q}</td><td class="n">${fmtDinero(x.$)}</td></tr>`).join('');
+  pL.innerHTML = `
+    <div class="totales-top">
+      ${tile('Venta local', fmtDinero(ventaLocal), `${tickets} ${tickets === 1 ? 'ticket' : 'tickets'}`, true)}
+      ${tile('Ticket promedio', fmtDinero(Math.round(promLocal)), 'Solo lo comprado en mostrador')}
+      ${tile('Por método', fmtDinero(met.efectivo), `Efectivo · Terminal ${fmtDinero(met.terminal)} · Transf. ${fmtDinero(met.transferencia)}`)}
+      ${tile('Cortesías y merma', cortN + merN + ' piezas', `Cortesía ${cortN} (${fmtDinero(cort$)}) · Merma ${merN} (${fmtDinero(mer$)})`)}
+    </div>
+    ${ticketsConPedido ? `<div class="hint" style="margin:-10px 0 14px;">${ticketsConPedido} ${ticketsConPedido === 1 ? 'cliente llegó' : 'clientes llegaron'} por un pedido y además compró en mostrador (solo cuenta lo de mostrador).</div>` : ''}
+    <div class="seccion-resumen"><h3>Lo que más se vende en el local</h3>
+      ${filasProd ? `<div class="tabla-wrap" style="max-width:720px;"><table class="tabla-pedidos"><thead><tr><th>#</th><th>Producto</th><th class="n">Piezas</th><th class="n">Total</th></tr></thead><tbody>${filasProd}</tbody></table></div>` : '<div class="empty">Sin ventas de mostrador en este rango.</div>'}
+    </div>`;
+
+  // ---- PEDIDOS: lo agendado para entregar en el rango
+  let totPed = 0, cobradoPed = 0;
+  const porCat = {}, porProd = {};
+  pedidos.forEach(p=>{
+    const t = Number(p.precio)||0; totPed += t; cobradoPed += Math.min(t, pagadoDe(p));
+    const c = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || 'Otro';
+    (porCat[c] = porCat[c] || { n:0, $:0 }); porCat[c].n++; porCat[c].$ += t;
+    const k = p.categoria === 'pastel' ? `Pastel ${formatNombre(p.tamano_o_sabor)} ${formatNombre(p.sabor)}` : (p.sabor || c);
+    (porProd[k] = porProd[k] || { n:0, $:0 }); porProd[k].n++; porProd[k].$ += t;
+  });
+  const cobradoLocalPed = ventas.reduce((a,v)=> a + (Number(v.monto_pedidos)||0), 0);
+  const promPed = pedidos.length ? totPed / pedidos.length : 0;
+  const filasCat = Object.entries(porCat).sort((a,b)=> b[1].$ - a[1].$).map(([n,x])=> `<tr><td class="nombre">${escHtml(n)}</td><td class="n">${x.n}</td><td class="n">${fmtDinero(x.$)}</td></tr>`).join('');
+  const filasPP = Object.entries(porProd).sort((a,b)=> b[1].n - a[1].n).map(([n,x],i)=> `<tr><td class="num">${i+1}</td><td class="nombre">${escHtml(n)}</td><td class="n">${x.n}</td><td class="n">${fmtDinero(x.$)}</td></tr>`).join('');
+  pP.innerHTML = `
+    <div class="totales-top">
+      ${tile('Pedidos agendados', fmtDinero(totPed), `${pedidos.length} ${pedidos.length === 1 ? 'pedido' : 'pedidos'}`, true)}
+      ${tile('Ticket promedio', fmtDinero(Math.round(promPed)), 'Por pedido')}
+      ${tile('Cobrado', fmtDinero(cobradoPed), `Falta por cobrar ${fmtDinero(Math.max(0, totPed - cobradoPed))}`)}
+      ${tile('Cobrado en el local', fmtDinero(cobradoLocalPed), 'Pagos de pedidos en el punto de venta')}
+    </div>
+    <div class="grid-historial">
+      <div class="seccion-resumen"><h3>Por categoría</h3>${filasCat ? `<div class="tabla-wrap"><table class="tabla-pedidos"><thead><tr><th>Categoría</th><th class="n">Pedidos</th><th class="n">Total</th></tr></thead><tbody>${filasCat}</tbody></table></div>` : '<div class="empty">Sin pedidos en este rango.</div>'}</div>
+      <div class="seccion-resumen"><h3>Lo que más se pide</h3>${filasPP ? `<div class="tabla-wrap"><table class="tabla-pedidos"><thead><tr><th>#</th><th>Producto</th><th class="n">Pedidos</th><th class="n">Total</th></tr></thead><tbody>${filasPP}</tbody></table></div>` : '<div class="empty">Sin pedidos en este rango.</div>'}</div>
+    </div>`;
+
+  // ---- TODO: combinado
+  const nTot = tickets + pedidos.length;
+  const promTodo = nTot ? (ventaLocal + totPed) / nTot : 0;
+  const top = {};
+  Object.entries(prod).forEach(([n,x])=>{ (top[n] = top[n] || { q:0, $:0 }); top[n].q += x.q; top[n].$ += x.$; });
+  Object.entries(porProd).forEach(([n,x])=>{ (top[n] = top[n] || { q:0, $:0 }); top[n].q += x.n; top[n].$ += x.$; });
+  const filasTop = Object.entries(top).sort((a,b)=> b[1].q - a[1].q).slice(0, 10).map(([n,x],i)=> `<tr><td class="num">${i+1}</td><td class="nombre">${escHtml(n)}</td><td class="n">${x.q}</td><td class="n">${fmtDinero(x.$)}</td></tr>`).join('');
+  pT.innerHTML = `
+    <div class="totales-top">
+      ${tile('Ticket promedio general', fmtDinero(Math.round(promTodo)), `${nTot} clientes (${tickets} de mostrador · ${pedidos.length} pedidos)`, true)}
+      ${tile('Ticket promedio local', fmtDinero(Math.round(promLocal)), 'Solo mostrador')}
+      ${tile('Ticket promedio pedidos', fmtDinero(Math.round(promPed)), 'Por pedido agendado')}
+    </div>
+    <div class="seccion-resumen"><h3>Top 10 de lo que más sale</h3>
+      ${filasTop ? `<div class="tabla-wrap" style="max-width:720px;"><table class="tabla-pedidos"><thead><tr><th>#</th><th>Producto</th><th class="n">Piezas / pedidos</th><th class="n">Total</th></tr></thead><tbody>${filasTop}</tbody></table></div>` : '<div class="empty">Sin ventas en este rango.</div>'}
+    </div>`;
+}
+
+async function generarResumenBase(){
   const desde = document.getElementById('resumen-desde').value;
   const hasta = document.getElementById('resumen-hasta').value;
   const cont = document.getElementById('resumen-contenido');

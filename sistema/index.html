@@ -1184,16 +1184,14 @@
         <div class="cart-row-name">Coronas ámbar <span id="check-coronas"></span></div>
         <div>›</div>
       </div>
+      <div class="cart-row" style="cursor:pointer;" onclick="abrirMermaCortesia()">
+        <div class="cart-row-name">Mermas y cortesía <span id="mc-cuenta" class="hint" style="margin-left:6px;"></span></div>
+        <div>›</div>
+      </div>
       <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('caja')">
         <div class="cart-row-name">Corte de caja <span id="check-caja"></span></div>
         <div>›</div>
       </div>
-    </div>
-    <div class="seccion-resumen" style="margin-bottom:18px;">
-      <h3 style="margin-bottom:8px;">Merma y cortesía de hoy</h3>
-      <div id="mc-dia" class="loading">Cargando...</div>
-      <button type="button" class="primary" id="btn-imprimir-mc" style="margin-top:10px; display:none;" onclick="imprimirResumenMC()">Imprimir merma y cortesía</button>
-      <div class="msg" id="mc-msg"></div>
     </div>
     <button class="primary" id="btn-cerrar-dia" onclick="cerrarDia()">Cerrar día</button>
     <div class="msg" id="productos-dia-msg"></div>
@@ -1251,6 +1249,14 @@
 
 </div><!-- cierre app-contenido -->
 
+<div class="ep-velo" id="mc-velo" onclick="cerrarModal('mc')"></div>
+<div class="ep-hoja" id="mc-hoja" role="dialog" aria-modal="true" style="width:min(620px,94vw);">
+  <h2>Mermas y cortesía de hoy</h2>
+  <div id="mc-dia" class="loading">Cargando...</div>
+  <button type="button" class="primary" id="btn-imprimir-mc" style="margin-top:10px; display:none;" onclick="imprimirResumenMC()">Imprimir</button>
+  <div class="msg" id="mc-msg"></div>
+  <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('mc')">Cerrar</button></div>
+</div>
 <div class="ep-velo" id="tk-velo" onclick="responderTicket(false)"></div>
 <div class="ep-hoja" id="tk-hoja" role="dialog" aria-modal="true" style="width:min(420px,94vw);">
   <h2>¿Quiere ticket?</h2>
@@ -4743,7 +4749,7 @@ function armarTicketXML(t){
   let pago = '';
   if(t.metodo) pago += tkFila('Pago', formatNombre(t.metodo)) + '\n';
   if(t.recibe > 0) pago += tkFila('Recibe', tkPesos(t.recibe)) + '\n' + tkFila('Cambio', tkPesos(t.recibe - t.total)) + '\n';
-  const encabezado = 'WhatsApp 667 139 0756\n' + fechaTxt + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : '');
+  const encabezado = 'WhatsApp 667 139 0756\nAv. Juan de la Barrera 1141, Local 2\nCol. Chapultepec, C.P. 80040\n' + fechaTxt + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : '');
   return '<?xml version="1.0" encoding="utf-8"?>'
     + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>'
     + '<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">'
@@ -4757,6 +4763,7 @@ function armarTicketXML(t){
     + `<text>${tkTexto('TOTAL ' + tkPesos(t.total) + '\n')}</text>`
     + '<text align="left" dw="false" dh="false" em="false"/>'
     + (pago ? `<text>${tkTexto(pago)}</text>` : '')
+    + '<feed line="1"/><text align="center" em="true"/>' + `<text>${tkTexto('¡Muchas gracias!\n')}</text>` + '<text em="false"/>'
     + '<feed line="3"/><cut type="feed"/>'
     + '</epos-print></s:Body></s:Envelope>';
 }
@@ -4802,8 +4809,16 @@ async function cargarMermaCortesiaHoy(){
       <tfoot><tr><td>Total</td><td class="n">${tq}</td><td class="n">${fmtDinero(t$)}</td></tr></tfoot></table></div>`;
   };
   cont.className = '';
-  cont.innerHTML = tabla('Merma', mcHoy.merma) + tabla('Cortesía', mcHoy.cortesia);
+  cont.innerHTML = (mcHoy.merma.length || mcHoy.cortesia.length) ? tabla('Merma', mcHoy.merma) + tabla('Cortesía', mcHoy.cortesia) : '<div class="empty">Hoy no hay mermas ni cortesías registradas.</div>';
+  const pzs = g => g.reduce((a,[,x])=> a + x.q, 0);
+  const cuenta = document.getElementById('mc-cuenta');
+  if(cuenta) cuenta.textContent = (mcHoy.merma.length || mcHoy.cortesia.length) ? `Merma ${pzs(mcHoy.merma)} · Cortesía ${pzs(mcHoy.cortesia)}` : '';
   btn.style.display = (mcHoy.merma.length || mcHoy.cortesia.length) ? 'block' : 'none';
+}
+function abrirMermaCortesia(){
+  document.getElementById('mc-msg').className = 'msg';
+  abrirModal('mc');
+  cargarMermaCortesiaHoy();
 }
 function armarResumenMCXML(d){
   const raya = '-'.repeat(TK_COLS) + '\n';

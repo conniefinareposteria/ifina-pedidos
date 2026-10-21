@@ -1189,6 +1189,12 @@
         <div>›</div>
       </div>
     </div>
+    <div class="seccion-resumen" style="margin-bottom:18px;">
+      <h3 style="margin-bottom:8px;">Merma y cortesía de hoy</h3>
+      <div id="mc-dia" class="loading">Cargando...</div>
+      <button type="button" class="primary" id="btn-imprimir-mc" style="margin-top:10px; display:none;" onclick="imprimirResumenMC()">Imprimir merma y cortesía</button>
+      <div class="msg" id="mc-msg"></div>
+    </div>
     <button class="primary" id="btn-cerrar-dia" onclick="cerrarDia()">Cerrar día</button>
     <div class="msg" id="productos-dia-msg"></div>
   </section>
@@ -2606,6 +2612,7 @@ async function abrirProductosDia(){
   }
   cierreDiaActual = data || { fecha, cupcakes:{}, individuales:{}, pasteles:{}, panques:{}, coronas:{}, corte_caja:{}, cupcakes_listo:false, individuales_listo:false, pasteles_listo:false, panques_listo:false, caja_listo:false, cerrado:false };
   actualizarChecksHub();
+  cargarMermaCortesiaHoy();
 }
 
 function actualizarChecksHub(){
@@ -2630,6 +2637,7 @@ let nivelSeccion = 'chooser';
 function volverAProductosDia(){
   document.getElementById('view-seccion').classList.remove('active');
   document.getElementById('view-productos').classList.add('active');
+  cargarMermaCortesiaHoy();
 }
 
 function irAtras(){
@@ -4508,9 +4516,12 @@ async function registrarMerma(){
   const items = locales.map(it=>({ tipo:'local', merma:true, cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad }));
   const valor = items.reduce((a,x)=>a + x.subtotal, 0);
   posGuardando = true; actualizarBotonCobrar();
-  const { error } = await sb.rpc('registrar_venta', { p_fecha: fechaHoyStr(), p_items: items, p_subtotal: valor, p_descuento: valor, p_total: 0, p_monto_local: 0, p_metodo: null });
+  const { data: folio, error } = await sb.rpc('registrar_venta', { p_fecha: fechaHoyStr(), p_items: items, p_subtotal: valor, p_descuento: valor, p_total: 0, p_monto_local: 0, p_metodo: null });
   posGuardando = false;
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo registrar la merma: ' + error.message; actualizarBotonCobrar(); return; }
+  ticketPendiente = { tipo:'merma', folio, fecha: new Date(), items, valor };
+  document.getElementById('tk-sub').textContent = `Merma: ${piezas} ${piezas === 1 ? 'pieza' : 'piezas'}`;
+  abrirModal('tk');
   vaciarVenta();
   const texto = `Merma registrada: ${piezas} ${piezas === 1 ? 'pieza' : 'piezas'}.`;
   msg.className = 'msg ok'; msg.textContent = texto;
@@ -4690,9 +4701,30 @@ function tkFila(izq, der){
   return izq + ' '.repeat(TK_COLS - izq.length - der.length) + der;
 }
 function tkPesos(n){ return '$' + (Number(n)||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function tkFechaTxt(f){ return f.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + f.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'}); }
+function tkSobre(cuerpo){
+  return '<?xml version="1.0" encoding="utf-8"?>'
+    + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>'
+    + '<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">'
+    + '<text lang="en" smooth="true"/>' + cuerpo + '<feed line="3"/><cut type="feed"/>'
+    + '</epos-print></s:Body></s:Envelope>';
+}
+function tkLogo(){ return '<text align="center"/>' + `<image width="${LOGO_TICKET.w}" height="${LOGO_TICKET.h}" color="color_1" mode="mono">${LOGO_TICKET.data}</image>` + '<feed line="1"/>'; }
+function tkTitulo(txt){ return '<text align="center" dw="true" dh="true" em="true"/>' + `<text>${tkTexto(txt + '\n')}</text>` + '<text dw="false" dh="false" em="false"/>'; }
+function armarMermaXML(t){
+  const raya = '-'.repeat(TK_COLS) + '\n';
+  let cuerpo = '', piezas = 0;
+  t.items.forEach(it=>{ piezas += Number(it.cantidad)||0; cuerpo += tkFila(`${it.cantidad} ${it.nombre}`, tkPesos(it.precio * it.cantidad)) + '\n'; });
+  return tkSobre(tkLogo() + tkTitulo('MERMA')
+    + `<text>${tkTexto(tkFechaTxt(t.fecha) + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : ''))}</text>`
+    + '<text align="left"/>'
+    + `<text>${tkTexto(raya + cuerpo + raya + tkFila(piezas + (piezas === 1 ? ' pieza' : ' piezas'), tkPesos(t.valor)) + '\n')}</text>`);
+}
 function armarTicketXML(t){
+  if(t.tipo === 'merma') return armarMermaXML(t);
   const f = t.fecha;
-  const fechaTxt = f.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + f.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+  const fechaTxt = tkFechaTxt(f);
+  const soloCortesia = t.cort > 0 && t.total <= 0 && !t.items.some(it=> it.tipo !== 'local');
   const raya = '-'.repeat(TK_COLS) + '\n';
   let cuerpo = '';
   t.items.forEach(it=>{
@@ -4716,9 +4748,8 @@ function armarTicketXML(t){
     + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>'
     + '<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">'
     + '<text lang="en" smooth="true"/>'
-    + '<text align="center"/>'
-    + `<image width="${LOGO_TICKET.w}" height="${LOGO_TICKET.h}" color="color_1" mode="mono">${LOGO_TICKET.data}</image>`
-    + '<feed line="1"/>'
+    + tkLogo()
+    + (soloCortesia ? tkTitulo('CORTESÍA') + '<text align="center"/>' : '')
     + `<text>${tkTexto(encabezado)}</text>`
     + '<text align="left"/>'
     + `<text>${tkTexto(raya + cuerpo + raya + tot)}</text>`
@@ -4729,12 +4760,13 @@ function armarTicketXML(t){
     + '<feed line="3"/><cut type="feed"/>'
     + '</epos-print></s:Body></s:Envelope>';
 }
-async function imprimirTicket(t){
+async function imprimirTicket(t){ return enviarEpson(armarTicketXML(t)); }
+async function enviarEpson(xml){
   const url = `https://${IMPRESORA_TICKETS}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
   const ctrl = new AbortController();
   const corte = setTimeout(()=> ctrl.abort(), 15000);
   try {
-    const r = await fetch(url, { method:'POST', body: armarTicketXML(t), signal: ctrl.signal,
+    const r = await fetch(url, { method:'POST', body: xml, signal: ctrl.signal,
       headers: { 'Content-Type':'text/xml; charset=utf-8', 'If-Modified-Since':'Thu, 01 Jan 1970 00:00:00 GMT', 'SOAPAction':'""' } });
     const txt = await r.text();
     if(!/success="true"/.test(txt)){
@@ -4743,6 +4775,58 @@ async function imprimirTicket(t){
     }
   } finally { clearTimeout(corte); }
 }
+// ---- Merma y cortesía del día (Productos del día) ----
+let mcHoy = null;
+async function cargarMermaCortesiaHoy(){
+  const cont = document.getElementById('mc-dia'); if(!cont) return;
+  const btn = document.getElementById('btn-imprimir-mc');
+  cont.className = 'loading'; cont.textContent = 'Cargando...'; btn.style.display = 'none';
+  const { data, error } = await sb.from('ventas').select('items').eq('fecha', fechaHoyStr());
+  if(error){ cont.className = 'empty'; cont.textContent = 'No se pudo cargar: ' + error.message; return; }
+  const junta = { m:{}, c:{} };
+  (data||[]).forEach(v=>(v.items||[]).forEach(it=>{
+    if(it.tipo !== 'local' || !(it.merma || it.cortesia)) return;
+    const g = junta[it.merma ? 'm' : 'c'];
+    const k = it.nombre || it.clave;
+    const q = Number(it.cantidad)||0;
+    (g[k] = g[k] || { q:0, $:0 }); g[k].q += q; g[k].$ += (Number(it.precio)||0) * q;
+  }));
+  const lista = g => Object.entries(g).sort((a,b)=> a[0].localeCompare(b[0], 'es'));
+  mcHoy = { merma: lista(junta.m), cortesia: lista(junta.c) };
+  const tabla = (titulo, filas) => {
+    if(!filas.length) return `<div class="hint" style="margin:6px 0 12px;">${titulo}: nada registrado hoy.</div>`;
+    const tq = filas.reduce((a,[,x])=> a + x.q, 0), t$ = filas.reduce((a,[,x])=> a + x.$, 0);
+    return `<div class="tabla-wrap" style="max-width:620px; margin-bottom:12px;"><table class="tabla-pedidos">
+      <thead><tr><th>${titulo}</th><th class="n">Piezas</th><th class="n">Valor</th></tr></thead>
+      <tbody>${filas.map(([n,x])=>`<tr><td class="nombre">${escHtml(n)}</td><td class="n">${x.q}</td><td class="n">${fmtDinero(x.$)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Total</td><td class="n">${tq}</td><td class="n">${fmtDinero(t$)}</td></tr></tfoot></table></div>`;
+  };
+  cont.className = '';
+  cont.innerHTML = tabla('Merma', mcHoy.merma) + tabla('Cortesía', mcHoy.cortesia);
+  btn.style.display = (mcHoy.merma.length || mcHoy.cortesia.length) ? 'block' : 'none';
+}
+function armarResumenMCXML(d){
+  const raya = '-'.repeat(TK_COLS) + '\n';
+  const bloque = (titulo, filas) => {
+    if(!filas.length) return `${titulo}: nada\n` + raya;
+    let t = titulo.toUpperCase() + '\n', q = 0, $ = 0;
+    filas.forEach(([n,x])=>{ q += x.q; $ += x.$; t += tkFila(`${x.q} ${n}`, tkPesos(x.$)) + '\n'; });
+    return t + tkFila('Total ' + q + (q === 1 ? ' pieza' : ' piezas'), tkPesos($)) + '\n' + raya;
+  };
+  const hoy = new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  return tkSobre(tkLogo() + tkTitulo('MERMA Y CORTESÍA')
+    + `<text>${tkTexto(hoy.charAt(0).toUpperCase() + hoy.slice(1) + '\n')}</text>`
+    + '<text align="left"/>'
+    + `<text>${tkTexto(raya + bloque('Merma', d.merma) + bloque('Cortesía', d.cortesia))}</text>`);
+}
+async function imprimirResumenMC(){
+  const msg = document.getElementById('mc-msg');
+  if(!mcHoy) return;
+  msg.className = 'msg ok'; msg.textContent = 'Imprimiendo...';
+  try { await enviarEpson(armarResumenMCXML(mcHoy)); msg.className = 'msg ok'; msg.textContent = 'Impreso.'; }
+  catch(e){ msg.className = 'msg err'; msg.textContent = 'No se pudo imprimir (' + (e.name === 'AbortError' ? 'la impresora no contestó' : e.message) + ').'; }
+}
+
 async function responderTicket(si){
   cerrarModal('tk');
   const t = ticketPendiente; ticketPendiente = null;

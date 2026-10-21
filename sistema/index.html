@@ -2707,10 +2707,12 @@ async function existenciaInicial(fecha){
   if(error) throw error;
   const lista = (dias||[]).slice().reverse();
   let vend = {}, mer = {}, cor = {};
+  const diasConPOS = new Set();
   if(lista.length){
     const { data: ventas, error: e2 } = await sb.from('ventas').select('fecha,items').gte('fecha', lista[0].fecha).lt('fecha', fecha);
     if(e2) throw e2;
     vend = vendidosPorDia(ventas, 'v'); mer = vendidosPorDia(ventas, 'm'); cor = vendidosPorDia(ventas, 'c');
+    (ventas||[]).forEach(v=> diasConPOS.add(v.fecha));
   }
   const deDia = (mapa, f, cat, k) => ((((mapa[f]||{})[cat])||{})[k]||0);
   const stock = {}; INV_CATS.forEach(c=> stock[c] = {});
@@ -2721,7 +2723,9 @@ async function existenciaInicial(fecha){
         const d = invDato(dia, cat, n, tam);
         const exis = idx === 0 ? (Number(d.exis)||0) : (stock[cat][k]||0);
         let queda;
-        if(dia[cat + '_listo'] && d.cierre !== undefined && d.cierre !== null) queda = Number(d.cierre)||0;
+        // Si ese día hubo punto de venta, lo que queda siempre sale de la cuenta real
+        // (aunque algo se haya registrado después de finalizar). Antes del punto de venta se usa el cierre capturado.
+        if(!diasConPOS.has(dia.fecha) && dia[cat + '_listo'] && d.cierre !== undefined && d.cierre !== null) queda = Number(d.cierre)||0;
         else queda = exis + (Number(d.in)||0) - deDia(vend, dia.fecha, cat, k)
           - Math.max(Number(d.merma)||0, deDia(mer, dia.fecha, cat, k)) - Math.max(Number(d.cortesia)||0, deDia(cor, dia.fecha, cat, k));
         stock[cat][k] = Math.max(0, queda);

@@ -4434,7 +4434,7 @@ function filaPedidoPOS(p, conFecha){
   return row;
 }
 
-const POS_EDITAR_ACTIVO = false;   // se activa cuando se corra sql/pos_editar_entrega.sql
+const POS_EDITAR_ACTIVO = true;
 // ---- Resumen del día en el punto de venta: cada ticket con hora, lo que se llevó y lo que se pagó
 async function abrirResumenDiaPOS(){
   const hoy = new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});

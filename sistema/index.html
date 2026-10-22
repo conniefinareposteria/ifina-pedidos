@@ -1261,6 +1261,17 @@
   <div class="msg" id="mc-msg"></div>
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('mc')">Cerrar</button></div>
 </div>
+<div class="ep-velo" id="pe-velo" onclick="cerrarModal('pe')"></div>
+<div class="ep-hoja" id="pe-hoja" role="dialog" aria-modal="true" style="width:min(440px,94vw);">
+  <h2 id="pe-titulo">Pedido</h2>
+  <div class="ep-sub" id="pe-sub"></div>
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <button type="button" class="primary" id="btn-pe-dom" style="margin:0;" onclick="accionPedidoPOS('domicilio')">Se fue a domicilio (quitar de entregas del local)</button>
+    <button type="button" class="primary" id="btn-pe-reabrir" style="margin:0; background:var(--amber-l); color:var(--cocoa);" onclick="accionPedidoPOS('reabrir')">Quitar finalizado (volver a pendiente)</button>
+  </div>
+  <div class="msg" id="pe-msg"></div>
+  <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('pe')">Cancelar</button></div>
+</div>
 <div class="ep-velo" id="tk-velo" onclick="responderTicket(false)"></div>
 <div class="ep-hoja" id="tk-hoja" role="dialog" aria-modal="true" style="width:min(420px,94vw);">
   <h2>¿Quiere ticket?</h2>
@@ -4392,6 +4403,8 @@ function filaPedidoPOS(p, conFecha){
   const est = p.entregado ? '<span class="pos-est ok">✓ Finalizado</span>'
     : enVenta ? '<span class="pos-est sel">En la venta</span>'
     : falta > 0 ? '<span class="pos-est pend">Pendiente</span>' : '<span class="pos-est pend">Por entregar</span>';
+  const esLocalP = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
+  const puedeEditar = p.entregado || esLocalP;
   const row = document.createElement('div');
   row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
   row.innerHTML = `<div><b>${fecha ? escHtml(fecha) : hora}</b>${fecha ? `<small>${hora}</small>` : ''}</div>
@@ -4399,11 +4412,39 @@ function filaPedidoPOS(p, conFecha){
     <div>${escHtml(detallePedidoPOS(p))}<small><b style="color:var(--cocoa);">${p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoge en local'}</b>${sub ? ' · ' + escHtml(sub) : ''}</small></div>
     <div class="m">${fmtDinero(tot)}<small>Total · pagó ${fmtDinero(pagadoDe(p))}</small></div>
     <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--rojo)' : 'var(--sage)'};">${falta > 0 && !p.entregado ? fmtDinero(falta) + '<small>Falta</small>' : '✓ Pagado<small>Falta $0</small>'}</div>
-    ${est}`;
+    <div style="justify-self:end; display:flex; flex-direction:column; align-items:flex-end; gap:6px;">${est}${puedeEditar ? '<a href="#" class="link-accion pos-editar" style="margin:0; font-size:13px;">Editar</a>' : ''}</div>`;
   if(!p.entregado) row.onclick = ()=> alternarPedidoEnVenta(p);
+  const be = row.querySelector('.pos-editar');
+  if(be) be.onclick = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); editarPedidoPOS(p); };
   return row;
 }
 
+let pedidoEditPOS = null;
+function editarPedidoPOS(p){
+  pedidoEditPOS = p;
+  document.getElementById('pe-titulo').textContent = p.nombre_cliente || 'Pedido';
+  document.getElementById('pe-sub').textContent = detallePedidoPOS(p) + (p.entregado ? ' · Finalizado' : ' · Recoge en local');
+  const esLocalP = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
+  document.getElementById('btn-pe-dom').style.display = (!p.entregado && esLocalP) ? 'block' : 'none';
+  document.getElementById('btn-pe-reabrir').style.display = p.entregado ? 'block' : 'none';
+  document.getElementById('pe-msg').className = 'msg';
+  abrirModal('pe');
+}
+async function accionPedidoPOS(cual){
+  const p = pedidoEditPOS; if(!p) return;
+  const msg = document.getElementById('pe-msg');
+  const { error } = cual === 'domicilio'
+    ? await sb.rpc('pos_cambiar_entrega', { p_id: p.id, p_entrega: 'domicilio' })
+    : await sb.rpc('pos_reabrir_pedido', { p_id: p.id });
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message; return; }
+  const i = posVenta.findIndex(x=>x.tipo==='pedido' && x.pedido_id === p.id);
+  if(i >= 0){ posVenta.splice(i, 1); pintarVenta(); }
+  cerrarModal('pe');
+  const m = document.getElementById('pos-msg');
+  m.className = 'msg ok'; m.textContent = cual === 'domicilio' ? `${p.nombre_cliente || 'El pedido'} ahora es a domicilio.` : `${p.nombre_cliente || 'El pedido'} regresó a pendiente por entregar.`;
+  await cargarDatosPOS();
+  if(posBusqueda) buscarPedidosPOS();
+}
 function pintarPedidosPOS(cont){
   cont.className = 'pos-plist'; cont.innerHTML = '';
   if(posBusqueda){
@@ -4731,11 +4772,20 @@ const TK_COLS = 42;
 let ticketPendiente = null;
 function tkEsc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function tkTexto(t){ return tkEsc(t).replace(/\n/g, '&#10;'); }
+// Bloque de renglones del mismo ancho, para que al centrarlo queden alineados entre sí
+function tkBloque(t){
+  return String(t).split('\n').map((l, i, arr)=> (i === arr.length - 1 && l === '') ? '' : l.padEnd(TK_COLS, ' ')).join('\n');
+}
 function tkFila(izq, der){
   der = String(der || ''); izq = String(izq || '');
   const max = TK_COLS - der.length - 1;
   // Si el texto no cabe junto al precio, el texto va completo arriba y el precio en el renglón de abajo
-  if(izq.length > max) return izq.slice(0, TK_COLS * 2) + '\n' + ' '.repeat(Math.max(0, TK_COLS - der.length)) + der;
+  if(izq.length > max){
+    const partes = []; let r = izq.slice(0, TK_COLS * 3);
+    while(r.length > TK_COLS){ partes.push(r.slice(0, TK_COLS)); r = r.slice(TK_COLS); }
+    if(r.length) partes.push(r);
+    return partes.join('\n') + '\n' + ' '.repeat(Math.max(0, TK_COLS - der.length)) + der;
+  }
   return izq + ' '.repeat(TK_COLS - izq.length - der.length) + der;
 }
 function tkPesos(n){ return '$' + (Number(n)||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2}); }
@@ -4755,8 +4805,7 @@ function armarMermaXML(t){
   t.items.forEach(it=>{ piezas += Number(it.cantidad)||0; cuerpo += tkFila(`${it.cantidad} ${it.nombre}`, tkPesos(it.precio * it.cantidad)) + '\n'; });
   return tkSobre(tkLogo() + tkTitulo('MERMA')
     + `<text>${tkTexto(tkFechaTxt(t.fecha) + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : ''))}</text>`
-    + '<text align="left"/>'
-    + `<text>${tkTexto(raya + cuerpo + raya + tkFila(piezas + (piezas === 1 ? ' pieza' : ' piezas'), tkPesos(t.valor)) + '\n')}</text>`);
+    + `<text>${tkTexto(tkBloque(raya + cuerpo + raya + tkFila(piezas + (piezas === 1 ? ' pieza' : ' piezas'), tkPesos(t.valor)) + '\n'))}</text>`);
 }
 function armarTicketXML(t){
   if(t.tipo === 'merma') return armarMermaXML(t);
@@ -4803,12 +4852,12 @@ function armarTicketXML(t){
     + tkLogo()
     + (soloCortesia ? tkTitulo('CORTESÍA') + '<text align="center"/>' : '')
     + `<text>${tkTexto(encabezado)}</text>`
-    + '<text align="left"/>'
-    + `<text>${tkTexto(raya + cuerpo + raya + tot + raya)}</text>`
-    + '<text align="right" dw="false" dh="true" em="true"/>'
-    + `<text>${tkTexto('TOTAL ' + tkPesos(totalTicket) + '\n')}</text>`
-    + '<text align="left" dw="false" dh="false" em="false"/><feed line="1"/>'
-    + (pago ? `<text>${tkTexto(pago)}</text>` : '')
+    + '<text align="center"/>'
+    + `<text>${tkTexto(tkBloque(raya + cuerpo + raya + tot + raya))}</text>`
+    + '<text dw="false" dh="true" em="true"/>'
+    + `<text>${tkTexto(tkBloque(tkFila('TOTAL', tkPesos(totalTicket)) + '\n'))}</text>`
+    + '<text dw="false" dh="false" em="false"/><feed line="1"/>'
+    + (pago ? `<text>${tkTexto(tkBloque(pago))}</text>` : '')
     + '<feed line="1"/><text align="center" dw="true" dh="true" em="true"/>' + `<text>${tkTexto('¡Muchas gracias!\n')}</text>`
     + '<text dw="false" dh="false"/><feed line="1"/>' + `<text>${tkTexto('¡Que lo disfrutes!\n')}</text>` + '<text em="false"/>'
 
@@ -4879,8 +4928,7 @@ function armarResumenMCXML(d){
   const hoy = new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   return tkSobre(tkLogo() + tkTitulo('MERMA Y CORTESÍA')
     + `<text>${tkTexto(hoy.charAt(0).toUpperCase() + hoy.slice(1) + '\n')}</text>`
-    + '<text align="left"/>'
-    + `<text>${tkTexto(raya + bloque('Merma', d.merma) + bloque('Cortesía', d.cortesia))}</text>`);
+    + `<text>${tkTexto(tkBloque(raya + bloque('Merma', d.merma) + bloque('Cortesía', d.cortesia)))}</text>`);
 }
 async function imprimirResumenMC(){
   const msg = document.getElementById('mc-msg');

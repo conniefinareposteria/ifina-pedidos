@@ -538,6 +538,12 @@
   .rd-venta .rd-editar{border:1.5px solid var(--cocoa); background:transparent; color:var(--cocoa); border-radius:20px; padding:6px 16px; font:700 13px 'Arimo',Arial,sans-serif; cursor:pointer;}
   .pos-edit{border:2px dashed var(--amber-l); border-radius:12px; padding:9px 11px; margin-bottom:10px; font-size:13.5px; line-height:1.45; color:#E6DCCB;}
   .pos-edit b{color:var(--yeso);}
+  .pos-dif{margin-top:10px; border:2.5px solid var(--amber-l); border-radius:14px; padding:10px 14px; background:rgba(227,160,74,.14);}
+  .pos-dif .fila{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .pos-dif .fila + .fila{margin-top:6px; padding-top:6px; border-top:1px solid rgba(217,206,187,.25);}
+  .pos-dif .que{font:700 15px 'Arimo',Arial,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--yeso);}
+  .pos-dif .que small{display:block; font-size:12px; letter-spacing:0; text-transform:none; font-weight:400; color:#E6DCCB;}
+  .pos-dif .cuanto{font-family:'Tinos',Georgia,serif; font-size:34px; color:var(--yeso); white-space:nowrap;}
   .pos-edit a{color:var(--amber-l); font-weight:700;}
   .rd-tag{display:inline-block; font-size:11.5px; font-weight:700; border-radius:20px; padding:2px 9px; margin-left:6px; background:var(--cream-deep); color:var(--cocoa);}
   .pos-prow small{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
@@ -1070,7 +1076,8 @@
           <div class="pos-pcts" id="pos-pcts">
             <button type="button" data-p="10">10%</button><button type="button" data-p="15">15%</button><button type="button" data-p="20">20%</button><button type="button" data-p="25">25%</button><button type="button" data-p="otro">Otro</button>
           </div>
-          <div class="pos-row pos-big"><span>Total</span><input type="number" id="pos-total" inputmode="decimal"></div>
+          <div class="pos-row pos-big"><span id="pos-total-lbl">Total</span><input type="number" id="pos-total" inputmode="decimal"></div>
+          <div class="pos-dif" id="pos-dif" style="display:none;"></div>
           <div class="pos-lbl">Método de pago</div>
           <div class="pos-chips" id="pos-metodos">
             <div class="pos-chip" data-m="efectivo">Efectivo</div>
@@ -4516,6 +4523,16 @@ async function editarVentaPOS(v){
   await cargarDatosPOS();
 }
 // Cuánto dinero se mueve con el cambio (para decirle al cajero qué devolver o cobrar)
+function filasDiferenciaEdicion(total, metodo){
+  const ed = posEditando; if(!ed) return [];
+  const orig = ed.total, mOrig = ed.metodo ? formatNombre(ed.metodo) : '', mNuevo = metodo ? formatNombre(metodo) : '';
+  if(orig > 0 && total > 0 && ed.metodo !== metodo)
+    return [{ que:'Devolver al cliente', como:mOrig, monto:orig }, { que:'Cobrar al cliente', como:mNuevo, monto:total }];
+  const dif = Math.round((total - orig) * 100) / 100;
+  if(dif > 0) return [{ que:'Cobrar al cliente', como:mNuevo, monto:dif }];
+  if(dif < 0) return [{ que:'Devolver al cliente', como:mOrig, monto:-dif }];
+  return [{ que:'Sin diferencia', como:'No se cobra ni se devuelve', monto:0 }];
+}
 function textoDiferenciaEdicion(total, metodo){
   const ed = posEditando; if(!ed) return '';
   const orig = ed.total, mOrig = ed.metodo ? formatNombre(ed.metodo) : '', mNuevo = metodo ? formatNombre(metodo) : '';
@@ -4529,11 +4546,16 @@ function textoDiferenciaEdicion(total, metodo){
 function pintarBannerEdicion(){
   const b = document.getElementById('pos-edit-banner');
   document.getElementById('pos-h2-titulo').textContent = posEditando ? `Editando folio ${posEditando.id}` : 'Venta actual';
-  if(!posEditando){ b.style.display = 'none'; return; }
+  const dif = document.getElementById('pos-dif');
+  document.getElementById('pos-total-lbl').textContent = posEditando ? 'Nuevo total' : 'Total';
+  if(!posEditando){ b.style.display = 'none'; dif.style.display = 'none'; return; }
   const total = Math.max(0, leerNum('pos-total'));
+  // Lo importante en una devolución o cambio: cuánto cobrar o devolver, grande junto al total
+  dif.style.display = 'block';
+  dif.innerHTML = filasDiferenciaEdicion(total, total > 0 ? posMetodo : null).map(f=>
+    `<div class="fila"><div class="que">${escHtml(f.que)}${f.como ? `<small>${escHtml(f.como)}</small>` : ''}</div><div class="cuanto">${fmtDinero(f.monto)}</div></div>`).join('');
   b.style.display = 'block';
-  b.innerHTML = `Antes: <b>${fmtDinero(posEditando.total)}</b>${posEditando.metodo ? ' · ' + escHtml(formatNombre(posEditando.metodo)) : ''} · Ahora: <b>${fmtDinero(total)}</b><br>
-    <b>${escHtml(textoDiferenciaEdicion(total, total > 0 ? posMetodo : null))}</b><br>
+  b.innerHTML = `Ya había pagado: <b>${fmtDinero(posEditando.total)}</b>${posEditando.metodo ? ' · ' + escHtml(formatNombre(posEditando.metodo)) : ''}<br>
     <span style="font-size:12.5px;">Quita lo que devolvió y agrega lo que se lleva. Lo quitado regresa a existencia.</span>
     <a href="#" id="pos-cancelar-edicion" style="display:block; margin-top:4px;">Cancelar edición</a>`;
   document.getElementById('pos-cancelar-edicion').onclick = (e)=>{ e.preventDefault(); vaciarVenta(); };
@@ -4852,7 +4874,9 @@ function actualizarBotonCobrar(){
   if(posEditando){
     if(total > 0 && !posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
     btn.disabled = posGuardando;
-    btn.textContent = posVenta.length ? `Actualizar folio ${posEditando.id}` : `Devolver todo (folio ${posEditando.id})`;
+    const f = filasDiferenciaEdicion(Math.max(0, total), total > 0 ? posMetodo : null);
+    const accion = f.map(x=> x.monto > 0 ? `${x.que.split(' ')[0]} ${fmtDinero(x.monto)}` : '').filter(Boolean).join(' y ');
+    btn.textContent = (posVenta.length ? `Actualizar folio ${posEditando.id}` : `Devolver todo (folio ${posEditando.id})`) + (accion ? ' · ' + accion : '');
     return;
   }
   const nPed = posVenta.filter(x=>x.tipo==='pedido' && x.entregar).length;

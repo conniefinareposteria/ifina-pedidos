@@ -4808,7 +4808,7 @@ function armarTicketXML(t){
     + '<text align="left" dw="false" dh="false" em="false"/>'
     + (pago ? `<text>${tkTexto(pago)}</text>` : '')
     + '<feed line="1"/><text align="center" dw="true" dh="true" em="true"/>' + `<text>${tkTexto('¡Muchas gracias!\n')}</text>`
-    + '<text dw="false" dh="false"/>' + `<text>${tkTexto('¡Que lo disfrutes!\n')}</text>` + '<text em="false"/>'
+    + '<text dw="false" dh="false"/><feed line="1"/>' + `<text>${tkTexto('¡Que lo disfrutes!\n')}</text>` + '<text em="false"/>'
     + '<feed line="1"/>' + `<image width="${CARITA_TICKET.w}" height="${CARITA_TICKET.h}" color="color_1" mode="mono">${CARITA_TICKET.data}</image>`
     + '<feed line="3"/><cut type="feed"/>'
     + '</epos-print></s:Body></s:Envelope>';

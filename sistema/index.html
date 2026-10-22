@@ -1203,6 +1203,7 @@
       <a href="#" onclick="irAtras(); return false;" style="color:var(--jam-deep); font-weight:700; font-size:22px; text-decoration:none;">←</a>
       <div style="font-family:'Tinos',Georgia,serif; font-size:18px; font-weight:600;" id="seccion-titulo"></div>
     </div>
+    <input type="search" id="seccion-buscar" placeholder="Buscar producto (ej. white velvet)" autocomplete="off" style="display:none; margin-bottom:12px;" oninput="filtrarSeccion()">
     <div id="seccion-filas"></div>
     <button class="primary" id="btn-guardar-seccion" style="margin-top:8px; display:none;" onclick="guardarSeccion(false)">Guardar</button>
     <button class="primary" id="btn-finalizar-seccion" style="margin-top:10px; background:var(--sage); display:none;" onclick="guardarSeccion(true)">Finalizar sección</button>
@@ -2667,7 +2668,20 @@ function fechaStrDesdeDate(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+function mostrarBuscadorSeccion(si){
+  const b = document.getElementById('seccion-buscar');
+  b.value = ''; b.style.display = si ? 'block' : 'none';
+}
+function filtrarSeccion(){
+  const norm = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const q = norm(document.getElementById('seccion-buscar').value);
+  document.querySelectorAll('#seccion-filas .seccion-item').forEach(el=>{
+    const n = el.querySelector('.nombre-item');
+    el.style.display = !q || (n && norm(n.textContent).includes(q)) ? '' : 'none';
+  });
+}
 function abrirSeccion(tipo){
+  mostrarBuscadorSeccion(false);
   if(tipo === 'caja'){
     return abrirSeccionCaja();
   }
@@ -2807,6 +2821,7 @@ async function abrirModoSeccion(modo){
   try { await cargarInventarioSeccion(seccionActual); }
   catch(e){ cont.innerHTML = `<div class="empty">No se pudieron calcular las existencias: ${escHtml(e.message)}</div>`; return; }
 
+  mostrarBuscadorSeccion(seccionActual !== 'coronas');
   document.getElementById('seccion-titulo').textContent =
     ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués', coronas:'Coronas ámbar'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
   cont.innerHTML = '';
@@ -2922,6 +2937,7 @@ async function abrirModoSeccionPasteles(modo){
   try { await cargarInventarioSeccion('pasteles'); }
   catch(e){ cont.innerHTML = `<div class="empty">No se pudieron calcular las existencias: ${escHtml(e.message)}</div>`; return; }
 
+  mostrarBuscadorSeccion(true);
   document.getElementById('seccion-titulo').textContent = 'Pasteles — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
   cont.innerHTML = '';
 

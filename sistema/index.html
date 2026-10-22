@@ -529,6 +529,12 @@
   .pos-tam button:disabled{opacity:.4; cursor:default;}
   .pos-plist{display:flex; flex-direction:column; gap:10px;}
   .pos-prow{display:grid; grid-template-columns:64px minmax(0,1.3fr) minmax(0,2fr) 84px 84px 112px; gap:12px; align-items:center; background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:12px 16px; font-size:14px; cursor:pointer;}
+  .pos-resumen-btn{position:fixed; right:0; top:42%; z-index:40; writing-mode:vertical-rl; transform:rotate(180deg); background:var(--cocoa); color:#fff; border:none; border-radius:0 14px 14px 0; padding:16px 9px; font:600 14px 'Arimo',Arial,sans-serif; letter-spacing:.04em; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.18);}
+  .rd-venta{border:1px solid var(--line); border-radius:14px; padding:10px 14px; margin-bottom:10px; background:var(--paper);}
+  .rd-cab{display:flex; justify-content:space-between; gap:10px; align-items:baseline; font-size:14px;}
+  .rd-cab b{font-family:'Tinos',Georgia,serif; font-size:17px;}
+  .rd-lin{display:flex; justify-content:space-between; gap:10px; font-size:13.5px; color:var(--cocoa-soft); padding:2px 0;}
+  .rd-tag{display:inline-block; font-size:11.5px; font-weight:700; border-radius:20px; padding:2px 9px; margin-left:6px; background:var(--cream-deep); color:var(--cocoa);}
   .pos-prow small{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
   .pos-prow .m{text-align:right;}
   .pos-prow.sel{border-color:var(--jam); box-shadow:0 0 0 2px var(--jam-bg);}
@@ -1042,6 +1048,7 @@
 
   <!-- VISTA: PUNTO DE VENTA (colaborador) -->
   <section id="view-pos" class="view">
+    <button type="button" class="pos-resumen-btn" onclick="abrirResumenDiaPOS()">Resumen del día</button>
     <div class="pos-top">
       <a href="#" class="link-accion solo-colab" style="margin:0;" onclick="irInicio(); return false;">← Inicio</a>
       <span id="pos-fecha" class="hint" style="margin:0;"></span>
@@ -1271,6 +1278,14 @@
   </div>
   <div class="msg" id="pe-msg"></div>
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('pe')">Cancelar</button></div>
+</div>
+<div class="ep-velo" id="rd-velo" onclick="cerrarModal('rd')"></div>
+<div class="ep-hoja" id="rd-hoja" role="dialog" aria-modal="true" style="width:min(760px,96vw);">
+  <h2>Resumen del día</h2>
+  <div class="ep-sub" id="rd-sub"></div>
+  <div id="rd-totales"></div>
+  <div id="rd-lista" class="loading">Cargando...</div>
+  <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('rd')">Cerrar</button></div>
 </div>
 <div class="ep-velo" id="tk-velo" onclick="responderTicket(false)"></div>
 <div class="ep-hoja" id="tk-hoja" role="dialog" aria-modal="true" style="width:min(420px,94vw);">
@@ -4404,7 +4419,7 @@ function filaPedidoPOS(p, conFecha){
     : enVenta ? '<span class="pos-est sel">En la venta</span>'
     : falta > 0 ? '<span class="pos-est pend">Pendiente</span>' : '<span class="pos-est pend">Por entregar</span>';
   const esLocalP = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
-  const puedeEditar = p.entregado || esLocalP;
+  const puedeEditar = POS_EDITAR_ACTIVO && (p.entregado || esLocalP);
   const row = document.createElement('div');
   row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
   row.innerHTML = `<div><b>${fecha ? escHtml(fecha) : hora}</b>${fecha ? `<small>${hora}</small>` : ''}</div>
@@ -4419,6 +4434,49 @@ function filaPedidoPOS(p, conFecha){
   return row;
 }
 
+const POS_EDITAR_ACTIVO = false;   // se activa cuando se corra sql/pos_editar_entrega.sql
+// ---- Resumen del día en el punto de venta: cada ticket con hora, lo que se llevó y lo que se pagó
+async function abrirResumenDiaPOS(){
+  const hoy = new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
+  document.getElementById('rd-sub').textContent = hoy.charAt(0).toUpperCase() + hoy.slice(1);
+  const lista = document.getElementById('rd-lista'), tot = document.getElementById('rd-totales');
+  lista.className = 'loading'; lista.textContent = 'Cargando...'; tot.innerHTML = '';
+  abrirModal('rd');
+  const { data, error } = await sb.from('ventas').select('*').eq('fecha', fechaHoyStr()).order('created_at', {ascending:false});
+  if(error){ lista.className = 'empty'; lista.textContent = 'No se pudo cargar: ' + error.message; return; }
+  const ventas = data || [];
+  if(!ventas.length){ lista.className = 'empty'; lista.textContent = 'Todavía no hay ventas hoy.'; return; }
+  const met = { efectivo:0, terminal:0, transferencia:0 };
+  let cobrado = 0, nVentas = 0;
+  ventas.forEach(v=>{ const t = Number(v.total)||0; cobrado += t; if(t > 0) nVentas++; if(v.metodo_pago in met) met[v.metodo_pago] += t; });
+  tot.innerHTML = `<div class="totales-top" style="margin-bottom:14px;">
+    <div class="total-box"><div class="tb-label">Cobrado hoy</div><div class="tb-monto">${fmtDinero(cobrado)}</div><div class="tb-sub">${nVentas} ${nVentas === 1 ? 'venta' : 'ventas'}</div></div>
+    <div class="total-box caramelo"><div class="tb-label">Por método</div><div class="tb-sub" style="font-size:13.5px; line-height:1.6;">Efectivo ${fmtDinero(met.efectivo)}<br>Terminal ${fmtDinero(met.terminal)}<br>Transferencia ${fmtDinero(met.transferencia)}</div></div>
+  </div>`;
+  lista.className = '';
+  lista.innerHTML = ventas.map(v=>{
+    const items = v.items || [];
+    const hora = v.created_at ? new Date(v.created_at).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'}) : '';
+    const esMerma = items.length && items.every(i=> i.merma);
+    const soloCort = !esMerma && items.length && items.every(i=> i.tipo === 'local' && i.cortesia);
+    const tag = esMerma ? 'Merma' : soloCort ? 'Cortesía' : (Number(v.total)||0) <= 0 ? 'Entrega' : '';
+    const lineas = items.map(i=>{
+      if(i.tipo === 'local'){
+        const extra = i.merma ? ' (merma)' : i.cortesia ? ' (cortesía)' : '';
+        return `<div class="rd-lin"><span>${i.cantidad} ${escHtml(i.nombre || i.clave || '')}${extra}</span><span>${fmtDinero((Number(i.precio)||0) * (Number(i.cantidad)||0))}</span></div>`;
+      }
+      const que = i.anticipo ? 'Anticipo' : i.entregar ? 'Entregado' : 'Pago';
+      return `<div class="rd-lin"><span>Pedido: ${escHtml(i.nombre || '')}${i.detalle ? ' · ' + escHtml(i.detalle) : ''} <i>(${que})</i></span><span>${fmtDinero(i.cobrado)}</span></div>`;
+    }).join('');
+    const desc = Number(v.descuento)||0;
+    return `<div class="rd-venta">
+      <div class="rd-cab"><span><b>${hora}</b> · Folio ${v.id}${tag ? `<span class="rd-tag">${tag}</span>` : ''}</span>
+        <span><b>${fmtDinero(v.total)}</b>${v.metodo_pago ? ' · ' + escHtml(formatNombre(v.metodo_pago)) : ''}</span></div>
+      ${lineas}
+      ${desc > 0 && !esMerma ? `<div class="rd-lin"><span>Descuento / cortesía</span><span>-${fmtDinero(desc)}</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
 let pedidoEditPOS = null;
 function editarPedidoPOS(p){
   pedidoEditPOS = p;

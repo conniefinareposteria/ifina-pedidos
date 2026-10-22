@@ -534,6 +534,11 @@
   .rd-cab{display:flex; justify-content:space-between; gap:10px; align-items:baseline; font-size:14px;}
   .rd-cab b{font-family:'Tinos',Georgia,serif; font-size:17px;}
   .rd-lin{display:flex; justify-content:space-between; gap:10px; font-size:13.5px; color:var(--cocoa-soft); padding:2px 0;}
+  .rd-acc{display:flex; justify-content:flex-end; margin-top:6px;}
+  .rd-venta .rd-editar{border:1.5px solid var(--cocoa); background:transparent; color:var(--cocoa); border-radius:20px; padding:6px 16px; font:700 13px 'Arimo',Arial,sans-serif; cursor:pointer;}
+  .pos-edit{border:2px dashed var(--amber-l); border-radius:12px; padding:9px 11px; margin-bottom:10px; font-size:13.5px; line-height:1.45; color:#E6DCCB;}
+  .pos-edit b{color:var(--yeso);}
+  .pos-edit a{color:var(--amber-l); font-weight:700;}
   .rd-tag{display:inline-block; font-size:11.5px; font-weight:700; border-radius:20px; padding:2px 9px; margin-left:6px; background:var(--cream-deep); color:var(--cocoa);}
   .pos-prow small{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
   .pos-prow .m{text-align:right;}
@@ -1055,7 +1060,8 @@
     </div>
     <div class="pos-grid">
       <aside class="pos-ticket">
-        <div class="pos-h2">Venta actual</div>
+        <div class="pos-h2" id="pos-h2-titulo">Venta actual</div>
+        <div class="pos-edit" id="pos-edit-banner" style="display:none;"></div>
         <div id="pos-items" class="pos-items"></div>
         <div class="pos-tot">
           <div class="pos-row"><span>Subtotal</span><span id="pos-subtotal">$0</span></div>
@@ -4225,6 +4231,7 @@ let posHayCierre = false;
 let posPedidos = [];
 let posTotalManual = false;
 let posGuardando = false;
+let posEditando = null;      // ticket que se está editando: {id, creado, total, metodo}
 
 function posKey(it){ return it.cat + '|' + it.clave + '|' + (it.tam || ''); }
 function posPrecio(cat, nombre, tam){
@@ -4274,7 +4281,7 @@ async function cargarDatosPOS(){
   const [rango0, rango1] = rangoHoyISO();
   const [cierre, ventas, peds] = await Promise.all([
     sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle(),
-    sb.from('ventas').select('items').eq('fecha', fecha),
+    sb.from('ventas').select('id,items').eq('fecha', fecha),
     sb.rpc('pedidos_entrega_hoy', { desde: rango0, hasta: rango1 })
   ]);
   if(ventas.error || peds.error){
@@ -4302,7 +4309,8 @@ async function cargarDatosPOS(){
       }
     });
   });
-  (ventas.data||[]).forEach(v=>(v.items||[]).forEach(it=>{
+  // Si se está editando un ticket, sus productos cuentan como disponibles otra vez (están en la venta actual)
+  (ventas.data||[]).forEach(v=>(posEditando && v.id === posEditando.id ? [] : (v.items||[])).forEach(it=>{
     if(it.tipo !== 'local' || !posStock[it.cat]) return;
     const k = it.clave + '|' + (it.tam||'');
     posStock[it.cat][k] = (posStock[it.cat][k]||0) - (Number(it.cantidad)||0);
@@ -4445,6 +4453,7 @@ async function abrirResumenDiaPOS(){
   const { data, error } = await sb.from('ventas').select('*').eq('fecha', fechaHoyStr()).order('created_at', {ascending:false});
   if(error){ lista.className = 'empty'; lista.textContent = 'No se pudo cargar: ' + error.message; return; }
   const ventas = data || [];
+  rdVentas = ventas;
   if(!ventas.length){ lista.className = 'empty'; lista.textContent = 'Todavía no hay ventas hoy.'; return; }
   const met = { efectivo:0, terminal:0, transferencia:0 };
   let cobrado = 0, nVentas = 0;
@@ -4459,7 +4468,8 @@ async function abrirResumenDiaPOS(){
     const hora = v.created_at ? new Date(v.created_at).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'}) : '';
     const esMerma = items.length && items.every(i=> i.merma);
     const soloCort = !esMerma && items.length && items.every(i=> i.tipo === 'local' && i.cortesia);
-    const tag = esMerma ? 'Merma' : soloCort ? 'Cortesía' : (Number(v.total)||0) <= 0 ? 'Entrega' : '';
+    const editable = items.every(i=> i.tipo === 'local' && !i.merma);
+    const tag = !items.length ? 'Devuelto' : esMerma ? 'Merma' : soloCort ? 'Cortesía' : (Number(v.total)||0) <= 0 ? 'Entrega' : '';
     const lineas = items.map(i=>{
       if(i.tipo === 'local'){
         const extra = i.merma ? ' (merma)' : i.cortesia ? ' (cortesía)' : '';
@@ -4474,8 +4484,88 @@ async function abrirResumenDiaPOS(){
         <span><b>${fmtDinero(v.total)}</b>${v.metodo_pago ? ' · ' + escHtml(formatNombre(v.metodo_pago)) : ''}</span></div>
       ${lineas}
       ${desc > 0 && !esMerma ? `<div class="rd-lin"><span>Descuento / cortesía</span><span>-${fmtDinero(desc)}</span></div>` : ''}
+      ${editable ? `<div class="rd-acc">${v.editado_at ? '<span class="rd-tag" style="margin:0 8px 0 0; align-self:center;">Editado</span>' : ''}<button type="button" class="rd-editar" data-id="${v.id}">Editar</button></div>` : ''}
     </div>`;
   }).join('');
+  lista.querySelectorAll('.rd-editar').forEach(b=> b.onclick = ()=> editarVentaPOS(rdVentas.find(x=> String(x.id) === b.dataset.id)));
+}
+
+// ---- Editar un ticket (devolución o cambio): se carga en la venta, se ajusta y se guarda con el mismo folio
+let rdVentas = [];
+async function editarVentaPOS(v){
+  if(!v) return;
+  if(posVenta.length && !(posEditando && posEditando.id === v.id)){
+    if(!confirm(`Hay una venta en curso. ¿Quitarla para editar el folio ${v.id}?`)) return;
+  }
+  vaciarVenta(false);
+  const items = v.items || [];
+  posEditando = { id: v.id, creado: v.created_at ? new Date(v.created_at) : new Date(), total: Number(v.total)||0, metodo: v.metodo_pago || null };
+  posVenta = items.map(i=>({ tipo:'local', cat:i.cat, categoria:i.categoria, clave:i.clave, tam:i.tam || null, variante:i.variante || null,
+    incluida: !!(i.variante && String(i.variante).endsWith('-incluida')), nombre:i.nombre, precio:Number(i.precio)||0, cantidad:Number(i.cantidad)||0, cortesia: !!i.cortesia }));
+  // Descuento que tenía: si era un porcentaje de los botones, se respeta como porcentaje
+  const { base } = subtotalesPOS();
+  const desc = Math.max(0, Math.round((base - posEditando.total) * 100) / 100);
+  const pct = base > 0 ? Math.round(desc / base * 100) : 0;
+  if(desc > 0 && [10,15,20,25].includes(pct) && Math.abs(Math.round(base * pct / 100) - desc) < 1) aplicarPct(pct);
+  else document.getElementById('pos-descuento').value = desc > 0 ? desc : '';
+  posMetodo = posEditando.metodo;
+  document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=> c.classList.toggle('sel', c.dataset.m === posMetodo));
+  cerrarModal('rd');
+  document.getElementById('pos-msg').className = 'msg';
+  pintarVenta();
+  await cargarDatosPOS();
+}
+// Cuánto dinero se mueve con el cambio (para decirle al cajero qué devolver o cobrar)
+function textoDiferenciaEdicion(total, metodo){
+  const ed = posEditando; if(!ed) return '';
+  const orig = ed.total, mOrig = ed.metodo ? formatNombre(ed.metodo) : '', mNuevo = metodo ? formatNombre(metodo) : '';
+  if(orig > 0 && total > 0 && ed.metodo !== metodo)
+    return `Devolver ${fmtDinero(orig)} (${mOrig}) y cobrar ${fmtDinero(total)} (${mNuevo})`;
+  const dif = Math.round((total - orig) * 100) / 100;
+  if(dif > 0) return `Cobrar diferencia: ${fmtDinero(dif)}${mNuevo ? ' (' + mNuevo + ')' : ''}`;
+  if(dif < 0) return `Devolver al cliente: ${fmtDinero(-dif)}${mOrig ? ' (' + mOrig + ')' : ''}`;
+  return 'Sin diferencia de dinero';
+}
+function pintarBannerEdicion(){
+  const b = document.getElementById('pos-edit-banner');
+  document.getElementById('pos-h2-titulo').textContent = posEditando ? `Editando folio ${posEditando.id}` : 'Venta actual';
+  if(!posEditando){ b.style.display = 'none'; return; }
+  const total = Math.max(0, leerNum('pos-total'));
+  b.style.display = 'block';
+  b.innerHTML = `Antes: <b>${fmtDinero(posEditando.total)}</b>${posEditando.metodo ? ' · ' + escHtml(formatNombre(posEditando.metodo)) : ''} · Ahora: <b>${fmtDinero(total)}</b><br>
+    <b>${escHtml(textoDiferenciaEdicion(total, total > 0 ? posMetodo : null))}</b><br>
+    <span style="font-size:12.5px;">Quita lo que devolvió y agrega lo que se lleva. Lo quitado regresa a existencia.</span>
+    <a href="#" id="pos-cancelar-edicion" style="display:block; margin-top:4px;">Cancelar edición</a>`;
+  document.getElementById('pos-cancelar-edicion').onclick = (e)=>{ e.preventDefault(); vaciarVenta(); };
+}
+async function guardarEdicionVenta(){
+  const msg = document.getElementById('pos-msg'); msg.className = 'msg';
+  const ed = posEditando; if(!ed || posGuardando) return;
+  const { cort, subtotal } = subtotalesPOS();
+  const total = Math.max(0, leerNum('pos-total'));
+  const metodo = total > 0 ? posMetodo : null;
+  if(total > 0 && !metodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
+  const items = posVenta.filter(it=> it.tipo === 'local' && it.cantidad > 0).map(it=>({ tipo:'local', cortesia: !!it.cortesia, cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad }));
+  if(!items.length && !confirm(`¿Devolver todo el folio ${ed.id}? El ticket queda en $0 y todo regresa a existencia.`)) return;
+  const aviso = textoDiferenciaEdicion(total, metodo);
+  posGuardando = true; actualizarBotonCobrar();
+  const { error } = await sb.rpc('editar_venta', { p_id: ed.id, p_items: items, p_subtotal: subtotal, p_descuento: Math.max(0, subtotal - total),
+    p_total: total, p_monto_local: total, p_metodo: metodo });
+  posGuardando = false;
+  if(error){
+    const faltaSQL = /editar_venta|schema cache|does not exist/i.test(error.message);
+    msg.className = 'msg err';
+    msg.textContent = faltaSQL ? 'Falta correr en Supabase el archivo sql/editar_venta.sql. Después de eso ya se puede editar.' : 'No se pudo actualizar: ' + error.message;
+    actualizarBotonCobrar(); return;
+  }
+  if(items.length){
+    ticketPendiente = { folio: ed.id, fecha: ed.creado, items, subtotal, cort, total, metodo, recibe: 0 };
+    document.getElementById('tk-sub').textContent = `Folio ${ed.id} actualizado · ${aviso}`;
+    abrirModal('tk');
+  }
+  vaciarVenta();
+  // Este aviso se queda hasta la siguiente acción para que no se olvide devolver o cobrar
+  msg.className = 'msg ok'; msg.textContent = `Folio ${ed.id} actualizado. ${aviso}.`;
 }
 let pedidoEditPOS = null;
 function editarPedidoPOS(p){
@@ -4517,6 +4607,7 @@ function pintarPedidosPOS(cont){
 }
 
 function alternarPedidoEnVenta(p){
+  if(posEditando){ const m = document.getElementById('pos-msg'); m.className = 'msg err'; m.textContent = 'Al editar un ticket no se pueden agregar pedidos. Termina o cancela la edición.'; return; }
   const i = posVenta.findIndex(x=>x.tipo==='pedido' && x.pedido_id === p.id);
   if(i >= 0) posVenta.splice(i, 1);
   else {
@@ -4642,6 +4733,7 @@ document.querySelectorAll('#pos-pcts button').forEach(b=> b.addEventListener('cl
 }));
 async function registrarMerma(){
   const msg = document.getElementById('pos-msg'); msg.className = 'msg';
+  if(posEditando){ msg.className = 'msg err'; msg.textContent = 'Termina o cancela la edición del folio antes de registrar merma.'; return; }
   const locales = posVenta.filter(x=>x.tipo==='local');
   if(!locales.length){ msg.className = 'msg err'; msg.textContent = 'Agrega los productos que se van a merma.'; return; }
   if(posVenta.some(x=>x.tipo==='pedido')){ msg.className = 'msg err'; msg.textContent = 'Quita los pedidos de la venta antes de registrar merma.'; return; }
@@ -4737,8 +4829,8 @@ document.querySelectorAll('#pos-metodos .pos-chip').forEach(el=> el.addEventList
 
 function actualizarCambioPOS(){
   const wrap = document.getElementById('pos-efectivo-wrap');
-  wrap.style.display = posMetodo === 'efectivo' ? 'block' : 'none';
-  if(posMetodo !== 'efectivo') return;
+  wrap.style.display = posMetodo === 'efectivo' && !posEditando ? 'block' : 'none';
+  if(posMetodo !== 'efectivo' || posEditando) return;
   const total = leerNum('pos-total');
   const v = document.getElementById('pos-recibe').value;
   const el = document.getElementById('pos-cambio');
@@ -4755,6 +4847,14 @@ function actualizarBotonCobrar(){
   if(ba) ba.disabled = !posVenta.some(x=>x.tipo==='pedido');
   const btn = document.getElementById('pos-cobrar');
   const total = leerNum('pos-total');
+  pintarBannerEdicion();
+  document.getElementById('pos-btn-merma').disabled = !!posEditando;
+  if(posEditando){
+    if(total > 0 && !posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
+    btn.disabled = posGuardando;
+    btn.textContent = posVenta.length ? `Actualizar folio ${posEditando.id}` : `Devolver todo (folio ${posEditando.id})`;
+    return;
+  }
   const nPed = posVenta.filter(x=>x.tipo==='pedido' && x.entregar).length;
   const entregar = nPed ? (nPed === 1 ? ' y entregar pedido' : ` y entregar ${nPed} pedidos`) : '';
   if(!posVenta.length){ btn.disabled = true; btn.textContent = 'Cobrar'; return; }
@@ -4767,7 +4867,9 @@ function actualizarBotonCobrar(){
   btn.textContent = `Cobrar ${fmtDinero(total)}${entregar}`;
 }
 
-function vaciarVenta(){
+function vaciarVenta(recargar){
+  const estabaEditando = !!posEditando;
+  posEditando = null;
   posVenta = []; posMetodo = null; posTotalManual = false;
   limpiarPct();
   if(posModoCortesia) alternarModoCortesia();
@@ -4777,9 +4879,12 @@ function vaciarVenta(){
   document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=>c.classList.remove('sel'));
   document.getElementById('pos-msg').className = 'msg';
   pintarVenta(); pintarCatalogoPOS();
+  // Al salir de una edición se recalculan existencias (ya cuenta otra vez el ticket guardado)
+  if(estabaEditando && recargar !== false) cargarDatosPOS();
 }
 
 async function cobrarVenta(){
+  if(posEditando) return guardarEdicionVenta();
   const msg = document.getElementById('pos-msg'); msg.className = 'msg';
   if(!posVenta.length || posGuardando) return;
   const { local, cort, subtotal, base } = subtotalesPOS();

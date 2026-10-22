@@ -1203,7 +1203,10 @@
       <a href="#" onclick="irAtras(); return false;" style="color:var(--jam-deep); font-weight:700; font-size:22px; text-decoration:none;">←</a>
       <div style="font-family:'Tinos',Georgia,serif; font-size:18px; font-weight:600;" id="seccion-titulo"></div>
     </div>
-    <input type="search" id="seccion-buscar" placeholder="Buscar producto (ej. white velvet)" autocomplete="off" style="display:none; margin-bottom:12px;" oninput="filtrarSeccion()">
+    <div class="field" id="seccion-buscar-wrap" style="display:none; margin-bottom:14px;">
+      <label for="seccion-buscar">Buscar producto</label>
+      <input type="text" id="seccion-buscar" placeholder="Ej. White velvet" autocomplete="off" oninput="filtrarSeccion()">
+    </div>
     <div id="seccion-filas"></div>
     <button class="primary" id="btn-guardar-seccion" style="margin-top:8px; display:none;" onclick="guardarSeccion(false)">Guardar</button>
     <button class="primary" id="btn-finalizar-seccion" style="margin-top:10px; background:var(--sage); display:none;" onclick="guardarSeccion(true)">Finalizar sección</button>
@@ -2669,8 +2672,8 @@ function fechaStrDesdeDate(d){
 }
 
 function mostrarBuscadorSeccion(si){
-  const b = document.getElementById('seccion-buscar');
-  b.value = ''; b.style.display = si ? 'block' : 'none';
+  document.getElementById('seccion-buscar').value = '';
+  document.getElementById('seccion-buscar-wrap').style.display = si ? 'block' : 'none';
 }
 function filtrarSeccion(){
   const norm = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();

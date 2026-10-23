@@ -1017,6 +1017,7 @@
       <div style="font-family:'Tinos',Georgia,serif; font-size:19px; font-weight:600; color:var(--jam-deep); margin-bottom:6px;">Tu pedido se guardó exitosamente</div>
       <div style="font-size:13.5px; color:var(--cocoa-soft); margin-bottom:22px;">Ya puedes capturar el siguiente.</div>
       <button class="primary" style="max-width:260px;" onclick="iniciarNuevoPedido()">Iniciar nuevo pedido</button>
+      <div class="msg" id="conf-msg" style="max-width:420px; margin:12px auto 0;"></div>
       <div class="solo-colab" style="margin-top:14px;"><a href="#" class="link-inicio" onclick="iniciarNuevoPedido(); irInicio(); return false;">Volver al inicio</a></div>
     </div>
   </section>
@@ -2234,6 +2235,14 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
 
     document.getElementById('form-pedido').style.display = 'none';
     document.getElementById('confirmacion').style.display = 'block';
+    document.getElementById('conf-msg').className = 'msg';
+    // En el local: si dejó anticipo (o pagó completo), ofrecer el comprobante impreso
+    if(rolActual === 'colaborador' && (Number(pedido.anticipo)||0) > 0){
+      ticketPendiente = { comprobante:true, fecha:new Date(), items:[itemTicketPedido(pedido)], subtotal:0, cort:0, total:0, metodo:null,
+        metodoAnticipo: pedido.metodo_pago || null, recibe:0, msgId:'conf-msg', nota:'El pedido sí quedó guardado.' };
+      document.getElementById('tk-sub').textContent = `${pedido.nombre_cliente || 'Pedido'} · pagó ${fmtDinero(pedido.anticipo)} de ${fmtDinero(pedido.precio)}`;
+      abrirModal('tk');
+    }
   }
 });
 
@@ -4413,6 +4422,17 @@ function pintarCatalogoPOS(){
 }
 
 // Renglones del pedido para el ticket: el producto y la corona por separado, con su precio
+function entregaTxtPedido(p){
+  if(!p.fecha_entrega) return '';
+  const d = new Date(p.fecha_entrega);
+  const dia = d.toLocaleDateString('es-MX', {weekday:'short', day:'numeric', month:'short'});
+  return p.entrega === 'domicilio' ? dia + ' ' + d.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'}) + ' (domicilio)' : dia;
+}
+// Pedido como renglón de ticket (comprobante): precio completo, lo ya pagado y nada cobrado hoy
+function itemTicketPedido(p){
+  return { tipo:'pedido', nombre: p.nombre_cliente || 'Sin nombre', cobrado:0, montoBase:0,
+    total: Number(p.precio)||0, pagadoAntes: pagadoDe(p), lineas: lineasTicketPedido(p), entregaTxt: entregaTxtPedido(p) };
+}
 function lineasTicketPedido(p){
   const tot = Number(p.precio)||0;
   const cor = textoCorona(p);
@@ -4663,7 +4683,7 @@ function alternarPedidoEnVenta(p){
     const entregar = esLocal && (!p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy);
     posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),
       total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)), entregar, esLocal,
-      pagadoAntes: pagadoDe(p), lineasTicket: lineasTicketPedido(p),
+      pagadoAntes: pagadoDe(p), lineasTicket: lineasTicketPedido(p), entregaTxt: entregaTxtPedido(p),
       tipoEntrega: p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : '',
       fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
   }
@@ -4931,7 +4951,9 @@ function actualizarBotonCobrar(){
   const hayLocal = posVenta.some(x=>x.tipo==='local');
   if(total <= 0){
     btn.disabled = posGuardando || (!nPed && !hayLocal);
-    btn.textContent = hayLocal ? 'Registrar cortesía' + entregar : (!nPed ? 'No hay nada que cobrar' : (nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`)); return; }
+    // Pedidos ya pagados que no se entregan hoy: no hay nada que cobrar, pero sí se puede imprimir el comprobante
+    if(!hayLocal && !nPed){ btn.disabled = posGuardando; btn.textContent = 'Imprimir comprobante'; return; }
+    btn.textContent = hayLocal ? 'Registrar cortesía' + entregar : (nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`); return; }
   if(!posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
   if(posMetodo === 'mixto'){
     const resta = Math.round((total - pagosDiferidos().reduce((a,x)=> a + x.monto, 0)) * 100) / 100;
@@ -4962,6 +4984,7 @@ async function cobrarVenta(){
   if(posEditando) return guardarEdicionVenta();
   const msg = document.getElementById('pos-msg'); msg.className = 'msg';
   if(!posVenta.length || posGuardando) return;
+  if(leerNum('pos-total') <= 0 && !posVenta.some(x=> x.tipo === 'local' || x.entregar)) return imprimirComprobantePOS();
   const { local, cort, subtotal, base } = subtotalesPOS();
   const total = Math.max(0, leerNum('pos-total'));
   const soloEntrega = total <= 0;
@@ -5002,7 +5025,7 @@ async function cobrarVenta(){
   const recibe = Number(document.getElementById('pos-recibe').value) || 0;
   const efectivoParte = pagosFinal ? ((pagosFinal.find(x=> x.metodo === 'efectivo') || {}).monto || 0) : (metodoFinal === 'efectivo' ? total : 0);
   const extraPed = {};
-  posVenta.forEach(it=>{ if(it.tipo === 'pedido') extraPed[it.pedido_id] = { total: it.total, pagadoAntes: it.pagadoAntes || 0, lineas: it.lineasTicket || [], montoBase: it.abono != null ? it.abono : it.falta }; });
+  posVenta.forEach(it=>{ if(it.tipo === 'pedido') extraPed[it.pedido_id] = { total: it.total, pagadoAntes: it.pagadoAntes || 0, lineas: it.lineasTicket || [], montoBase: it.abono != null ? it.abono : it.falta, entregaTxt: it.entregaTxt || '' }; });
   ticketPendiente = { folio, fecha: new Date(), items: items.map(it=> it.tipo === 'pedido' ? { ...it, ...(extraPed[it.pedido_id] || {}) } : it), subtotal, cort, total, metodo: soloEntrega ? null : metodoFinal, pagos: pagosFinal,
     recibe: !soloEntrega && efectivoParte > 0 && recibe > efectivoParte ? recibe : 0, cambio: Math.max(0, recibe - efectivoParte) };
   document.getElementById('tk-sub').textContent = soloEntrega ? texto : `Total ${fmtDinero(total)} · ${metodoTxt}`;
@@ -5071,6 +5094,7 @@ function armarTicketXML(t){
       cuerpo += 'Pedido: ' + String(it.nombre).slice(0, TK_COLS - 8) + '\n';
       const lineas = (it.lineas && it.lineas.length) ? it.lineas : [{ txt: it.detalle || 'Pedido', monto: it.total != null ? it.total : it.cobrado }];
       lineas.forEach(l=> cuerpo += tkFila('  ' + l.txt, tkPesos(l.monto)) + '\n');
+      if(it.entregaTxt) cuerpo += '  Entrega: ' + it.entregaTxt + '\n';
     }
   });
   // Lo del pedido se muestra a precio completo; lo que ya se había pagado se resta aparte
@@ -5087,8 +5111,13 @@ function armarTicketXML(t){
   let pago = '';
   if(peds.length){
     const falta = Math.max(0, Math.round((totalTicket - pagadoAntes - t.total) * 100) / 100);
-    if(pagadoAntes > 0) pago += tkFila('Pagado antes', tkPesos(pagadoAntes)) + '\n';
-    pago += tkFila('Pago hoy', tkPesos(t.total)) + '\n';
+    if(t.comprobante){
+      pago += tkFila('Pagado', tkPesos(pagadoAntes)) + '\n';
+      if(t.metodoAnticipo) pago += tkFila('Método', formatNombre(t.metodoAnticipo)) + '\n';
+    } else {
+      if(pagadoAntes > 0) pago += tkFila('Pagado antes', tkPesos(pagadoAntes)) + '\n';
+      pago += tkFila('Pago hoy', tkPesos(t.total)) + '\n';
+    }
     pago += tkFila(falta > 0 ? 'Falta por pagar' : 'Pagado', falta > 0 ? tkPesos(falta) : 'Completo') + '\n';
   }
   if(t.pagos && t.pagos.length){
@@ -5102,7 +5131,7 @@ function armarTicketXML(t){
     + '<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">'
     + '<text lang="en" smooth="true"/>'
     + tkLogo()
-    + (soloCortesia ? tkTitulo('CORTESÍA') + '<text align="center"/>' : '')
+    + (soloCortesia ? tkTitulo('CORTESÍA') + '<text align="center"/>' : t.comprobante ? tkTitulo('COMPROBANTE') + '<text align="center"/>' : '')
     + `<text>${tkTexto(encabezado)}</text>`
     + '<text align="center"/>'
     + `<text>${tkTexto(tkBloque(raya + cuerpo + raya + tot + raya))}</text>`
@@ -5190,18 +5219,27 @@ async function imprimirResumenMC(){
   catch(e){ msg.className = 'msg err'; msg.textContent = 'No se pudo imprimir (' + (e.name === 'AbortError' ? 'la impresora no contestó' : e.message) + ').'; }
 }
 
+// Comprobante de pedidos ya pagados (no registra venta): precio completo y lo que ya se pagó
+async function imprimirComprobantePOS(){
+  const peds = posVenta.filter(x=> x.tipo === 'pedido');
+  if(!peds.length) return;
+  ticketPendiente = { comprobante:true, fecha:new Date(), subtotal:0, cort:0, total:0, metodo:null, recibe:0, nota:'No se registró ningún cobro.',
+    items: peds.map(it=> ({ tipo:'pedido', nombre:it.nombre, cobrado:0, montoBase:0, total:it.total, pagadoAntes:it.pagadoAntes || 0, lineas:it.lineasTicket || [], entregaTxt:it.entregaTxt || '' })) };
+  vaciarVenta();
+  await responderTicket(true);
+}
 async function responderTicket(si){
   cerrarModal('tk');
   const t = ticketPendiente; ticketPendiente = null;
   if(!si || !t) return;
-  const msg = document.getElementById('pos-msg');
+  const msg = document.getElementById(t.msgId || 'pos-msg');
   msg.className = 'msg ok'; msg.textContent = 'Imprimiendo ticket...';
   try {
     await imprimirTicket(t);
     if(msg.textContent === 'Imprimiendo ticket...'){ msg.className = 'msg'; msg.textContent = ''; }
   } catch(e){
     msg.className = 'msg err';
-    msg.textContent = 'No se pudo imprimir el ticket (' + (e.name === 'AbortError' ? 'la impresora no contestó' : e.message) + '). Revisa que la impresora esté prendida y con cable de red. La venta sí quedó registrada.';
+    msg.textContent = 'No se pudo imprimir el ticket (' + (e.name === 'AbortError' ? 'la impresora no contestó' : e.message) + '). Revisa que la impresora esté prendida y con cable de red. ' + (t.nota || 'La venta sí quedó registrada.');
   }
 }
 

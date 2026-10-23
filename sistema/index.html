@@ -704,7 +704,7 @@
   .pos-pcts{display:flex; gap:6px; justify-content:flex-end; margin:2px 0 4px;}
   .pos-pcts button{font-family:inherit; font-size:12.5px; font-weight:700; padding:6px 10px; border-radius:999px; border:1px solid rgba(217,206,187,.4); background:transparent; color:#D6CEBF; cursor:pointer;}
   .pos-pcts button.sel{background:var(--yeso); color:var(--cocoa); border-color:var(--yeso);}
-  .pos-extra{display:flex; gap:8px; margin-top:8px;}
+  .pos-extra{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
   .pos-extra button{flex:1; font-family:inherit; font-size:14px; font-weight:700; padding:11px; border-radius:999px; border:1px solid rgba(217,206,187,.45); background:transparent; color:var(--yeso); cursor:pointer;}
   .pos-extra button:disabled{opacity:.35; cursor:default;}
   .pos-extra button.on{background:var(--yeso); color:var(--cocoa);}
@@ -1084,15 +1084,22 @@
             <div class="pos-chip" data-m="transferencia">Transferencia</div>
             <div class="pos-chip" data-m="tarjeta">Tarjeta</div>
           </div>
+          <div id="pos-div-wrap" style="display:none; margin-top:4px;">
+            <div class="pos-row"><span>Efectivo</span><input type="number" id="pos-div-efectivo" inputmode="decimal" placeholder="0"></div>
+            <div class="pos-row"><span>Tarjeta</span><input type="number" id="pos-div-tarjeta" inputmode="decimal" placeholder="0"></div>
+            <div class="pos-row"><span>Transferencia</span><input type="number" id="pos-div-transferencia" inputmode="decimal" placeholder="0"></div>
+            <div class="pos-row"><span>Restante</span><b id="pos-div-resta" style="font-family:'Tinos',Georgia,serif; font-size:20px; font-weight:400; color:var(--amber-l);">$0</b></div>
+          </div>
           <div id="pos-efectivo-wrap" style="display:none; margin-top:8px;">
             <div class="pos-row"><span>Recibe</span><input type="number" id="pos-recibe" inputmode="decimal" placeholder="0"></div>
             <div class="pos-row"><span>Cambio</span><b id="pos-cambio" style="font-family:'Tinos',Georgia,serif; font-size:24px; font-weight:400; color:var(--amber-l);">$0</b></div>
           </div>
           <button type="button" class="primary pos-cobrar" id="pos-cobrar" onclick="cobrarVenta()">Cobrar</button>
           <div class="pos-extra">
-            <button type="button" id="pos-btn-cortesia" onclick="alternarModoCortesia()">Cortesía</button>
-            <button type="button" id="pos-btn-merma" onclick="registrarMerma()">Merma</button>
             <button type="button" id="pos-btn-anticipo" onclick="botonAnticipo()" disabled>Anticipo</button>
+            <button type="button" id="pos-btn-diferido" onclick="alternarPagoDiferido()">Pago diferido</button>
+            <button type="button" id="pos-btn-merma" onclick="registrarMerma()">Merma</button>
+            <button type="button" id="pos-btn-cortesia" onclick="alternarModoCortesia()">Cortesía</button>
           </div>
           <div class="msg" id="pos-msg" style="margin:8px 0 0;"></div>
           <a href="#" class="pos-vaciar" onclick="vaciarVenta(); return false;">Vaciar venta</a>
@@ -1431,9 +1438,20 @@ function nombreActual(n, lista){
 }
 // Método de pago: antes se guardaba 'terminal', ahora 'tarjeta'
 function mt(m){ return m === 'terminal' ? 'tarjeta' : m; }
+// Cómo se repartió el pago de una venta: [{m, monto}] (pago diferido = varios métodos), escalado a "base"
+function repartoVenta(v, base){
+  const tot = Number(v.total)||0;
+  if(v.metodo_pago === 'mixto' && Array.isArray(v.pagos) && tot > 0) return v.pagos.map(x=> ({ m: mt(x.metodo), monto: base * (Number(x.monto)||0) / tot }));
+  return [{ m: mt(v.metodo_pago), monto: base }];
+}
+function textoMetodoVenta(v){
+  if(v.metodo_pago === 'mixto' && Array.isArray(v.pagos)) return v.pagos.map(x=> formatNombre(x.metodo) + ' ' + fmtDinero(x.monto)).join(' + ');
+  return v.metodo_pago ? formatNombre(v.metodo_pago) : '';
+}
 function formatNombre(s){
   if(!s) return '';
   if(s === 'terminal') return 'Tarjeta';
+  if(s === 'mixto') return 'Pago diferido';
   let t = s.replace(/^cc_/i, '');
   t = t.replace(/_/g, ' ');
   return t.replace(/\b\w/g, c => c.toUpperCase());
@@ -3111,7 +3129,7 @@ async function abrirSeccionCaja(){
   const d0 = new Date(); const ini = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()); const fin = new Date(ini); fin.setDate(fin.getDate()+1);
   const [prev, ventas, antic] = await Promise.all([
     sb.from('cierres_dia').select('corte_caja').lt('fecha', fecha).order('fecha', {ascending:false}).limit(1).maybeSingle(),
-    sb.from('ventas').select('total,monto_local,monto_pedidos,metodo_pago').eq('fecha', fecha),
+    sb.from('ventas').select('total,monto_local,monto_pedidos,metodo_pago,pagos').eq('fecha', fecha),
     sb.rpc('anticipos_del_dia', { desde: ini.toISOString(), hasta: fin.toISOString() })
   ]);
   if(ventas.error){ cont.innerHTML = `<div class="empty">No se pudieron cargar las ventas: ${escHtml(ventas.error.message)}</div>`; return; }
@@ -3120,7 +3138,7 @@ async function abrirSeccionCaja(){
   const a = { efectivo:0, tarjeta:0, transferencia:0, local:0, pedidos:0, n:0 };
   (ventas.data||[]).forEach(v=>{
     const t = Number(v.total)||0;
-    if(mt(v.metodo_pago) in a) a[mt(v.metodo_pago)] += t;
+    repartoVenta(v, t).forEach(r=>{ if(r.m in a) a[r.m] += r.monto; });
     a.local += Number(v.monto_local)||0;
     a.pedidos += Number(v.monto_pedidos)||0;
     a.n++;
@@ -3433,7 +3451,7 @@ async function generarResumenTickets(){
     const ml = Number(v.monto_local)||0;
     if(vendidos.length && ml > 0){
       tickets++; ventaLocal += ml;
-      if(mt(v.metodo_pago) in met) met[mt(v.metodo_pago)] += ml;
+      repartoVenta(v, ml).forEach(r=>{ if(r.m in met) met[r.m] += r.monto; });
       if(items.some(i=> i.tipo === 'pedido')) ticketsConPedido++;
     }
   });
@@ -4467,7 +4485,7 @@ async function abrirResumenDiaPOS(){
   if(!ventas.length){ lista.className = 'empty'; lista.textContent = 'Todavía no hay ventas hoy.'; return; }
   const met = { efectivo:0, tarjeta:0, transferencia:0 };
   let cobrado = 0, nVentas = 0;
-  ventas.forEach(v=>{ const t = Number(v.total)||0; cobrado += t; if(t > 0) nVentas++; if(mt(v.metodo_pago) in met) met[mt(v.metodo_pago)] += t; });
+  ventas.forEach(v=>{ const t = Number(v.total)||0; cobrado += t; if(t > 0) nVentas++; repartoVenta(v, t).forEach(r=>{ if(r.m in met) met[r.m] += r.monto; }); });
   tot.innerHTML = `<div class="totales-top" style="margin-bottom:14px;">
     <div class="total-box"><div class="tb-label">Cobrado hoy</div><div class="tb-monto">${fmtDinero(cobrado)}</div><div class="tb-sub">${nVentas} ${nVentas === 1 ? 'venta' : 'ventas'}</div></div>
     <div class="total-box caramelo"><div class="tb-label">Por método</div><div class="tb-sub" style="font-size:13.5px; line-height:1.6;">Efectivo ${fmtDinero(met.efectivo)}<br>Tarjeta ${fmtDinero(met.tarjeta)}<br>Transferencia ${fmtDinero(met.transferencia)}</div></div>
@@ -4491,7 +4509,7 @@ async function abrirResumenDiaPOS(){
     const desc = Number(v.descuento)||0;
     return `<div class="rd-venta">
       <div class="rd-cab"><span><b>${hora}</b> · Folio ${v.id}${tag ? `<span class="rd-tag">${tag}</span>` : ''}</span>
-        <span><b>${fmtDinero(v.total)}</b>${v.metodo_pago ? ' · ' + escHtml(formatNombre(v.metodo_pago)) : ''}</span></div>
+        <span><b>${fmtDinero(v.total)}</b>${v.metodo_pago ? ' · ' + escHtml(textoMetodoVenta(v)) : ''}</span></div>
       ${lineas}
       ${desc > 0 && !esMerma ? `<div class="rd-lin"><span>Descuento / cortesía</span><span>-${fmtDinero(desc)}</span></div>` : ''}
       ${editable ? `<div class="rd-acc">${v.editado_at ? '<span class="rd-tag" style="margin:0 8px 0 0; align-self:center;">Editado</span>' : ''}<button type="button" class="rd-editar" data-id="${v.id}">Editar</button></div>` : ''}
@@ -4518,7 +4536,8 @@ async function editarVentaPOS(v){
   const pct = base > 0 ? Math.round(desc / base * 100) : 0;
   if(desc > 0 && [10,15,20,25].includes(pct) && Math.abs(Math.round(base * pct / 100) - desc) < 1) aplicarPct(pct);
   else document.getElementById('pos-descuento').value = desc > 0 ? desc : '';
-  posMetodo = posEditando.metodo;
+  alternarPagoDiferido(false);
+  posMetodo = posEditando.metodo === 'mixto' ? null : posEditando.metodo;
   document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=> c.classList.toggle('sel', c.dataset.m === posMetodo));
   cerrarModal('rd');
   document.getElementById('pos-msg').className = 'msg';
@@ -4852,11 +4871,34 @@ document.querySelectorAll('#pos-metodos .pos-chip').forEach(el=> el.addEventList
   actualizarBotonCobrar();
 }));
 
+// ---- Pago diferido: una venta pagada con varios métodos (ej. parte en efectivo y parte con tarjeta)
+const DIV_METODOS = ['efectivo','tarjeta','transferencia'];
+function pagosDiferidos(){ return DIV_METODOS.map(m=>({ metodo:m, monto: Math.round(leerNum('pos-div-' + m) * 100) / 100 })).filter(x=> x.monto > 0); }
+function alternarPagoDiferido(forzar){
+  const on = forzar !== undefined ? forzar : posMetodo !== 'mixto';
+  if(on && posEditando) return;
+  posMetodo = on ? 'mixto' : null;
+  document.getElementById('pos-btn-diferido').classList.toggle('on', on);
+  document.getElementById('pos-metodos').style.display = on ? 'none' : '';
+  document.getElementById('pos-div-wrap').style.display = on ? 'block' : 'none';
+  if(!on) DIV_METODOS.forEach(m=> document.getElementById('pos-div-' + m).value = '');
+  document.querySelectorAll('#pos-metodos .pos-chip').forEach(c=> c.classList.remove('sel'));
+  actualizarBotonCobrar();
+}
+DIV_METODOS.forEach(m=> document.getElementById('pos-div-' + m).addEventListener('input', actualizarBotonCobrar));
 function actualizarCambioPOS(){
   const wrap = document.getElementById('pos-efectivo-wrap');
-  wrap.style.display = posMetodo === 'efectivo' && !posEditando ? 'block' : 'none';
-  if(posMetodo !== 'efectivo' || posEditando) return;
-  const total = leerNum('pos-total');
+  const efDiv = posMetodo === 'mixto' ? leerNum('pos-div-efectivo') : 0;
+  const conCambio = !posEditando && (posMetodo === 'efectivo' || efDiv > 0);
+  wrap.style.display = conCambio ? 'block' : 'none';
+  if(posMetodo === 'mixto'){
+    const resta = Math.round((leerNum('pos-total') - pagosDiferidos().reduce((a,x)=> a + x.monto, 0)) * 100) / 100;
+    const r = document.getElementById('pos-div-resta');
+    r.textContent = resta === 0 ? '✓ $0' : resta > 0 ? fmtDinero(resta) : 'Sobran ' + fmtDinero(-resta);
+    r.style.color = resta === 0 ? 'var(--amber-l)' : '#F2B8AC';
+  }
+  if(!conCambio) return;
+  const total = posMetodo === 'mixto' ? efDiv : leerNum('pos-total');
   const v = document.getElementById('pos-recibe').value;
   const el = document.getElementById('pos-cambio');
   if(v === ''){ el.textContent = '—'; el.style.color = 'var(--amber-l)'; return; }
@@ -4874,6 +4916,7 @@ function actualizarBotonCobrar(){
   const total = leerNum('pos-total');
   pintarBannerEdicion();
   document.getElementById('pos-btn-merma').disabled = !!posEditando;
+  document.getElementById('pos-btn-diferido').disabled = !!posEditando;
   if(posEditando){
     if(total > 0 && !posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
     btn.disabled = posGuardando;
@@ -4890,6 +4933,10 @@ function actualizarBotonCobrar(){
     btn.disabled = posGuardando || (!nPed && !hayLocal);
     btn.textContent = hayLocal ? 'Registrar cortesía' + entregar : (!nPed ? 'No hay nada que cobrar' : (nPed === 1 ? 'Entregar pedido' : `Entregar ${nPed} pedidos`)); return; }
   if(!posMetodo){ btn.disabled = true; btn.textContent = 'Elige método de pago'; return; }
+  if(posMetodo === 'mixto'){
+    const resta = Math.round((total - pagosDiferidos().reduce((a,x)=> a + x.monto, 0)) * 100) / 100;
+    if(resta !== 0){ btn.disabled = true; btn.textContent = resta > 0 ? `Faltan ${fmtDinero(resta)} por repartir` : `Sobran ${fmtDinero(-resta)}`; return; }
+  }
   btn.disabled = posGuardando;
   btn.textContent = `Cobrar ${fmtDinero(total)}${entregar}`;
 }
@@ -4898,6 +4945,7 @@ function vaciarVenta(recargar){
   const estabaEditando = !!posEditando;
   posEditando = null;
   posVenta = []; posMetodo = null; posTotalManual = false;
+  alternarPagoDiferido(false);
   limpiarPct();
   if(posModoCortesia) alternarModoCortesia();
   if(posModoAnticipo){ posModoAnticipo = false; const b = document.getElementById('pos-btn-anticipo'); b.classList.remove('on'); b.textContent = 'Anticipo'; }
@@ -4919,6 +4967,14 @@ async function cobrarVenta(){
   const soloEntrega = total <= 0;
   const habiaLocal = posVenta.some(x=>x.tipo==='local');
   if(!soloEntrega && !posMetodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
+  // Pago diferido: si al final solo se usó un método, se guarda como ese método
+  let metodoFinal = posMetodo, pagosFinal = null;
+  if(!soloEntrega && posMetodo === 'mixto'){
+    const pd = pagosDiferidos();
+    const suma = Math.round(pd.reduce((a,x)=> a + x.monto, 0) * 100) / 100;
+    if(Math.abs(suma - total) > 0.009){ msg.className = 'msg err'; msg.textContent = 'Los montos del pago diferido no suman el total.'; return; }
+    if(pd.length === 1) metodoFinal = pd[0].metodo; else pagosFinal = pd;
+  }
   // La cortesía se descuenta completa; el descuento se reparte en proporción entre lo de local y lo de pedidos
   const factor = base > 0 ? total / base : 0;
   const montoLocal = Math.round((local - cort) * factor * 100) / 100;
@@ -4936,17 +4992,20 @@ async function cobrarVenta(){
   posGuardando = true; actualizarBotonCobrar();
   const { data: folio, error } = await sb.rpc('registrar_venta', {
     p_fecha: fechaHoyStr(), p_items: items, p_subtotal: subtotal, p_descuento: Math.max(0, subtotal - total),
-    p_total: total, p_monto_local: montoLocal, p_metodo: soloEntrega ? null : posMetodo
+    p_total: total, p_monto_local: montoLocal, p_metodo: soloEntrega ? null : metodoFinal,
+    ...(pagosFinal ? { p_pagos: pagosFinal } : {})
   });
   posGuardando = false;
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo registrar: ' + error.message; actualizarBotonCobrar(); return; }
-  const texto = soloEntrega ? (habiaLocal ? 'Cortesía registrada.' : 'Pedido entregado.') : `Venta registrada: ${fmtDinero(total)} en ${formatNombre(posMetodo)}.`;
+  const metodoTxt = pagosFinal ? pagosFinal.map(x=> formatNombre(x.metodo) + ' ' + fmtDinero(x.monto)).join(' + ') : formatNombre(metodoFinal);
+  const texto = soloEntrega ? (habiaLocal ? 'Cortesía registrada.' : 'Pedido entregado.') : `Venta registrada: ${fmtDinero(total)} en ${metodoTxt}.`;
   const recibe = Number(document.getElementById('pos-recibe').value) || 0;
+  const efectivoParte = pagosFinal ? ((pagosFinal.find(x=> x.metodo === 'efectivo') || {}).monto || 0) : (metodoFinal === 'efectivo' ? total : 0);
   const extraPed = {};
   posVenta.forEach(it=>{ if(it.tipo === 'pedido') extraPed[it.pedido_id] = { total: it.total, pagadoAntes: it.pagadoAntes || 0, lineas: it.lineasTicket || [], montoBase: it.abono != null ? it.abono : it.falta }; });
-  ticketPendiente = { folio, fecha: new Date(), items: items.map(it=> it.tipo === 'pedido' ? { ...it, ...(extraPed[it.pedido_id] || {}) } : it), subtotal, cort, total, metodo: soloEntrega ? null : posMetodo,
-    recibe: !soloEntrega && posMetodo === 'efectivo' && recibe > total ? recibe : 0 };
-  document.getElementById('tk-sub').textContent = soloEntrega ? texto : `Total ${fmtDinero(total)} · ${formatNombre(posMetodo)}`;
+  ticketPendiente = { folio, fecha: new Date(), items: items.map(it=> it.tipo === 'pedido' ? { ...it, ...(extraPed[it.pedido_id] || {}) } : it), subtotal, cort, total, metodo: soloEntrega ? null : metodoFinal, pagos: pagosFinal,
+    recibe: !soloEntrega && efectivoParte > 0 && recibe > efectivoParte ? recibe : 0, cambio: Math.max(0, recibe - efectivoParte) };
+  document.getElementById('tk-sub').textContent = soloEntrega ? texto : `Total ${fmtDinero(total)} · ${metodoTxt}`;
   abrirModal('tk');
   vaciarVenta();
   msg.className = 'msg ok'; msg.textContent = texto;
@@ -5032,8 +5091,11 @@ function armarTicketXML(t){
     pago += tkFila('Pago hoy', tkPesos(t.total)) + '\n';
     pago += tkFila(falta > 0 ? 'Falta por pagar' : 'Pagado', falta > 0 ? tkPesos(falta) : 'Completo') + '\n';
   }
-  if(t.metodo) pago += tkFila('Método', formatNombre(t.metodo)) + '\n';
-  if(t.recibe > 0) pago += tkFila('Recibe', tkPesos(t.recibe)) + '\n' + tkFila('Cambio', tkPesos(t.recibe - t.total)) + '\n';
+  if(t.pagos && t.pagos.length){
+    pago += 'Pago diferido\n';
+    t.pagos.forEach(x=> pago += tkFila('  ' + formatNombre(x.metodo), tkPesos(x.monto)) + '\n');
+  } else if(t.metodo) pago += tkFila('Método', formatNombre(t.metodo)) + '\n';
+  if(t.recibe > 0) pago += tkFila('Recibe', tkPesos(t.recibe)) + '\n' + tkFila('Cambio', tkPesos(t.cambio != null ? t.cambio : t.recibe - t.total)) + '\n';
   const encabezado = 'WhatsApp 667 139 0756\nAv. Juan de la Barrera 1141, Local 2\nCol. Chapultepec, C.P. 80040\n' + fechaTxt + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : '');
   return '<?xml version="1.0" encoding="utf-8"?>'
     + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>'

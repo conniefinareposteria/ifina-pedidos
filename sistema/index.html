@@ -987,7 +987,7 @@
           <div class="chip-group" id="metodo-pago-chips">
             <div class="chip" data-metodo="efectivo">Efectivo</div>
             <div class="chip" data-metodo="transferencia">Transferencia</div>
-            <div class="chip" data-metodo="terminal">Terminal</div>
+            <div class="chip" data-metodo="tarjeta">Tarjeta</div>
           </div>
         </div>
         <div class="field">
@@ -1082,7 +1082,7 @@
           <div class="pos-chips" id="pos-metodos">
             <div class="pos-chip" data-m="efectivo">Efectivo</div>
             <div class="pos-chip" data-m="transferencia">Transferencia</div>
-            <div class="pos-chip" data-m="terminal">Terminal</div>
+            <div class="pos-chip" data-m="tarjeta">Tarjeta</div>
           </div>
           <div id="pos-efectivo-wrap" style="display:none; margin-top:8px;">
             <div class="pos-row"><span>Recibe</span><input type="number" id="pos-recibe" inputmode="decimal" placeholder="0"></div>
@@ -1331,7 +1331,7 @@
   <div class="chip-group" id="pg-metodos">
     <div class="chip" data-m="transferencia">Transferencia</div>
     <div class="chip" data-m="efectivo">Efectivo</div>
-    <div class="chip" data-m="terminal">Terminal</div>
+    <div class="chip" data-m="tarjeta">Tarjeta</div>
   </div>
   <div class="ep-acc">
     <button type="button" class="btn-cerrar-ep" onclick="cerrarModal('pg')">Cancelar</button>
@@ -1429,8 +1429,11 @@ function nombreActual(n, lista){
   const k = claveNombre(n); if(!k) return null;
   return lista.find(x => claveNombre(x) === k) || lista.find(x => { const c = claveNombre(x); return c && (c.includes(k) || k.includes(c)); }) || null;
 }
+// Método de pago: antes se guardaba 'terminal', ahora 'tarjeta'
+function mt(m){ return m === 'terminal' ? 'tarjeta' : m; }
 function formatNombre(s){
   if(!s) return '';
+  if(s === 'terminal') return 'Tarjeta';
   let t = s.replace(/^cc_/i, '');
   t = t.replace(/_/g, ' ');
   return t.replace(/\b\w/g, c => c.toUpperCase());
@@ -2388,16 +2391,16 @@ function pintarPedidosPorDia(data, cont){
     g.className = 'day-group';
 
     // Totales del día (como en la hoja de seguimiento)
-    const cobrado = { efectivo:0, transferencia:0, terminal:0 };
+    const cobrado = { efectivo:0, transferencia:0, tarjeta:0 };
     let totalDia = 0, faltaDia = 0;
     grupos[fecha].forEach(p=>{
       const total = Number(p.precio)||0;
       const pagado = pagadoDe(p);
       totalDia += total;
       faltaDia += Math.max(0, total - pagado);
-      if(p.metodo_pago && p.metodo_pago in cobrado) cobrado[p.metodo_pago] += Number(p.anticipo)||0;
-      if(p.metodo_entrega && p.metodo_entrega in cobrado) cobrado[p.metodo_entrega] += Number(p.pago_entrega)||0;
-      pagosDe(p).forEach(x=>{ if(x.metodo in cobrado) cobrado[x.metodo] += Number(x.monto)||0; });
+      if(p.metodo_pago && mt(p.metodo_pago) in cobrado) cobrado[mt(p.metodo_pago)] += Number(p.anticipo)||0;
+      if(p.metodo_entrega && mt(p.metodo_entrega) in cobrado) cobrado[mt(p.metodo_entrega)] += Number(p.pago_entrega)||0;
+      pagosDe(p).forEach(x=>{ if(mt(x.metodo) in cobrado) cobrado[mt(x.metodo)] += Number(x.monto)||0; });
     });
 
     let filas = '';
@@ -2441,7 +2444,7 @@ function pintarPedidosPorDia(data, cont){
       ${rolActual === 'director' ? `<div class="resumen-dia">
         <span>Efectivo <b>${dinero(cobrado.efectivo)}</b></span>
         <span>Transferencia <b>${dinero(cobrado.transferencia)}</b></span>
-        <span>Terminal <b>${dinero(cobrado.terminal)}</b></span>
+        <span>Tarjeta <b>${dinero(cobrado.tarjeta)}</b></span>
         <span>Total <b>${dinero(totalDia)}</b></span>
         <span>Falta pago <b>${dinero(faltaDia)}</b></span>
       </div>` : ''}
@@ -3114,16 +3117,16 @@ async function abrirSeccionCaja(){
   if(ventas.error){ cont.innerHTML = `<div class="empty">No se pudieron cargar las ventas: ${escHtml(ventas.error.message)}</div>`; return; }
   fondoCajaAyer = (prev.data && prev.data.corte_caja && prev.data.corte_caja.fondo_caja) || 0;
 
-  const a = { efectivo:0, terminal:0, transferencia:0, local:0, pedidos:0, n:0 };
+  const a = { efectivo:0, tarjeta:0, transferencia:0, local:0, pedidos:0, n:0 };
   (ventas.data||[]).forEach(v=>{
     const t = Number(v.total)||0;
-    if(v.metodo_pago in a) a[v.metodo_pago] += t;
+    if(mt(v.metodo_pago) in a) a[mt(v.metodo_pago)] += t;
     a.local += Number(v.monto_local)||0;
     a.pedidos += Number(v.monto_pedidos)||0;
     a.n++;
   });
-  const anticipos = { efectivo:0, terminal:0, transferencia:0 };
-  (antic.data||[]).forEach(r=>{ if(r.metodo in anticipos) anticipos[r.metodo] += Number(r.monto)||0; });
+  const anticipos = { efectivo:0, tarjeta:0, transferencia:0 };
+  (antic.data||[]).forEach(r=>{ if(mt(r.metodo) in anticipos) anticipos[mt(r.metodo)] += Number(r.monto)||0; });
   cajaAuto = { ...a, anticipos, anticiposError: antic.error ? antic.error.message : null };
 
   const datos = cierreDiaActual.corte_caja || {};
@@ -3141,16 +3144,16 @@ async function abrirSeccionCaja(){
   });
 
   const fila = (c, m, fuerte) => `<tr${fuerte ? ' style="font-weight:700;"' : ''}><td>${c}</td><td class="n">${fmtDinero(m)}</td></tr>`;
-  const totMetodo = a.efectivo + a.terminal + a.transferencia;
+  const totMetodo = a.efectivo + a.tarjeta + a.transferencia;
   const totTipo = a.local + a.pedidos;
-  const antTot = anticipos.efectivo + anticipos.terminal + anticipos.transferencia;
+  const antTot = anticipos.efectivo + anticipos.tarjeta + anticipos.transferencia;
 
   cont.innerHTML = `
     <div style="font-family:'Tinos',Georgia,serif; font-size:19px; margin-bottom:4px;">Ventas del día</div>
     <div class="hint" style="margin:0 0 10px;">Se llenan solas con lo cobrado en el punto de venta (${a.n} ${a.n === 1 ? 'venta' : 'ventas'}).</div>
     <div class="tabla-wrap" style="margin-bottom:12px;"><table class="tabla-pedidos">
       <thead><tr><th>Por método de pago</th><th class="n">Monto</th></tr></thead>
-      <tbody>${fila('Efectivo', a.efectivo)}${fila('Terminal', a.terminal)}${fila('Transferencia', a.transferencia)}</tbody>
+      <tbody>${fila('Efectivo', a.efectivo)}${fila('Tarjeta', a.tarjeta)}${fila('Transferencia', a.transferencia)}</tbody>
       <tfoot><tr><td>Total vendido</td><td class="n">${fmtDinero(totMetodo)}</td></tr></tfoot>
     </table></div>
     <div class="tabla-wrap" style="margin-bottom:10px;"><table class="tabla-pedidos">
@@ -3159,7 +3162,7 @@ async function abrirSeccionCaja(){
       <tfoot><tr><td>Total vendido</td><td class="n">${fmtDinero(totTipo)}</td></tr></tfoot>
     </table></div>
     <div class="hint" style="margin:0 0 22px;">${cajaAuto.anticiposError ? 'No se pudieron leer los anticipos de hoy.' :
-      `Nota: hoy se recibieron ${fmtDinero(antTot)} de anticipos de pedidos (efectivo ${fmtDinero(anticipos.efectivo)} · terminal ${fmtDinero(anticipos.terminal)} · transferencia ${fmtDinero(anticipos.transferencia)}). No cuentan como venta.`}</div>
+      `Nota: hoy se recibieron ${fmtDinero(antTot)} de anticipos de pedidos (efectivo ${fmtDinero(anticipos.efectivo)} · tarjeta ${fmtDinero(anticipos.tarjeta)} · transferencia ${fmtDinero(anticipos.transferencia)}). No cuentan como venta.`}</div>
 
     <div style="font-family:'Tinos',Georgia,serif; font-size:19px; margin-bottom:8px;">Efectivo en caja</div>
     ${filasDenom}
@@ -3202,13 +3205,13 @@ async function guardarSeccionCaja(finalizar){
   DENOMINACIONES.forEach(d=>{
     denominaciones[d] = parseFloat(document.getElementById(`dc_${d}`).value) || 0;
   });
-  const a = cajaAuto || { efectivo:0, terminal:0, transferencia:0, local:0, pedidos:0, anticipos:{} };
+  const a = cajaAuto || { efectivo:0, tarjeta:0, transferencia:0, local:0, pedidos:0, anticipos:{} };
 
   const corte_caja = {
     version: 2,
     denominaciones,
     venta_efectivo: a.efectivo,
-    venta_tarjeta: a.terminal,
+    venta_tarjeta: a.tarjeta,
     venta_transferencia: a.transferencia,
     venta_local: a.local,
     venta_pedidos: a.pedidos,
@@ -3416,7 +3419,7 @@ async function generarResumenTickets(){
 
   // ---- LOCAL: solo lo que se vende en mostrador (sin lo pagado de pedidos agendados)
   let ventaLocal = 0, tickets = 0, ticketsConPedido = 0;
-  const met = { efectivo:0, terminal:0, transferencia:0 };
+  const met = { efectivo:0, tarjeta:0, transferencia:0 };
   const prod = {}; let cortN = 0, cort$ = 0, merN = 0, mer$ = 0;
   ventas.forEach(v=>{
     const items = v.items || [];
@@ -3430,7 +3433,7 @@ async function generarResumenTickets(){
     const ml = Number(v.monto_local)||0;
     if(vendidos.length && ml > 0){
       tickets++; ventaLocal += ml;
-      if(v.metodo_pago in met) met[v.metodo_pago] += ml;
+      if(mt(v.metodo_pago) in met) met[mt(v.metodo_pago)] += ml;
       if(items.some(i=> i.tipo === 'pedido')) ticketsConPedido++;
     }
   });
@@ -3442,7 +3445,7 @@ async function generarResumenTickets(){
     <div class="totales-top">
       ${tile('Venta local', fmtDinero(ventaLocal), `${tickets} ${tickets === 1 ? 'ticket' : 'tickets'}`, true)}
       ${tile('Ticket promedio', fmtDinero(Math.round(promLocal)), 'Solo lo comprado en mostrador')}
-      ${tile('Por método', fmtDinero(met.efectivo), `Efectivo · Terminal ${fmtDinero(met.terminal)} · Transf. ${fmtDinero(met.transferencia)}`)}
+      ${tile('Por método', fmtDinero(met.efectivo), `Efectivo · Tarjeta ${fmtDinero(met.tarjeta)} · Transf. ${fmtDinero(met.transferencia)}`)}
       ${tile('Cortesías y merma', cortN + merN + ' piezas', `Cortesía ${cortN} (${fmtDinero(cort$)}) · Merma ${merN} (${fmtDinero(mer$)})`)}
     </div>
     ${ticketsConPedido ? `<div class="hint" style="margin:-10px 0 14px;">${ticketsConPedido} ${ticketsConPedido === 1 ? 'cliente llegó' : 'clientes llegaron'} por un pedido y además compró en mostrador (solo cuenta lo de mostrador).</div>` : ''}
@@ -3907,13 +3910,13 @@ async function abrirDetalleDia(fecha){
         <tbody>
           ${cc.version === 2 ? `
           ${filaCaja('Efectivo', cc.venta_efectivo)}
-          ${filaCaja('Terminal', cc.venta_tarjeta)}
+          ${filaCaja('Tarjeta', cc.venta_tarjeta)}
           ${filaCaja('Transferencia', cc.venta_transferencia)}
           ${filaCaja('Total por método de pago', (cc.venta_efectivo||0)+(cc.venta_tarjeta||0)+(cc.venta_transferencia||0), true)}
           ${filaCaja('Venta local (mostrador)', cc.venta_local)}
           ${filaCaja('Venta de pedidos', cc.venta_pedidos)}
           ${filaCaja('Total por tipo de venta', (cc.venta_local||0)+(cc.venta_pedidos||0), true)}
-          ${filaCaja('Anticipos recibidos (no cuentan como venta)', ((cc.anticipos||{}).efectivo||0)+((cc.anticipos||{}).terminal||0)+((cc.anticipos||{}).transferencia||0))}` : `
+          ${filaCaja('Anticipos recibidos (no cuentan como venta)', ((cc.anticipos||{}).efectivo||0)+((cc.anticipos||{}).tarjeta||0)+((cc.anticipos||{}).terminal||0)+((cc.anticipos||{}).transferencia||0))}` : `
           ${filaCaja('Venta en efectivo', cc.venta_efectivo)}
           ${filaCaja('Venta en tarjeta', cc.venta_tarjeta)}
           ${filaCaja('Venta en transferencia', cc.venta_transferencia)}
@@ -4462,12 +4465,12 @@ async function abrirResumenDiaPOS(){
   const ventas = data || [];
   rdVentas = ventas;
   if(!ventas.length){ lista.className = 'empty'; lista.textContent = 'Todavía no hay ventas hoy.'; return; }
-  const met = { efectivo:0, terminal:0, transferencia:0 };
+  const met = { efectivo:0, tarjeta:0, transferencia:0 };
   let cobrado = 0, nVentas = 0;
-  ventas.forEach(v=>{ const t = Number(v.total)||0; cobrado += t; if(t > 0) nVentas++; if(v.metodo_pago in met) met[v.metodo_pago] += t; });
+  ventas.forEach(v=>{ const t = Number(v.total)||0; cobrado += t; if(t > 0) nVentas++; if(mt(v.metodo_pago) in met) met[mt(v.metodo_pago)] += t; });
   tot.innerHTML = `<div class="totales-top" style="margin-bottom:14px;">
     <div class="total-box"><div class="tb-label">Cobrado hoy</div><div class="tb-monto">${fmtDinero(cobrado)}</div><div class="tb-sub">${nVentas} ${nVentas === 1 ? 'venta' : 'ventas'}</div></div>
-    <div class="total-box caramelo"><div class="tb-label">Por método</div><div class="tb-sub" style="font-size:13.5px; line-height:1.6;">Efectivo ${fmtDinero(met.efectivo)}<br>Terminal ${fmtDinero(met.terminal)}<br>Transferencia ${fmtDinero(met.transferencia)}</div></div>
+    <div class="total-box caramelo"><div class="tb-label">Por método</div><div class="tb-sub" style="font-size:13.5px; line-height:1.6;">Efectivo ${fmtDinero(met.efectivo)}<br>Tarjeta ${fmtDinero(met.tarjeta)}<br>Transferencia ${fmtDinero(met.transferencia)}</div></div>
   </div>`;
   lista.className = '';
   lista.innerHTML = ventas.map(v=>{
@@ -5133,7 +5136,7 @@ async function responderTicket(si){
   msg.className = 'msg ok'; msg.textContent = 'Imprimiendo ticket...';
   try {
     await imprimirTicket(t);
-    msg.className = 'msg ok'; msg.textContent = 'Ticket impreso.';
+    if(msg.textContent === 'Imprimiendo ticket...'){ msg.className = 'msg'; msg.textContent = ''; }
   } catch(e){
     msg.className = 'msg err';
     msg.textContent = 'No se pudo imprimir el ticket (' + (e.name === 'AbortError' ? 'la impresora no contestó' : e.message) + '). Revisa que la impresora esté prendida y con cable de red. La venta sí quedó registrada.';

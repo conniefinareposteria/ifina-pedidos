@@ -4686,6 +4686,7 @@ function alternarPedidoEnVenta(p){
       pagadoAntes: pagadoDe(p), lineasTicket: lineasTicketPedido(p), entregaTxt: entregaTxtPedido(p),
       tipoEntrega: p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : '',
       fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
+    if(entregar && p.categoria === 'pastel' && !p.corona_tipo) setTimeout(()=> preguntarCoronaPedido(p), 0);
   }
   posTotalManual = false;
   pintarVenta(); pintarCatalogoPOS();
@@ -5477,6 +5478,28 @@ function preguntarCorona(nombre, tam){
       ()=>{ cerrarPreguntaCorona(); agregarAVenta('pasteles', nombre, tam); agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio); }, quedan <= 0);
   });
   boton('Sin corona', 'Solo el pastel', ()=>{ cerrarPreguntaCorona(); agregarAVenta('pasteles', nombre, tam); });
+  document.getElementById('cor-velo').classList.add('on');
+  document.getElementById('cor-hoja').classList.add('on');
+}
+// Pedido que se entrega hoy y se agendó sin corona: preguntar si al final sí la quiere (misma lógica que en el local)
+function preguntarCoronaPedido(p){
+  const tam = String(p.tamano_o_sabor || '').toLowerCase() === 'mini' ? 'mini' : 'normal';
+  const tipoCor = tam === 'mini' ? 'Mini' : 'Normal';
+  const incluida = saborTraeCorona(p.sabor);
+  const quedan = posDisponible('coronas', tipoCor, '');
+  document.getElementById('cor-titulo').textContent = '¿Ahora sí quiere corona?';
+  document.getElementById('cor-sub').textContent = `${p.nombre_cliente || 'Pedido'} · ${detallePedidoPOS(p)} · se agendó sin corona` + (incluida ? ' · este sabor ya incluye la corona' : '') + ` · coronas ${tipoCor.toLowerCase()} disponibles: ${quedan}`;
+  const cont = document.getElementById('cor-opciones'); cont.innerHTML = '';
+  const boton = (texto, sub, fn, deshab) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pos-card'; b.style.minHeight = '0';
+    b.innerHTML = `<div class="nm">${texto}</div><div class="st">${sub}</div>`;
+    if(deshab){ b.classList.add('agotado'); b.disabled = true; }
+    b.onclick = fn; cont.appendChild(b);
+  };
+  const precio = incluida ? 0 : precioCorona('ambar', tam);
+  boton('Corona ámbar', quedan <= 0 ? 'Ya no hay coronas ' + tipoCor.toLowerCase() : (incluida ? 'Incluida, sin costo' : '+ ' + fmtDinero(precio)),
+    ()=>{ cerrarPreguntaCorona(); agregarCoronaVenta(tipoCor, 'ambar', 'Corona ámbar', incluida, precio); }, quedan <= 0);
+  boton('Sin corona', 'Se entrega sin corona', ()=> cerrarPreguntaCorona());
   document.getElementById('cor-velo').classList.add('on');
   document.getElementById('cor-hoja').classList.add('on');
 }

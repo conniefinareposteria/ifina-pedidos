@@ -140,3 +140,17 @@ button.primary:disabled{background:#A8A296; color:#F3EDE2;}
 .pos-est.pend{background:transparent; border:1.5px solid #8A5208; color:#7A4806;}
 .pos-est.sel{background:var(--cocoa); color:var(--yeso);}
 .pos-est.ok{background:var(--sage); color:#fff;}
+
+/* ----- Catálogo: fotos de productos ----- */
+.cf-producto{background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:14px 16px; margin-bottom:10px;}
+.cf-cab{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:10px;}
+.cf-cab b{font-family:'Tinos',Georgia,serif; font-size:17px; font-weight:400;}
+.cf-fotos{display:flex; flex-wrap:wrap; gap:10px;}
+.cf-foto{position:relative; width:118px; height:118px; border-radius:14px; overflow:hidden; border:1px solid var(--line); background:var(--cream-deep);}
+.cf-foto.principal{border:2px solid var(--cocoa);}
+.cf-foto img{width:100%; height:100%; object-fit:cover; display:block;}
+.cf-tag,.cf-btn{position:absolute; left:6px; bottom:6px; font:700 11px 'Arimo',Arial,sans-serif; border-radius:999px; padding:3px 8px; border:none;}
+.cf-tag{background:var(--cocoa); color:var(--yeso);}
+.cf-btn{background:rgba(255,253,248,.92); color:var(--cocoa); cursor:pointer;}
+.cf-quitar{position:absolute; top:5px; right:5px; width:26px; height:26px; border-radius:50%; border:none; background:rgba(61,58,47,.82); color:#fff; font-size:17px; line-height:1; cursor:pointer;}
+.cf-agregar{width:118px; height:118px; border-radius:14px; border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; text-align:center; font-weight:700; font-size:13.5px; color:var(--jam-deep); cursor:pointer; background:var(--cream);}

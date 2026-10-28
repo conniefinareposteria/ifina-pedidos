@@ -15,6 +15,9 @@
     sabores_cupcakes: [{nombre:'limon'},{nombre:'pistache'},{nombre:'chocolate'},{nombre:'coco'}],
     individuales: [{nombre:'cupcake',precio:45},{nombre:'cuchareable_coco',precio:80},{nombre:'galletas_limon',precio:80},{nombre:'carlota_limon',precio:80}],
     panques: [{nombre:'panque_platano',precio:120},{nombre:'panque_naranja',precio:120}],
+    fotos_catalogo: [
+      {id:1,tabla:'sabores_pasteles',producto:'white_velvet',orden:0,ruta:'sabores_pasteles/whitevelvet/a.jpg',url:'https://fotos.prueba/a.jpg',ruta_original:'sabores_pasteles/whitevelvet/a-original.jpg'},
+      {id:2,tabla:'sabores_pasteles',producto:'white_velvet',orden:1,ruta:'sabores_pasteles/whitevelvet/b.jpg',url:'https://fotos.prueba/b.jpg',ruta_original:'sabores_pasteles/whitevelvet/b-original.jpg'}],
     coronas: [{tipo:'ambar',tamano:'mini',precio:30},{tipo:'ambar',tamano:'normal',precio:50},{tipo:'color',tamano:'mini',precio:60},{tipo:'color',tamano:'normal',precio:100}],
     metas_produccion: [
       {dia:3, pasteles:{"White velvet":{mini:4,chico:2},"Coco":{mini:2,chico:1}}, cupcakes:{"Limón":24,"Pistache":12}, coronas:{}},
@@ -72,7 +75,9 @@
         let r = (tablas[tabla] || []).filter(x=> filtros.every(f=> f(x)));
         if(accion === 'update'){ log('update', tabla, { datos, filas: r.map(x=>x.id || x.fecha) }); r.forEach(x=> Object.assign(x, datos)); }
         if(accion === 'delete'){ log('delete', tabla, r.map(x=>x.id)); }
-        if(accion === 'insert'){ r = Array.isArray(datos) ? datos : [datos]; }
+        if(accion === 'insert'){ r = Array.isArray(datos) ? datos : [datos];
+          if(tabla === 'fotos_catalogo'){ r = r.map(x=> ({ id: 100 + tablas.fotos_catalogo.length, ...x })); tablas.fotos_catalogo.push(...r); } }
+        if(accion === 'delete' && tabla === 'fotos_catalogo'){ tablas.fotos_catalogo = tablas.fotos_catalogo.filter(x=> !r.includes(x)); }
         if(accion === 'upsert'){ r = Array.isArray(datos) ? datos : [datos]; }
         if(orden) r = r.slice().sort((a,b)=> (a[orden] > b[orden] ? 1 : a[orden] < b[orden] ? -1 : 0) * (desc ? -1 : 1));
         if(limite) r = r.slice(0, limite);
@@ -88,6 +93,12 @@
   window.supabase = { createClient(){ return {
     from: consulta,
     rpc(nombre, args){ log('rpc', nombre, args); const f = rpcs[nombre]; return Promise.resolve({ data: f ? JSON.parse(JSON.stringify(f(args||{}))) : null, error: null }); },
+    // Almacenamiento de fotos: solo anota lo que se sube o se borra
+    storage: { from: (bucket) => ({
+      upload(ruta, archivo, o){ log('subir', bucket, { ruta: ruta.replace(/\d{13}-[a-z0-9]+/, 'X'), tipo: o && o.contentType }); return Promise.resolve({ data:{ path: ruta }, error:null }); },
+      getPublicUrl(ruta){ return { data:{ publicUrl: 'https://fotos.prueba/' + ruta } }; },
+      remove(rutas){ log('borrar', bucket, rutas); return Promise.resolve({ data:[], error:null }); }
+    }) },
     auth: {
       getSession: () => Promise.resolve({ data: { session: { user: { id:'u1' } } } }),
       onAuthStateChange(){}, signOut: () => Promise.resolve({}), signInWithPassword: () => Promise.resolve({ data:{}, error:null }),

@@ -77,6 +77,7 @@
   <button id="tab-clientes" onclick="abrirClientes()" style="display:none;">Clientes</button>
   <button id="tab-pos" onclick="abrirPOS()" style="display:none;">Punto de venta</button>
   <button id="tab-porhacer" onclick="abrirPorHacer()" style="display:none;">Por hacer</button>
+  <button id="tab-catalogo" onclick="abrirCatalogo()" style="display:none;">Catálogo</button>
 </nav>
 <div id="debug-banner" style="display:none; background:#F7E4E8; color:#8F2E44; padding:12px 18px; font-size:13px; font-weight:600; border-bottom:1px solid #E0A8B5;"></div>
 
@@ -440,6 +441,12 @@
     <div id="clientes-contenido" class="loading">Cargando clientes...</div>
   </section>
 
+  <!-- VISTA: CATÁLOGO (FOTOS PARA LA PÁGINA) -->
+  <section id="view-catalogo" class="view">
+    <div class="hint" style="margin:0 0 16px;">Fotos de cada producto para conniereposteria.com. La primera es la principal; se guarda la original sin perder calidad.</div>
+    <div id="catalogo-contenido" class="loading">Cargando...</div>
+  </section>
+
   <!-- VISTA: CLIENTE (DETALLE) -->
   <section id="view-cliente-detalle" class="view">
     <a href="#" class="link-accion" onclick="abrirClientes(); return false;">← Clientes</a>
@@ -695,6 +702,7 @@
 <script src="js/tickets.js"></script>
 <script src="js/punto-venta.js"></script>
 <script src="js/produccion.js"></script>
+<script src="js/catalogo-fotos.js"></script>
 <script src="js/interfaz.js"></script>
 <script src="js/inicio.js"></script>
 

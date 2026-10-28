@@ -114,6 +114,11 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .card{text-align:left}
 .card .ph{aspect-ratio:4/5;position:relative;border-radius:18px;overflow:hidden;background:var(--yeso)}
 .sinfoto{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.gal{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.gal::-webkit-scrollbar{display:none}
+.gal img{flex:0 0 100%;scroll-snap-align:start}
+.gal-n{position:absolute;right:10px;top:10px;background:rgba(43,38,32,.72);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;pointer-events:none}
+.hoja .gal-n{top:auto;bottom:12px;right:14px;font-size:12px}
 .sinfoto img{height:42%;opacity:.35}
 .tag{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;white-space:nowrap;background:rgba(255,253,248,.92);color:var(--amber);font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;display:flex;align-items:center;gap:4px}
 .tag img{height:12px}
@@ -161,7 +166,7 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .hoja-top{padding:14px 18px 12px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center}
 .hoja-top .logo{height:30px;justify-self:center}
 .hoja-top button{font-size:22px;width:40px;height:40px}
-.hoja .foto{height:290px;background:var(--yeso)}
+.hoja .foto{height:290px;background:var(--yeso);position:relative}
 .hoja .cuerpo{padding:18px 20px}
 .hoja h2{font-size:34px}
 .hoja .desc{font-size:13.5px;color:var(--soft);margin-top:4px;line-height:1.5}
@@ -337,6 +342,15 @@ const pos = t => { const i = ORDEN.indexOf(clave(t)); return i<0 ? 50 + (clave(t
 const esCheeseT = t => clave(t).includes('cheesecake');
 const esTresT = t => clave(t).includes('tresleches');
 function fotoHtml(url, alt){ return url ? `<img class="cover" src="${esc(url)}" alt="${esc(alt||'')}" loading="lazy">` : `<div class="sinfoto"><img src="${CORONA}" alt=""></div>`; }
+// Varias fotos: se deslizan de lado; el contador dice en cuál vas (ej. 2 / 4)
+function galeriaHtml(fotos, url, alt){
+  if(!fotos || fotos.length < 2) return fotoHtml((fotos && fotos[0]) || url, alt);
+  return `<div class="gal" onscroll="galMover(this)">${fotos.map(f=>`<img class="cover" src="${esc(f)}" alt="${esc(alt||'')}" loading="lazy">`).join('')}</div><span class="gal-n">1 / ${fotos.length}</span>`;
+}
+function galMover(el){
+  const n = el.nextElementSibling; if(!n) return;
+  n.textContent = (Math.round(el.scrollLeft / el.clientWidth) + 1) + ' / ' + el.children.length;
+}
 
 // ===== Datos =====
 let D = {tam:[], sab:[], cup:[], cuch:[], pan:[], cor:[], deco:[], precioCup:0};
@@ -344,9 +358,15 @@ const carrito = []; // {tipo, nombre, detalle, precio, qty, foto, datos}
 
 async function cargar(){
   const q = t => sb.from(t).select('*');
-  const [t, sp, sc, ind, pan, cor, dec] = await Promise.all([q('tamanos_pastel'), q('sabores_pasteles'), q('sabores_cupcakes'), q('individuales'), q('panques'), q('coronas'), q('decoraciones')]);
+  const [t, sp, sc, ind, pan, cor, dec, fot] = await Promise.all([q('tamanos_pastel'), q('sabores_pasteles'), q('sabores_cupcakes'), q('individuales'), q('panques'), q('coronas'), q('decoraciones'), q('fotos_catalogo').order('orden').order('id')]);
   const err = [t,sp,sc,ind].find(r=>r.error);
   if(err){ document.getElementById('cat-cont').innerHTML = '<div class="cargando">No pudimos cargar el catálogo. Intenta de nuevo en un momento.</div>'; document.getElementById('lista-linea').innerHTML=''; console.error(err.error); return; }
+  // Fotos subidas desde el sistema (Catálogo); la primera es la principal
+  const fotos = {};
+  (fot.data||[]).forEach(f=>{ (fotos[f.tabla+'|'+f.producto] = fotos[f.tabla+'|'+f.producto] || []).push(f.url); });
+  const conFotos = tabla => r => { const l = fotos[tabla+'|'+r.nombre]; if(l && l.length){ r._fotos = l; r.foto_url = l[0]; } return r; };
+  (sp.data||[]).forEach(conFotos('sabores_pasteles')); (sc.data||[]).forEach(conFotos('sabores_cupcakes'));
+  (ind.data||[]).forEach(conFotos('individuales')); (pan.data||[]).forEach(conFotos('panques'));
   D.tam = (t.data||[]).sort((a,b)=>pos(a.tamano)-pos(b.tamano));
   D.sab = (sp.data||[]).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   const ORDEN_CUP=['limon','pistache','bicajeta','cajeta','whitevelvet','especial','biespecial','coco','caramelo','chocolate','chocophila','zanahoria','platano','chococajeta','chococaramelo'];
@@ -394,13 +414,13 @@ function irCat(c){
 }
 function cardSabor(s, grupo){
   return `<button class="card" onclick="abrirProducto('${grupo}','${esc(s.nombre)}')">
-    <div class="ph">${fotoHtml(s.foto_url, nombreBonito(s.nombre))}${s.incluye_corona && grupo==='pastel'?`<span class="tag"><img src="${CORONA}" alt="">Corona incluida</span>`:''}</div>
+    <div class="ph">${fotoHtml(s.foto_url, nombreBonito(s.nombre))}${(s._fotos||[]).length>1?`<span class="gal-n">${s._fotos.length} fotos</span>`:''}${s.incluye_corona && grupo==='pastel'?`<span class="tag"><img src="${CORONA}" alt="">Corona incluida</span>`:''}</div>
     <div class="t serif">${esc(nombreBonito(s.nombre))}</div><div class="d">${s._desde?'Desde '+dinero(s._desde):''}</div></button>`;
 }
 function cardCantidad(tipo, r, precio){
   const it = carrito.find(x=>x.tipo===tipo && x.nombre===r.nombre);
   const n = it ? it.qty : 0;
-  return `<div class="card"><div class="ph" style="aspect-ratio:3/4">${fotoHtml(r.foto_url, nombreBonito(r.nombre))}</div>
+  return `<div class="card"><div class="ph" style="aspect-ratio:3/4">${galeriaHtml(r._fotos, r.foto_url, nombreBonito(r.nombre))}</div>
     <div class="t serif">${esc(nombreBonito(r.nombre))}</div><div class="d">${dinero(precio)}</div>
     <div class="step${n?' con':''}"><button aria-label="Quitar uno" onclick="cambiar('${tipo}','${esc(r.nombre)}',${Number(precio)||0},-1,'${esc(r.foto_url||'')}')">−</button><span>${n}</span><button aria-label="Agregar uno" onclick="cambiar('${tipo}','${esc(r.nombre)}',${Number(precio)||0},1,'${esc(r.foto_url||'')}')">+</button></div></div>`;
 }
@@ -420,7 +440,7 @@ function pintarCat(c){
     const sabores = D.sab.filter(s=>!/^cc_/i.test(s.nombre) && !clave(s.nombre).includes('cheesecake') && !clave(s.nombre).includes('tresleches'))
       .map(s=>({...s, _desde:minimo(linea)}));
     const tarjetas = sabores.map(s=>cardSabor(s,'pastel')).join('')
-      + (tres.length ? cardSabor({nombre:'Tres leches', foto_url:(D.sab.find(s=>clave(s.nombre)==='tresleches')||{}).foto_url, _desde:minimo(tres)}, 'tresleches') : '');
+      + (tres.length ? cardSabor({nombre:'Tres leches', foto_url:(D.sab.find(s=>clave(s.nombre)==='tresleches')||{}).foto_url, _fotos:(D.sab.find(s=>clave(s.nombre)==='tresleches')||{})._fotos, _desde:minimo(tres)}, 'tresleches') : '');
     cont.innerHTML = `<div class="cat-h"><h2 class="serif">Pasteles</h2><p>Elige el sabor y después el tamaño</p></div><div class="grid">${tarjetas || vacio}</div>`;
   } else if(c === 'cheesecakes'){
     const tams = D.tam.filter(t=>esCheeseT(t.tamano));
@@ -465,7 +485,8 @@ function abrirProducto(grupo, nombre){
              : grupo==='tresleches' ? D.tam.filter(t=>esTresT(t.tamano))
              : D.tam.filter(t=>!esCheeseT(t.tamano) && !esTresT(t.tamano));
   hp = {grupo, sabor:nombre, tams, tamano: tams.length===1 ? tams[0].tamano : null, corona:'no', incluye: !!s.incluye_corona, foto:s.foto_url||''};
-  document.getElementById('hp-foto').innerHTML = fotoHtml(s.foto_url, nombreBonito(nombre));
+  const sf = s._fotos || s.foto_url ? s : (grupo==='tresleches' ? D.sab.find(x=>clave(x.nombre)==='tresleches') || s : s);
+  document.getElementById('hp-foto').innerHTML = galeriaHtml(sf._fotos, sf.foto_url, nombreBonito(nombre));
   document.getElementById('hp-nombre').textContent = (grupo==='cheesecake'?'Cheesecake ':'') + nombreBonito(nombre);
   document.getElementById('hp-desc').textContent = s.descripcion || '';
   document.getElementById('hp-color').value = '';

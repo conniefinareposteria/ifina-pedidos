@@ -11,6 +11,7 @@ const RAIZ = path.resolve(__dirname, '..');
 const PAGINA = path.resolve(process.argv[2] || path.join(RAIZ, 'sistema/index.html'));
 const SALIDA = process.argv[3] || path.join(__dirname, 'huella.json');
 const STUB = path.join(__dirname, 'supabase-simulado.js');
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR4nGM40ZMHRwzEcQDhMhwh1+Dl5gAAAABJRU5ErkJggg==', 'base64');
 const AHORA = new Date('2026-10-28T12:30:00-07:00');
 
 async function abrir(browser, rol){
@@ -33,6 +34,7 @@ async function abrir(browser, rol){
   }, rol);
   await page.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ status:200, contentType:'application/javascript', path: STUB }));
   await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ status:200, contentType:'text/css', body:'' }));
+  await page.route('https://fotos.prueba/**', r => r.fulfill({ status:200, contentType:'image/png', body: PNG }));
   await page.route('https://fonts.gstatic.com/**', r => r.fulfill({ status:200, body:'' }));
   await page.route('https://192.168.1.30/**', r => {
     huella.pasos.push({ paso: '(impresora epson)', xml: r.request().postData() });
@@ -142,6 +144,12 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'por hacer', ()=> ev(()=> abrirPorHacer()));
     await paso(page, huella, 'metas pasteles', ()=> ev(()=> abrirMetas('pasteles')));
     await paso(page, huella, 'metas cupcakes', ()=> ev(()=> abrirMetas('cupcakes')));
+    await paso(page, huella, 'catalogo fotos', ()=> ev(()=> abrirCatalogo()));
+    await paso(page, huella, 'catalogo agregar 2 fotos', async()=>{
+      await page.setInputFiles('#cf-sabores_cupcakes-limon input[type=file]', [{ name:'a.png', mimeType:'image/png', buffer:PNG }, { name:'b.png', mimeType:'image/png', buffer:PNG }]);
+      await page.waitForFunction(()=> document.querySelectorAll('#cf-sabores_cupcakes-limon .cf-foto').length === 2); });
+    await paso(page, huella, 'catalogo hacer principal', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-btn'));
+    await paso(page, huella, 'catalogo quitar foto', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-quitar >> nth=0'));
     await paso(page, huella, 'nuevo pedido', ()=> ev(()=> switchView('nuevo')));
     resultado.director = huella;
     await ctx.close();

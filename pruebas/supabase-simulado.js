@@ -19,6 +19,7 @@
       {id:1,tabla:'sabores_pasteles',producto:'white_velvet',orden:0,ruta:'sabores_pasteles/whitevelvet/a.jpg',url:'https://fotos.prueba/a.jpg',ruta_original:'sabores_pasteles/whitevelvet/a-original.jpg'},
       {id:2,tabla:'sabores_pasteles',producto:'white_velvet',orden:1,ruta:'sabores_pasteles/whitevelvet/b.jpg',url:'https://fotos.prueba/b.jpg',ruta_original:'sabores_pasteles/whitevelvet/b-original.jpg'}],
     decoraciones: [{nombre:'Base blanca',precio:0,orden:1},{nombre:'Corona de color',precio:100,orden:2},{nombre:'Decorado simple',precio:150,orden:3},{nombre:'Decorado de evento',precio:null,orden:4}],
+    productos_ocultos: [{tabla:'individuales',producto:'carlota_limon'}],
     coronas: [{tipo:'ambar',tamano:'mini',precio:30},{tipo:'ambar',tamano:'normal',precio:50},{tipo:'color',tamano:'mini',precio:60},{tipo:'color',tamano:'normal',precio:100}],
     metas_produccion: [
       {dia:3, pasteles:{"White velvet":{mini:4,chico:2},"Coco":{mini:2,chico:1}}, cupcakes:{"Limón":24,"Pistache":12}, coronas:{}},
@@ -78,6 +79,8 @@
         if(accion === 'delete'){ log('delete', tabla, r.map(x=>x.id)); }
         if(accion === 'insert'){ r = Array.isArray(datos) ? datos : [datos];
           if(tabla === 'fotos_catalogo'){ r = r.map(x=> ({ id: 100 + tablas.fotos_catalogo.length, ...x })); tablas.fotos_catalogo.push(...r); } }
+        if(accion === 'insert' && tabla === 'productos_ocultos') tablas.productos_ocultos.push(...r);
+        if(accion === 'delete' && tabla === 'productos_ocultos'){ tablas.productos_ocultos = tablas.productos_ocultos.filter(x=> !r.includes(x)); }
         if(accion === 'delete' && tabla === 'fotos_catalogo'){ tablas.fotos_catalogo = tablas.fotos_catalogo.filter(x=> !r.includes(x)); }
         if(accion === 'upsert'){ r = Array.isArray(datos) ? datos : [datos]; }
         if(orden) r = r.slice().sort((a,b)=> (a[orden] > b[orden] ? 1 : a[orden] < b[orden] ? -1 : 0) * (desc ? -1 : 1));

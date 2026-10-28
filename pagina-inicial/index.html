@@ -361,7 +361,7 @@ const carrito = []; // {tipo, nombre, detalle, precio, qty, foto, datos}
 
 async function cargar(){
   const q = t => sb.from(t).select('*');
-  const [t, sp, sc, ind, pan, cor, dec, fot] = await Promise.all([q('tamanos_pastel'), q('sabores_pasteles'), q('sabores_cupcakes'), q('individuales'), q('panques'), q('coronas'), q('decoraciones'), q('fotos_catalogo').order('orden').order('id')]);
+  const [t, sp, sc, ind, pan, cor, dec, fot, ocu] = await Promise.all([q('tamanos_pastel'), q('sabores_pasteles'), q('sabores_cupcakes'), q('individuales'), q('panques'), q('coronas'), q('decoraciones'), q('fotos_catalogo').order('orden').order('id'), q('productos_ocultos')]);
   const err = [t,sp,sc,ind].find(r=>r.error);
   if(err){ document.getElementById('cat-cont').innerHTML = '<div class="cargando">No pudimos cargar el catálogo. Intenta de nuevo en un momento.</div>'; document.getElementById('lista-linea').innerHTML=''; console.error(err.error); return; }
   // Fotos subidas desde el sistema (Catálogo); la primera es la principal
@@ -376,6 +376,11 @@ async function cargar(){
   if(pag('visitanos').length) document.getElementById('foto-visitanos').src = pag('visitanos')[0];
   if(pag('galeria_decorados').length) GALERIA = pag('galeria_decorados');
   (dec.data||[]).forEach(d=>{ const l = fotos['decoraciones|'+d.nombre]; if(l && l.length) d.foto_url = l[0]; });
+  // Productos que la directora ocultó desde el sistema (Catálogo → Ocultar en la página)
+  const ocultos = new Set((ocu.data||[]).map(o=>o.tabla+'|'+o.producto));
+  const visible = tabla => r => !ocultos.has(tabla+'|'+r.nombre);
+  sp.data = (sp.data||[]).filter(visible('sabores_pasteles')); sc.data = (sc.data||[]).filter(visible('sabores_cupcakes'));
+  ind.data = (ind.data||[]).filter(r=> r.nombre==='cupcake' || visible('individuales')(r)); pan.data = (pan.data||[]).filter(visible('panques'));
   D.tam = (t.data||[]).sort((a,b)=>pos(a.tamano)-pos(b.tamano));
   D.sab = (sp.data||[]).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   const ORDEN_CUP=['limon','pistache','bicajeta','cajeta','whitevelvet','especial','biespecial','coco','caramelo','chocolate','chocophila','zanahoria','platano','chococajeta','chococaramelo'];

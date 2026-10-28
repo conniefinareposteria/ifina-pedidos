@@ -24,6 +24,7 @@ const FOTOS_PAGINA = [
 let fotosCatalogo = [];   // renglones de fotos_catalogo
 let decoracionesCat = []; // base blanca, corona de color, decorado simple, decorado de evento…
 let catSeccion = 'pagina';
+let ocultosCatalogo = new Set(); // "tabla|producto" que no se muestran en la página (sql/022)
 
 function abrirCatalogo(){
   activarVistaDirectora('tab-catalogo', 'view-catalogo');
@@ -39,10 +40,11 @@ async function cargarCatalogoFotos(){
   const cont = document.getElementById('catalogo-contenido');
   cont.className = 'loading'; cont.textContent = 'Cargando...';
   if(catalogosListos) await catalogosListos;
-  const [fot, dec] = await Promise.all([sb.from('fotos_catalogo').select('*').order('orden'), sb.from('decoraciones').select('nombre,orden').order('orden')]);
+  const [fot, dec, ocu] = await Promise.all([sb.from('fotos_catalogo').select('*').order('orden'), sb.from('decoraciones').select('nombre,orden').order('orden'), sb.from('productos_ocultos').select('tabla,producto')]);
   if(fot.error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar las fotos: ' + fot.error.message; return; }
   fotosCatalogo = fot.data || [];
   decoracionesCat = dec.data || [];
+  ocultosCatalogo = new Set((ocu.data || []).map(o=> o.tabla + '|' + o.producto));
   pintarCatalogoFotos();
 }
 function elegirSeccionCatalogo(id){ catSeccion = id; pintarCatalogoFotos(); }
@@ -58,24 +60,28 @@ function pintarCatalogoFotos(){
         + decoracionesCat.map(d=> filaProductoFotos('decoraciones', d.nombre, d.nombre)).join('') : '');
   } else {
     const filas = datosDeTabla(sec.tabla).filter(sec.filtro).slice().sort((a,b)=> formatNombre(a.nombre).localeCompare(formatNombre(b.nombre), 'es'));
-    cuerpo = filas.map(r=> filaProductoFotos(sec.tabla, r.nombre)).join('') || '<div class="empty">Sin productos.</div>';
+    cuerpo = filas.map(r=> filaProductoFotos(sec.tabla, r.nombre, null, null, true)).join('') || '<div class="empty">Sin productos.</div>';
   }
   cont.innerHTML = chips + `<div class="seccion-resumen"><h3>${sec.titulo}</h3>${cuerpo}</div>`;
 }
 function idFila(tabla, producto){ return 'cf-' + tabla + '-' + claveSabor(producto); }
-function filaProductoFotos(tabla, producto, titulo, nota){
+function filaProductoFotos(tabla, producto, titulo, nota, ocultable){
   const fotos = fotosDe(tabla, producto);
+  const oculto = ocultable && ocultosCatalogo.has(tabla + '|' + producto);
+  const pArg = escHtml(producto).replace(/'/g, '&#39;');
   const id = idFila(tabla, producto);
   const miniaturas = fotos.map((f, i)=> `<div class="cf-foto${i === 0 ? ' principal' : ''}">
       <img src="${escHtml(f.url)}" alt="" loading="lazy">
       ${i === 0 ? '<span class="cf-tag">Principal</span>' : `<button type="button" class="cf-btn" onclick="hacerPrincipal(${Number(f.id)})">Hacer principal</button>`}
       <button type="button" class="cf-quitar" aria-label="Quitar foto" onclick="quitarFoto(${Number(f.id)})">×</button>
     </div>`).join('');
-  return `<div class="cf-producto" id="${id}">
+  return `<div class="cf-producto${oculto ? ' oculto' : ''}" id="${id}">
     <div class="cf-cab"><b>${escHtml(titulo || formatNombre(producto))}</b><span class="hint" style="margin:0;">${fotos.length ? fotos.length + (fotos.length === 1 ? ' foto' : ' fotos') : 'Sin foto'}</span></div>
+    ${ocultable ? `<div class="cf-estado"><span>${oculto ? 'No se muestra en la página' : 'Se muestra en la página'}</span>
+      <button type="button" class="cf-ocultar" onclick="cambiarOcultoProducto('${tabla}', '${pArg}', ${!oculto})">${oculto ? 'Volver a mostrar' : 'Ocultar en la página'}</button></div>` : ''}
     ${nota ? `<div class="hint" style="margin:-4px 0 10px;">${escHtml(nota)}</div>` : ''}
     <div class="cf-fotos">${miniaturas}
-      <label class="cf-agregar">+ agregar foto<input type="file" accept="image/*" multiple hidden onchange="subirFotos(this, '${tabla}', '${escHtml(producto).replace(/'/g, '&#39;')}')"></label>
+      <label class="cf-agregar">+ agregar foto<input type="file" accept="image/*" multiple hidden onchange="subirFotos(this, '${tabla}', '${pArg}')"></label>
     </div>
     <div class="msg" id="${id}-msg"></div>
   </div>`;
@@ -143,5 +149,16 @@ async function quitarFoto(id){
   if(error){ alert('No se pudo quitar: ' + error.message); return; }
   await sb.storage.from('catalogo').remove([f.ruta, f.ruta_original].filter(Boolean));
   fotosCatalogo = fotosCatalogo.filter(x=> x.id !== id);
+  pintarCatalogoFotos();
+}
+// Ocultar / volver a mostrar un producto en la página (no cambia nada en el sistema ni en el punto de venta)
+async function cambiarOcultoProducto(tabla, producto, ocultar){
+  if(ocultar && !confirm(`¿Ocultar ${formatNombre(producto)} en la página? Se puede volver a mostrar cuando quieras.`)) return;
+  const q = ocultar
+    ? sb.from('productos_ocultos').insert([{ tabla, producto }])
+    : sb.from('productos_ocultos').delete().eq('tabla', tabla).eq('producto', producto);
+  const { error } = await q;
+  if(error){ alert('No se pudo cambiar: ' + error.message); return; }
+  if(ocultar) ocultosCatalogo.add(tabla + '|' + producto); else ocultosCatalogo.delete(tabla + '|' + producto);
   pintarCatalogoFotos();
 }

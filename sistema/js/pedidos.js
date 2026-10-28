@@ -10,7 +10,7 @@ function resumenPedidoCorto(p){
     const cor = textoCorona(p);
     return `Pastel ${formatNombre(p.tamano_o_sabor)}${p.sabor ? ' de ' + formatNombre(p.sabor) : ''}${cor ? ', ' + cor.toLowerCase() : ''}`;
   }
-  const tipo = {cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria;
+  const tipo = {cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria;
   return `${tipo}: ${p.sabor || ''}`;
 }
 function armarTextoRepartidor(fechaTitulo, pedidos){
@@ -137,7 +137,7 @@ function pintarPedidosPorDia(data, cont){
     let filas = '';
     grupos[fecha].forEach((p, idx)=>{
       const hora = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
-      const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria;
+      const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria;
       const tamano = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '—';
       const sabor = p.categoria === 'pastel' ? formatNombre(p.sabor) + (textoCorona(p) ? ' · ' + textoCorona(p) : '') + (p.decorado ? ' · Decorado' : '') : (p.sabor || '');
       const entrega = p.entrega === 'domicilio' ? 'Domicilio'
@@ -154,7 +154,7 @@ function pintarPedidosPorDia(data, cont){
       pedidosPorId[p.id] = p;
       filas += `
         <tr>
-          ${rolActual === 'director' ? `<td class="c"><button type="button" class="btn-editar-fila" onclick="event.stopPropagation(); elegirAccionPedido(${Number(p.id)})">Editar</button></td>` : ''}
+          ${puede('pedidos_editar') ? `<td class="c"><button type="button" class="btn-editar-fila" onclick="event.stopPropagation(); elegirAccionPedido(${Number(p.id)})">Editar</button></td>` : ''}
           <td class="num">${idx+1}</td>
           <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
           <td class="nowrap">${esc(p.telefono || '')}</td>
@@ -172,7 +172,7 @@ function pintarPedidosPorDia(data, cont){
 
     g.innerHTML = `
       <h3>${fecha.charAt(0).toUpperCase() + fecha.slice(1)}</h3>
-      ${rolActual === 'director' ? `<div class="resumen-dia">
+      ${puede('ver_dinero') ? `<div class="resumen-dia">
         <span>Efectivo <b>${dinero(cobrado.efectivo)}</b></span>
         <span>Transferencia <b>${dinero(cobrado.transferencia)}</b></span>
         <span>Tarjeta <b>${dinero(cobrado.tarjeta)}</b></span>
@@ -183,7 +183,7 @@ function pintarPedidosPorDia(data, cont){
         <table class="tabla-pedidos">
           <thead>
             <tr>
-              ${rolActual === 'director' ? '<th></th>' : ''}<th>No.</th><th>Nombre</th><th>Teléfono</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th>
+              ${puede('pedidos_editar') ? '<th></th>' : ''}<th>No.</th><th>Nombre</th><th>Teléfono</th><th>Producto</th><th>Tamaño</th><th>Sabor / detalle</th>
               <th>Hora</th><th>Entrega</th><th class="dinero">Total</th><th class="dinero">Pagó</th><th class="dinero">Falta</th><th>Comentarios</th>
             </tr>
           </thead>
@@ -202,7 +202,7 @@ function pintarPedidosPorDia(data, cont){
       btn.onclick = () => copiarRepartidor(textoRep, btn);
       g.appendChild(btn);
     }
-    if(rolActual === 'director'){
+    if(puede('pedidos_imprimir')){
       const bi = document.createElement('button');
       bi.type = 'button';
       bi.className = 'btn-repartidor';
@@ -215,7 +215,6 @@ function pintarPedidosPorDia(data, cont){
     cont.appendChild(g);
   });
 }
-let rolActual = null;
 // ---------- Ver / editar / borrar pedido ----------
 const pedidosPorId = {};
 let pedidoEditando = null;
@@ -235,7 +234,7 @@ function epActualizarUI(){
   document.getElementById(id).addEventListener('change', epActualizarUI);
 });
 function abrirEditarPedido(id){
-  if(rolActual !== 'director') return; // Producción solo puede ver
+  if(!puede('pedidos_editar')) return; // Producción solo puede ver
   const p = pedidosPorId[id];
   if(!p) return;
   pedidoEditando = p;
@@ -323,7 +322,7 @@ async function abrirEliminados(){
   cont.className = ''; cont.innerHTML = '';
   data.forEach(e=>{
     const p = e.pedido || {};
-    const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria || '';
+    const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || '';
     const det = p.categoria === 'pastel' ? [formatNombre(p.tamano_o_sabor), formatNombre(p.sabor)].filter(Boolean).join(' · ') : (p.sabor || '');
     const entrega = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleString('es-MX', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : 'Sin fecha';
     const borrado = new Date(e.eliminado_at).toLocaleString('es-MX', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
@@ -352,7 +351,7 @@ async function recuperarPedido(e, btn){
 let pedidoAccion = null;
 let pgMetodo = null;
 function elegirAccionPedido(id){
-  if(rolActual !== 'director') return;
+  if(!puede('pedidos_editar')) return;
   const p = pedidosPorId[id]; if(!p) return;
   pedidoAccion = p;
   document.getElementById('acc-titulo').textContent = p.nombre_cliente || 'Pedido';

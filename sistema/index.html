@@ -125,7 +125,7 @@
         <div class="chip-group" id="categoria-chips">
           <div class="chip" data-cat="pastel">Pastel</div>
           <div class="chip" data-cat="cupcake">Cupcake</div>
-          <div class="chip" data-cat="individual">Individual</div>
+          <div class="chip" data-cat="individual">Cuchareables</div>
           <div class="chip" data-cat="panque">Panqué</div>
         </div>
       </div>
@@ -315,7 +315,7 @@
             <option value="">Todas</option>
             <option value="pastel">Pastel</option>
             <option value="cupcake">Cupcake</option>
-            <option value="individual">Individual</option>
+            <option value="individual">Cuchareables</option>
             <option value="panque">Panqué</option>
           </select>
         </div>
@@ -475,7 +475,7 @@
         <div>›</div>
       </div>
       <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('individuales')">
-        <div class="cart-row-name">Individuales <span id="check-individuales"></span></div>
+        <div class="cart-row-name">Cuchareables <span id="check-individuales"></span></div>
         <div>›</div>
       </div>
       <div class="cart-row" style="cursor:pointer;" onclick="abrirSeccion('pasteles')">
@@ -503,7 +503,7 @@
     <div class="msg" id="productos-dia-msg"></div>
   </section>
 
-  <!-- VISTA: EDITOR DE SECCION (Cupcakes / Individuales) -->
+  <!-- VISTA: EDITOR DE SECCION (Cupcakes / Cuchareables / Panqués / Coronas) -->
   <section id="view-seccion" class="view">
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
       <a href="#" onclick="irAtras(); return false;" style="color:var(--jam-deep); font-weight:700; font-size:22px; text-decoration:none;">←</a>
@@ -646,7 +646,7 @@
   <div class="ep-sec">Producto</div>
   <div class="ep-grid">
     <div><label for="ep-cat">Categoría</label>
-      <select id="ep-cat"><option value="pastel">Pastel</option><option value="cupcake">Cupcakes</option><option value="individual">Individuales</option><option value="panque">Panqués</option></select></div>
+      <select id="ep-cat"><option value="pastel">Pastel</option><option value="cupcake">Cupcakes</option><option value="individual">Cuchareables</option><option value="panque">Panqués</option></select></div>
     <div><label for="ep-tam">Tamaño</label><input id="ep-tam" maxlength="60"></div>
     <div class="full"><label for="ep-sabor">Sabor / detalle</label><input id="ep-sabor" maxlength="300"></div>
     <div id="ep-cor-wrap"><label for="ep-cor">Corona</label>

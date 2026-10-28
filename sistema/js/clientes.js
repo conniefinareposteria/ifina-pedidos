@@ -89,7 +89,7 @@ async function cargarPedidosCliente(){
     const d = p.fecha_entrega ? new Date(p.fecha_entrega) : null;
     const fecha = d ? d.toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short', year:'numeric'}) : 'Sin fecha';
     const hora = d ? d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
-    const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Individuales', panque:'Panqués'}[p.categoria] || p.categoria || '';
+    const producto = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || '';
     const tamano = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '—';
     const sabor = p.categoria === 'pastel' ? formatNombre(p.sabor) + (textoCorona(p) ? ' · ' + textoCorona(p) : '') : (p.sabor || '');
     const entrega = p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoge en local';

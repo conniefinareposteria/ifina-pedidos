@@ -63,10 +63,6 @@ async function existenciaInicial(fecha){
   });
   return stock;
 }
-async function vendidosHoy(){
-  const t = await movimientosHoy();
-  return t.v;
-}
 async function movimientosHoy(){
   const fecha = fechaHoyStr();
   const { data, error } = await sb.from('ventas').select('fecha,items').eq('fecha', fecha);

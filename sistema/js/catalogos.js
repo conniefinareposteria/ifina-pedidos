@@ -136,3 +136,6 @@ function saborTraeCorona(nombre){
   const s = saboresPastelesData.find(x => claveSabor(x.nombre) === claveSabor(nombre));
   return !!(s && s.incluye_corona);
 }
+
+// El pedido se recoge en el local (no es domicilio ni recoger en casa)
+function esEntregaLocal(p){ return !p.entrega || p.entrega === 'recoger' || p.entrega === 'local'; }

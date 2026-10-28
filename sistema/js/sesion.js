@@ -1,5 +1,21 @@
 // Sesión y navegación: login, permisos por perfil y cambio entre pantallas.
 
+// ---------- Permisos por perfil (un solo lugar) ----------
+// Qué pestañas ve cada perfil, a dónde entra y qué acciones especiales tiene.
+// Para un módulo nuevo (compras, calculadora, alertas…): agregar su pestaña aquí y su acción en "acciones".
+// Ojo: esto solo decide lo que se ve; lo que de verdad protege los datos son las políticas de Supabase (RLS).
+const TODAS_LAS_PESTANAS = ['nuevo','lista','productos','historial','resumen','clientes','pos','porhacer'];
+const PERMISOS = {
+  director:    { nombre:'Directora',   pestanas:['nuevo','lista','historial','resumen','clientes','porhacer'], entrar: ()=> switchView('lista'),
+                 acciones:['pedidos_editar','pedidos_eliminados','pedidos_decorados','pedidos_imprimir','ver_dinero','metas_editar'] },
+  colaborador: { nombre:'Colaborador', pestanas:['nuevo','productos','pos'],                                  entrar: ()=> irInicio(),
+                 acciones:[] },
+  produccion:  { nombre:'Producción',  pestanas:['lista','porhacer'],                                         entrar: ()=> abrirPorHacer(),
+                 acciones:[] },
+};
+function permisosDe(rol){ return PERMISOS[rol] || PERMISOS.colaborador; }
+function puede(accion){ return permisosDe(rolActual).acciones.includes(accion); }
+
 function switchView(view){
   const yaEstabaEnNuevo = document.getElementById('view-nuevo').classList.contains('active');
   if(view === 'nuevo' && !yaEstabaEnNuevo){
@@ -95,24 +111,16 @@ async function cargarSesion(){
   }
 
   rolActual = perfil.rol;
+  const permisos = permisosDe(rolActual);
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-contenido').style.display = 'block';
-  document.getElementById('usuario-rol-label').textContent = rolActual === 'director' ? 'Directora' : rolActual === 'produccion' ? 'Producción' : 'Colaborador';
-  document.getElementById('tab-nuevo').style.display = rolActual === 'produccion' ? 'none' : 'inline-block';
-  document.getElementById('tab-porhacer').style.display = (rolActual === 'director' || rolActual === 'produccion') ? 'inline-block' : 'none';
-  document.getElementById('link-eliminados-wrap').style.display = rolActual === 'director' ? 'block' : 'none';
+  document.getElementById('usuario-rol-label').textContent = permisos.nombre;
+  TODAS_LAS_PESTANAS.forEach(t=> document.getElementById('tab-' + t).style.display = permisos.pestanas.includes(t) ? 'inline-block' : 'none');
+  document.getElementById('link-eliminados-wrap').style.display = puede('pedidos_eliminados') ? 'block' : 'none';
   document.body.classList.toggle('rol-director', rolActual === 'director');
-  document.getElementById('tab-lista').style.display = (rolActual === 'director' || rolActual === 'produccion') ? 'inline-block' : 'none';
-  document.getElementById('tab-productos').style.display = rolActual === 'colaborador' ? 'inline-block' : 'none';
-  document.getElementById('tab-historial').style.display = rolActual === 'director' ? 'inline-block' : 'none';
-  document.getElementById('tab-resumen').style.display = rolActual === 'director' ? 'inline-block' : 'none';
-  document.getElementById('tab-clientes').style.display = rolActual === 'director' ? 'inline-block' : 'none';
-  document.getElementById('tab-pos').style.display = rolActual === 'colaborador' ? 'inline-block' : 'none';
   document.body.classList.toggle('rol-colaborador', rolActual === 'colaborador');
-  if(rolActual === 'colaborador') irInicio();
-  else if(rolActual === 'produccion') abrirPorHacer();
-  else switchView('lista'); // la directora entra directo a Pedidos
+  permisos.entrar();
 
   catalogosListos = cargarCatalogos();
 }

@@ -353,7 +353,7 @@ async function generarResumenBase(){
         <tbody>
           ${filaDesglose('Pasteles', totalPastelesDinero, totalPastelesPiezas, ped.pastel.$, ped.pastel.n)}
           ${filaDesglose('Cupcakes', totalCupcakesDinero, totalCupcakesPiezas, ped.cupcake.$, ped.cupcake.n)}
-          ${filaDesglose('Individuales', totalIndividualesDinero, totalIndividualesPiezas, ped.individual.$, ped.individual.n)}
+          ${filaDesglose('Cuchareables', totalIndividualesDinero, totalIndividualesPiezas, ped.individual.$, ped.individual.n)}
           ${filaDesglose('Panqués', totalPanquesDinero, totalPanquesPiezas, ped.panque.$, ped.panque.n)}
         </tbody>
         <tfoot><tr>
@@ -370,7 +370,7 @@ async function generarResumenBase(){
     <div class="grid-historial">
       <div class="col-hist">
         ${tablaVentas('Pasteles', filasPas, true)}
-        ${tablaVentas('Individuales', filasInd, false, notaFalta)}
+        ${tablaVentas('Cuchareables', filasInd, false, notaFalta)}
         ${tablaVentas('Panqués', filasPan, false)}
       </div>
       <div class="col-hist">
@@ -440,7 +440,7 @@ async function abrirHistorial(){
     <div class="tabla-wrap">
       <table class="tabla-pedidos">
         <thead><tr>
-          <th>Fecha</th><th>Estado</th><th class="c">Cupcakes</th><th class="c">Individuales</th><th class="c">Pasteles</th><th class="c">Panqués</th><th class="c">Caja</th><th class="n">Ventas del día</th><th></th>
+          <th>Fecha</th><th>Estado</th><th class="c">Cupcakes</th><th class="c">Cuchareables</th><th class="c">Pasteles</th><th class="c">Panqués</th><th class="c">Caja</th><th class="n">Ventas del día</th><th></th>
         </tr></thead>
         <tbody>${filas}</tbody>
       </table>
@@ -561,7 +561,7 @@ async function abrirDetalleDia(fecha){
     <div class="grid-historial">
       <div class="col-hist">
         ${tablaInventario('Pasteles', data.pasteles_listo, filasPas, true)}
-        ${tablaInventario('Individuales', data.individuales_listo, filasInd, false)}
+        ${tablaInventario('Cuchareables', data.individuales_listo, filasInd, false)}
         ${tablaInventario('Panqués', data.panques_listo, filasPan, false)}
       </div>
       <div class="col-hist">

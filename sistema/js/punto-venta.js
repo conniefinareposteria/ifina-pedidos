@@ -1,19 +1,15 @@
 // Punto de venta (colaborador): venta, pedidos de hoy, coronas, cortesía, merma, anticipo, pago diferido.
 
 let posTab = 'cupcakes';
-let posVenta = [];
-          // [{tipo:'local', cat, clave, tam, nombre, precio, cantidad} | {tipo:'pedido', pedido_id, nombre, detalle, total, falta}]
+let posVenta = [];          // [{tipo:'local', cat, clave, tam, nombre, precio, cantidad} | {tipo:'pedido', pedido_id, nombre, detalle, total, falta}]
 let posMetodo = null;
-let posStock = {};
-          // posStock[cat][clave|tam] = disponibles (sin contar la venta actual)
+let posStock = {};          // posStock[cat][clave|tam] = disponibles (sin contar la venta actual)
 let posHayCierre = false;
 let posPedidos = [];
 let posTotalManual = false;
 let posGuardando = false;
-let posEditando = null;
-      // ticket que se está editando: {id, creado, total, metodo}
+let posEditando = null;      // ticket que se está editando: {id, creado, total, metodo}
 
-function posKey(it){ return it.cat + '|' + it.clave + '|' + (it.tam || ''); }
 function posEnVenta(cat, clave, tam){
   return posVenta.filter(x=>x.tipo==='local' && x.cat===cat && x.clave===clave && (x.tam||'')===(tam||''))
     .reduce((a, x)=> a + x.cantidad, 0);
@@ -145,8 +141,7 @@ function detallePedidoPOS(p){
   const det = p.categoria === 'pastel' ? [formatNombre(p.tamano_o_sabor), formatNombre(p.sabor)].filter(Boolean).join(' · ') : (p.sabor || '');
   return producto + (det ? ' · ' + det : '');
 }
-let posBusqueda = null;
-   // resultados de búsqueda de pedidos de otros días
+let posBusqueda = null;   // resultados de búsqueda de pedidos de otros días
 let posBuscarTimer = null;
 document.getElementById('pos-buscar').addEventListener('input', ()=>{
   clearTimeout(posBuscarTimer);
@@ -173,7 +168,7 @@ function filaPedidoPOS(p, conFecha){
   const est = p.entregado ? '<span class="pos-est ok">✓ Finalizado</span>'
     : enVenta ? '<span class="pos-est sel">En la venta</span>'
     : falta > 0 ? '<span class="pos-est pend">Pendiente</span>' : '<span class="pos-est pend">Por entregar</span>';
-  const esLocalP = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
+  const esLocalP = esEntregaLocal(p);
   const puedeEditar = POS_EDITAR_ACTIVO && (p.entregado || esLocalP);
   const row = document.createElement('div');
   row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
@@ -333,7 +328,7 @@ function editarPedidoPOS(p){
   pedidoEditPOS = p;
   document.getElementById('pe-titulo').textContent = p.nombre_cliente || 'Pedido';
   document.getElementById('pe-sub').textContent = detallePedidoPOS(p) + (p.entregado ? ' · Finalizado' : ' · Recoge en local');
-  const esLocalP = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
+  const esLocalP = esEntregaLocal(p);
   document.getElementById('btn-pe-dom').style.display = (!p.entregado && esLocalP) ? 'block' : 'none';
   document.getElementById('btn-pe-reabrir').style.display = p.entregado ? 'block' : 'none';
   document.getElementById('pe-msg').className = 'msg';
@@ -374,7 +369,7 @@ function alternarPedidoEnVenta(p){
     const tot = Number(p.precio)||0;
     const finHoy = new Date(); finHoy.setHours(23,59,59,999);
     // Si el pedido es para hoy o ya pasó, se entrega; si es de días adelante, solo se cobra (se puede cambiar)
-    const esLocal = !p.entrega || p.entrega === 'recoger' || p.entrega === 'local';
+    const esLocal = esEntregaLocal(p);
     // Domicilio o casa: solo se cobra, nunca se entrega desde el punto de venta
     const entregar = esLocal && (!p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy);
     posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),

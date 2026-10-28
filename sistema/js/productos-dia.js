@@ -78,7 +78,7 @@ function abrirSeccion(tipo){
   }
   seccionActual = tipo;
   nivelSeccion = 'chooser';
-  const nombres = {cupcakes:'Cupcakes', individuales:'Individuales', pasteles:'Pasteles', panques:'Panqués', coronas:'Coronas ámbar'};
+  const nombres = {cupcakes:'Cupcakes', individuales:'Cuchareables', pasteles:'Pasteles', panques:'Panqués', coronas:'Coronas ámbar'};
   document.getElementById('seccion-titulo').textContent = nombres[tipo];
   document.getElementById('btn-guardar-seccion').style.display = 'none';
   document.getElementById('btn-finalizar-seccion').style.display = 'none';
@@ -98,14 +98,10 @@ function abrirSeccion(tipo){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-seccion').classList.add('active');
 }
-let invBase = {};
-      // existencia con la que arranca hoy, por sección
-let invVendHoy = {};
-   // vendido hoy en el punto de venta, por sección
-let invMermaHoy = {};
-  // merma registrada hoy en el punto de venta
-let invCortHoy = {};
-   // cortesías registradas hoy en el punto de venta
+let invBase = {};      // existencia con la que arranca hoy, por sección
+let invVendHoy = {};   // vendido hoy en el punto de venta, por sección
+let invMermaHoy = {};  // merma registrada hoy en el punto de venta
+let invCortHoy = {};   // cortesías registradas hoy en el punto de venta
 
 async function cargarInventarioSeccion(cat){
   const [base, mov] = await Promise.all([existenciaInicial(fechaHoyStr()), movimientosHoy()]);
@@ -141,7 +137,7 @@ async function abrirModoSeccion(modo){
 
   mostrarBuscadorSeccion(seccionActual !== 'coronas');
   document.getElementById('seccion-titulo').textContent =
-    ({cupcakes:'Cupcakes', individuales:'Individuales', panques:'Panqués', coronas:'Coronas ámbar'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
+    ({cupcakes:'Cupcakes', individuales:'Cuchareables', panques:'Panqués', coronas:'Coronas ámbar'}[seccionActual]) + ' — ' + (modo === 'inicio' ? 'Inicio de día' : 'Cierre de día');
   cont.innerHTML = '';
   const gris = 'background:var(--cream-deep); color:var(--muted);';
 
@@ -353,8 +349,7 @@ async function guardarSeccionPasteles(finalizar){
 }
 const DENOMINACIONES = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
 let fondoCajaAyer = 0;
-let cajaAuto = null;
-   // ventas del día tomadas del punto de venta
+let cajaAuto = null;   // ventas del día tomadas del punto de venta
 
 function totalVentasCorte(cc){
   cc = cc || {};

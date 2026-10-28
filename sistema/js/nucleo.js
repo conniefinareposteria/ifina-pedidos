@@ -3,6 +3,8 @@
 const SUPABASE_URL = "https://cmdiowwxpectngfidpuc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Maj56l0lrEIGoIhKtAcJnw_HpkWaHIL";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let rolActual = null;   // perfil de quien entró: 'director' | 'colaborador' | 'produccion' (ver PERMISOS en sesion.js)
 let categoriaActual = null;
 let tamanosData = [];
 let saboresPastelesData = [];
@@ -10,10 +12,8 @@ let saboresCupcakesData = [];
 let individualesData = [];
 let coronasData = [];
 let panquesData = [];
-let PANQUE_PRODUCTOS = [];
- // se llena desde la tabla "panques" de Supabase
-let INDIVIDUAL_PRODUCTOS = [];
- // se llena desde la tabla "individuales" de Supabase
+let PANQUE_PRODUCTOS = []; // se llena desde la tabla "panques" de Supabase
+let INDIVIDUAL_PRODUCTOS = []; // se llena desde la tabla "individuales" de Supabase
 let catalogosListos = null;
 function formatNombre(s){
   if(!s) return '';
@@ -40,9 +40,6 @@ function fechaHoyStr(){
 function campoConBorrar(id, valor, extraAttrs){
   extraAttrs = extraAttrs || '';
   return `<input type="number" inputmode="numeric" class="mini-input" id="${id}" value="${valor}" ${extraAttrs}>`;
-}
-function esLunesHoy(){
-  return new Date().getDay() === 1;
 }
 function fechaStrDesdeDate(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');

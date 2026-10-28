@@ -47,10 +47,8 @@ function actualizarTotalCarrito(containerId){
   document.getElementById('precio').value = total || '';
 }
 // ---------- Coronas ----------
-let coronaQuiere = null;
-   // 'si' | 'no'
-let coronaTipo = null;
-     // 'ambar' | 'color'
+let coronaQuiere = null;   // 'si' | 'no'
+let coronaTipo = null;     // 'ambar' | 'color'
 
 function coronaTamanoActual(){
   return (document.getElementById('sel-tamano').value || '').toLowerCase() === 'mini' ? 'mini' : 'normal';
@@ -100,7 +98,7 @@ function actualizarCoronaUI(){
   const decWrap = document.getElementById('decorado-wrap');
   if(categoriaActual !== 'pastel' || !tamano || !sabor){ wrap.style.display = 'none'; decWrap.style.display = 'none'; recalcularPrecioPastel(); return; }
   wrap.style.display = 'block';
-  decWrap.style.display = rolActual === 'director' ? 'block' : 'none';
+  decWrap.style.display = puede('pedidos_decorados') ? 'block' : 'none';
   const incluida = saborIncluyeCorona();
   document.getElementById('corona-incluida').style.display = incluida ? 'block' : 'none';
   document.getElementById('corona-pregunta').style.display = incluida ? 'none' : 'block';
@@ -532,7 +530,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
       }
     }
     if(decoradoActual === 'si'){
-      if(rolActual !== 'director'){ msg.className='msg err'; msg.textContent='Solo la directora puede agendar pasteles decorados.'; return; }
+      if(!puede('pedidos_decorados')){ msg.className='msg err'; msg.textContent='Solo la directora puede agendar pasteles decorados.'; return; }
       if(!document.getElementById('decorado-desc').value.trim()){ msg.className='msg err'; msg.textContent='Escribe la descripción del decorado.'; return; }
       if(!(Number(document.getElementById('precio').value) > 0)){ msg.className='msg err'; msg.textContent='Es pastel decorado: escribe el precio total antes de guardar.'; return; }
     }

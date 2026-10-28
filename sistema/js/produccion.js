@@ -2,10 +2,8 @@
 
 // ---------- Productos por hacer (producción) ----------
 const DIAS_METAS = [[2,'Martes'],[3,'Miércoles'],[4,'Jueves'],[5,'Viernes'],[6,'Sábado']];
-const METAS_GENERAL = 7;
-  // fila general (coronas): no depende del día
-let metasData = {};
-       // dia -> {pasteles:{}, cupcakes:{}}
+const METAS_GENERAL = 7;  // fila general (coronas): no depende del día
+let metasData = {};       // dia -> {pasteles:{}, cupcakes:{}}
 let metasCat = 'pasteles';
 let metasDia = 2;
 async function cargarMetas(){
@@ -92,7 +90,7 @@ async function abrirPorHacer(){
     ${bloqueCor}`;
 
   // Producción: solo lo que hay que hacer (sin debe haber, sobró ni hay)
-  if(rolActual !== 'director'){
+  if(!puede('metas_editar')){
     const cel = h => `<td class="n"><span class="ph-hacer${h ? '' : ' ph-cero'}">${h}</span></td>`;
     const hx = (m, sob) => Math.max(0, (Number(m)||0) - sob);
     let fp = '', fc = '', fk = '';

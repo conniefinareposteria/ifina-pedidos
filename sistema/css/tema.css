@@ -154,3 +154,6 @@ button.primary:disabled{background:#A8A296; color:#F3EDE2;}
 .cf-btn{background:rgba(255,253,248,.92); color:var(--cocoa); cursor:pointer;}
 .cf-quitar{position:absolute; top:5px; right:5px; width:26px; height:26px; border-radius:50%; border:none; background:rgba(61,58,47,.82); color:#fff; font-size:17px; line-height:1; cursor:pointer;}
 .cf-agregar{width:118px; height:118px; border-radius:14px; border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; text-align:center; font-weight:700; font-size:13.5px; color:var(--jam-deep); cursor:pointer; background:var(--cream);}
+.cf-chips{margin-bottom:18px;}
+.cf-chips .chip{cursor:pointer;}
+.cf-sub{font-family:'Tinos',Georgia,serif; font-weight:400; font-size:20px; margin:22px 0 4px;}

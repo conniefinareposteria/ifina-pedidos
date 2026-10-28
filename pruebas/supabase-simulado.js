@@ -18,6 +18,7 @@
     fotos_catalogo: [
       {id:1,tabla:'sabores_pasteles',producto:'white_velvet',orden:0,ruta:'sabores_pasteles/whitevelvet/a.jpg',url:'https://fotos.prueba/a.jpg',ruta_original:'sabores_pasteles/whitevelvet/a-original.jpg'},
       {id:2,tabla:'sabores_pasteles',producto:'white_velvet',orden:1,ruta:'sabores_pasteles/whitevelvet/b.jpg',url:'https://fotos.prueba/b.jpg',ruta_original:'sabores_pasteles/whitevelvet/b-original.jpg'}],
+    decoraciones: [{nombre:'Base blanca',precio:0,orden:1},{nombre:'Corona de color',precio:100,orden:2},{nombre:'Decorado simple',precio:150,orden:3},{nombre:'Decorado de evento',precio:null,orden:4}],
     coronas: [{tipo:'ambar',tamano:'mini',precio:30},{tipo:'ambar',tamano:'normal',precio:50},{tipo:'color',tamano:'mini',precio:60},{tipo:'color',tamano:'normal',precio:100}],
     metas_produccion: [
       {dia:3, pasteles:{"White velvet":{mini:4,chico:2},"Coco":{mini:2,chico:1}}, cupcakes:{"Limón":24,"Pistache":12}, coronas:{}},

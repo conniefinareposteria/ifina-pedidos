@@ -145,11 +145,16 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'metas pasteles', ()=> ev(()=> abrirMetas('pasteles')));
     await paso(page, huella, 'metas cupcakes', ()=> ev(()=> abrirMetas('cupcakes')));
     await paso(page, huella, 'catalogo fotos', ()=> ev(()=> abrirCatalogo()));
+    await paso(page, huella, 'catalogo portada agregar foto', async()=>{
+      await page.setInputFiles('#cf-pagina-portada input[type=file]', [{ name:'p.png', mimeType:'image/png', buffer:PNG }]);
+      await page.waitForFunction(()=> document.querySelectorAll('#cf-pagina-portada .cf-foto').length === 1); });
+    await paso(page, huella, 'catalogo pasteles', ()=> page.click('.cf-chips .chip:has-text("Pasteles")'));
+    await paso(page, huella, 'catalogo hacer principal', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-btn'));
+    await paso(page, huella, 'catalogo quitar foto', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-quitar >> nth=0'));
+    await paso(page, huella, 'catalogo cupcakes', ()=> page.click('.cf-chips .chip:has-text("Cupcakes")'));
     await paso(page, huella, 'catalogo agregar 2 fotos', async()=>{
       await page.setInputFiles('#cf-sabores_cupcakes-limon input[type=file]', [{ name:'a.png', mimeType:'image/png', buffer:PNG }, { name:'b.png', mimeType:'image/png', buffer:PNG }]);
       await page.waitForFunction(()=> document.querySelectorAll('#cf-sabores_cupcakes-limon .cf-foto').length === 2); });
-    await paso(page, huella, 'catalogo hacer principal', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-btn'));
-    await paso(page, huella, 'catalogo quitar foto', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-quitar >> nth=0'));
     await paso(page, huella, 'nuevo pedido', ()=> ev(()=> switchView('nuevo')));
     resultado.director = huella;
     await ctx.close();

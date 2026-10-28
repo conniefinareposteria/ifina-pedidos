@@ -6,15 +6,24 @@
 
 const FOTO_LADO_MAX = 2400;
 const FOTO_CALIDAD = 0.92;
-// Grupos que se muestran: tabla de Supabase, título y qué renglones entran
-const CATALOGO_GRUPOS = [
-  { tabla:'sabores_pasteles', titulo:'Pasteles',     filtro: r => !/^cc_/i.test(r.nombre) },
-  { tabla:'sabores_pasteles', titulo:'Cheesecakes',  filtro: r => /^cc_/i.test(r.nombre) },
-  { tabla:'sabores_cupcakes', titulo:'Cupcakes',     filtro: () => true },
-  { tabla:'individuales',     titulo:'Cuchareables', filtro: r => r.nombre !== 'cupcake' },
-  { tabla:'panques',          titulo:'Panqués',      filtro: () => true },
+// Secciones (chips de arriba): una a la vez para no confundir productos que se repiten (ej. tres leches)
+const CATALOGO_SECCIONES = [
+  { id:'pagina',       titulo:'Página web' },
+  { id:'pasteles',     titulo:'Pasteles',     tabla:'sabores_pasteles', filtro: r => !/^cc_/i.test(r.nombre) },
+  { id:'cheesecakes',  titulo:'Cheesecakes',  tabla:'sabores_pasteles', filtro: r => /^cc_/i.test(r.nombre) },
+  { id:'cupcakes',     titulo:'Cupcakes',     tabla:'sabores_cupcakes', filtro: () => true },
+  { id:'cuchareables', titulo:'Cuchareables', tabla:'individuales',     filtro: r => r.nombre !== 'cupcake' },
+  { id:'panques',      titulo:'Panqués',      tabla:'panques',          filtro: () => true },
+];
+// Fotos de la página que no son de un producto
+const FOTOS_PAGINA = [
+  { producto:'portada',           titulo:'Foto principal (portada)', nota:'La foto grande de hasta arriba. Se usa la principal.' },
+  { producto:'visitanos',         titulo:'Visítanos',                nota:'La foto del final de la página, junto a la dirección. Se usa la principal.' },
+  { producto:'galeria_decorados', titulo:'Galería de pasteles decorados', nota:'Aparecen todas en la sección Decorados.' },
 ];
 let fotosCatalogo = [];   // renglones de fotos_catalogo
+let decoracionesCat = []; // base blanca, corona de color, decorado simple, decorado de evento…
+let catSeccion = 'pagina';
 
 function abrirCatalogo(){
   activarVistaDirectora('tab-catalogo', 'view-catalogo');
@@ -30,30 +39,41 @@ async function cargarCatalogoFotos(){
   const cont = document.getElementById('catalogo-contenido');
   cont.className = 'loading'; cont.textContent = 'Cargando...';
   if(catalogosListos) await catalogosListos;
-  const { data, error } = await sb.from('fotos_catalogo').select('*').order('orden');
-  if(error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar las fotos: ' + error.message + ' (revisa que ya se haya corrido el SQL de fotos).'; return; }
-  fotosCatalogo = data || [];
+  const [fot, dec] = await Promise.all([sb.from('fotos_catalogo').select('*').order('orden'), sb.from('decoraciones').select('nombre,orden').order('orden')]);
+  if(fot.error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar las fotos: ' + fot.error.message; return; }
+  fotosCatalogo = fot.data || [];
+  decoracionesCat = dec.data || [];
   pintarCatalogoFotos();
 }
+function elegirSeccionCatalogo(id){ catSeccion = id; pintarCatalogoFotos(); }
 function pintarCatalogoFotos(){
   const cont = document.getElementById('catalogo-contenido');
   cont.className = '';
-  cont.innerHTML = CATALOGO_GRUPOS.map(g=>{
-    const filas = datosDeTabla(g.tabla).filter(g.filtro).slice().sort((a,b)=> formatNombre(a.nombre).localeCompare(formatNombre(b.nombre), 'es'));
-    if(!filas.length) return '';
-    return `<div class="seccion-resumen"><h3>${g.titulo}</h3>${filas.map(r=> filaProductoFotos(g.tabla, r.nombre)).join('')}</div>`;
-  }).join('');
+  const chips = `<div class="chip-group cf-chips">${CATALOGO_SECCIONES.map(x=> `<div class="chip${x.id === catSeccion ? ' selected' : ''}" onclick="elegirSeccionCatalogo('${x.id}')">${x.titulo}</div>`).join('')}</div>`;
+  const sec = CATALOGO_SECCIONES.find(x=> x.id === catSeccion) || CATALOGO_SECCIONES[0];
+  let cuerpo;
+  if(sec.id === 'pagina'){
+    cuerpo = FOTOS_PAGINA.map(f=> filaProductoFotos('pagina', f.producto, f.titulo, f.nota)).join('')
+      + (decoracionesCat.length ? `<h3 class="cf-sub">Hazlo especial</h3><div class="hint" style="margin:0 0 10px;">Las opciones que se suman al precio del pastel. Se usa la foto principal.</div>`
+        + decoracionesCat.map(d=> filaProductoFotos('decoraciones', d.nombre, d.nombre)).join('') : '');
+  } else {
+    const filas = datosDeTabla(sec.tabla).filter(sec.filtro).slice().sort((a,b)=> formatNombre(a.nombre).localeCompare(formatNombre(b.nombre), 'es'));
+    cuerpo = filas.map(r=> filaProductoFotos(sec.tabla, r.nombre)).join('') || '<div class="empty">Sin productos.</div>';
+  }
+  cont.innerHTML = chips + `<div class="seccion-resumen"><h3>${sec.titulo}</h3>${cuerpo}</div>`;
 }
-function filaProductoFotos(tabla, producto){
+function idFila(tabla, producto){ return 'cf-' + tabla + '-' + claveSabor(producto); }
+function filaProductoFotos(tabla, producto, titulo, nota){
   const fotos = fotosDe(tabla, producto);
-  const id = 'cf-' + tabla + '-' + claveSabor(producto);
+  const id = idFila(tabla, producto);
   const miniaturas = fotos.map((f, i)=> `<div class="cf-foto${i === 0 ? ' principal' : ''}">
       <img src="${escHtml(f.url)}" alt="" loading="lazy">
       ${i === 0 ? '<span class="cf-tag">Principal</span>' : `<button type="button" class="cf-btn" onclick="hacerPrincipal(${Number(f.id)})">Hacer principal</button>`}
       <button type="button" class="cf-quitar" aria-label="Quitar foto" onclick="quitarFoto(${Number(f.id)})">×</button>
     </div>`).join('');
   return `<div class="cf-producto" id="${id}">
-    <div class="cf-cab"><b>${escHtml(formatNombre(producto))}</b><span class="hint" style="margin:0;">${fotos.length ? fotos.length + (fotos.length === 1 ? ' foto' : ' fotos') : 'Sin foto'}</span></div>
+    <div class="cf-cab"><b>${escHtml(titulo || formatNombre(producto))}</b><span class="hint" style="margin:0;">${fotos.length ? fotos.length + (fotos.length === 1 ? ' foto' : ' fotos') : 'Sin foto'}</span></div>
+    ${nota ? `<div class="hint" style="margin:-4px 0 10px;">${escHtml(nota)}</div>` : ''}
     <div class="cf-fotos">${miniaturas}
       <label class="cf-agregar">+ agregar foto<input type="file" accept="image/*" multiple hidden onchange="subirFotos(this, '${tabla}', '${escHtml(producto).replace(/'/g, '&#39;')}')"></label>
     </div>
@@ -76,7 +96,7 @@ async function copiaParaPagina(archivo){
 async function subirFotos(input, tabla, producto){
   const archivos = [...input.files]; input.value = '';
   if(!archivos.length) return;
-  const msg = document.getElementById('cf-' + tabla + '-' + claveSabor(producto) + '-msg');
+  const msg = document.getElementById(idFila(tabla, producto) + '-msg');
   const base = tabla + '/' + claveSabor(producto) + '/';
   let orden = Math.max(0, ...fotosDe(tabla, producto).map(f=> f.orden + 1));
   let hechas = 0;
@@ -105,7 +125,7 @@ async function subirFotos(input, tabla, producto){
     }
   }
   pintarCatalogoFotos();
-  const m = document.getElementById('cf-' + tabla + '-' + claveSabor(producto) + '-msg');
+  const m = document.getElementById(idFila(tabla, producto) + '-msg');
   if(hechas === archivos.length){ m.className = 'msg ok'; m.textContent = hechas === 1 ? 'Foto guardada. Ya aparece en la página.' : `${hechas} fotos guardadas. Ya aparecen en la página.`; }
 }
 async function hacerPrincipal(id){

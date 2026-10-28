@@ -111,7 +111,7 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .cat-h p{font-size:13px;color:var(--soft);margin-top:2px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:12px 0 30px}
 @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}
-.card{text-align:left}
+.card{text-align:left;cursor:pointer}
 .card .ph{aspect-ratio:4/5;position:relative;border-radius:18px;overflow:hidden;background:var(--yeso)}
 .sinfoto{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
 .gal{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
@@ -120,8 +120,8 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .gal-n{position:absolute;right:10px;top:10px;background:rgba(43,38,32,.72);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;pointer-events:none}
 .hoja .gal-n{top:auto;bottom:12px;right:14px;font-size:12px}
 .sinfoto img{height:42%;opacity:.35}
-.tag{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;white-space:nowrap;background:rgba(255,253,248,.92);color:var(--amber);font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;display:flex;align-items:center;gap:4px}
-.tag img{height:12px}
+.tag{position:absolute;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 16px);bottom:10px;white-space:nowrap;background:rgba(255,253,248,.94);color:var(--amber);font-size:10.5px;font-weight:700;line-height:1;padding:5px 11px;border-radius:999px;display:flex;align-items:center;gap:5px;pointer-events:none}
+.tag img{height:13px;display:block;flex:none}
 .card .t{font-size:19px;line-height:1.1;margin-top:10px;padding:0 4px}
 .card .d{font-size:12.5px;color:var(--soft);margin-top:3px;padding:0 4px}
 .step{display:flex;justify-content:space-between;align-items:center;margin:10px 4px 0;border:1.5px solid var(--line);border-radius:999px;background:#fff;font-weight:700}
@@ -166,7 +166,8 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .hoja-top{padding:14px 18px 12px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center}
 .hoja-top .logo{height:30px;justify-self:center}
 .hoja-top button{font-size:22px;width:40px;height:40px}
-.hoja .foto{height:290px;background:var(--yeso);position:relative}
+.hoja .foto{height:min(125vw,74vh);background:var(--yeso);position:relative}
+@media(min-width:700px){.hoja .foto .cover{object-fit:contain}}
 .hoja .cuerpo{padding:18px 20px}
 .hoja h2{font-size:34px}
 .hoja .desc{font-size:13.5px;color:var(--soft);margin-top:4px;line-height:1.5}
@@ -419,9 +420,9 @@ function irCat(c){
   document.getElementById('catalogo').scrollIntoView({behavior:'smooth'});
 }
 function cardSabor(s, grupo){
-  return `<button class="card" onclick="abrirProducto('${grupo}','${esc(s.nombre)}')">
-    <div class="ph">${fotoHtml(s.foto_url, nombreBonito(s.nombre))}${(s._fotos||[]).length>1?`<span class="gal-n">${s._fotos.length} fotos</span>`:''}${s.incluye_corona && grupo==='pastel'?`<span class="tag"><img src="${CORONA}" alt="">Corona incluida</span>`:''}</div>
-    <div class="t serif">${esc(nombreBonito(s.nombre))}</div><div class="d">${s._desde?'Desde '+dinero(s._desde):''}</div></button>`;
+  return `<div class="card" role="button" tabindex="0" onclick="abrirProducto('${grupo}','${esc(s.nombre)}')">
+    <div class="ph">${galeriaHtml(s._fotos, s.foto_url, nombreBonito(s.nombre))}${s.incluye_corona && grupo==='pastel'?`<span class="tag"><img src="${CORONA}" alt="">Corona incluida</span>`:''}</div>
+    <div class="t serif">${esc(nombreBonito(s.nombre))}</div><div class="d">${s._desde?'Desde '+dinero(s._desde):''}</div></div>`;
 }
 function cardCantidad(tipo, r, precio){
   const it = carrito.find(x=>x.tipo===tipo && x.nombre===r.nombre);

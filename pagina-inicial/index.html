@@ -58,8 +58,10 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .menu .pie{margin-top:auto;font-size:13px;color:var(--soft);line-height:1.6}
 
 /* ===== Portada ===== */
-.hero{height:min(78vh,620px);margin-top:-12px}
+.hero{height:min(78vh,620px);margin-top:-12px;overflow:hidden}
 .hero img{object-position:50% 30%}
+/* Encuadre de la portada: más cerca, con la corona arriba (como la pidió Pablo) */
+.hero img{transform:scale(1.22);transform-origin:8% 7%}
 .intro{padding:30px 20px 34px}
 .intro h1{font-size:clamp(32px,6vw,52px);line-height:1.08}
 .intro p{font-size:15px;line-height:1.6;color:var(--soft);margin-top:10px;max-width:560px}

@@ -533,7 +533,7 @@ grant execute on function pos_reabrir_pedido(bigint) to authenticated;
 create table if not exists fotos_catalogo (
   id bigint generated always as identity primary key,
   created_at timestamptz default now(),
-  tabla text not null check (tabla in ('sabores_pasteles','sabores_cupcakes','individuales','panques','decoraciones')),
+  tabla text not null,             -- regla fotos_catalogo_tabla_check abajo (021)
   producto text not null,          -- el "nombre" del producto en su tabla (ej. white_velvet)
   orden int not null default 0,    -- la más baja es la principal
   ruta text not null,              -- archivo para la página
@@ -576,3 +576,7 @@ create policy "catalogo cambiar director" on storage.objects for update to authe
 create policy "catalogo borrar director" on storage.objects for delete to authenticated using (
   bucket_id = 'catalogo' and exists (select 1 from public.perfiles where user_id = auth.uid() and rol = 'director'));
 
+-- ===== 021 Fotos de la página (tabla = 'pagina': portada, visitanos, galeria_decorados) =====
+alter table fotos_catalogo drop constraint if exists fotos_catalogo_tabla_check;
+alter table fotos_catalogo add constraint fotos_catalogo_tabla_check
+  check (tabla in ('sabores_pasteles','sabores_cupcakes','individuales','panques','decoraciones','pagina'));

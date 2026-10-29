@@ -173,7 +173,7 @@ function filaPedidoPOS(p, conFecha){
   const row = document.createElement('div');
   row.className = 'pos-prow' + (p.entregado ? ' fin' : '') + (enVenta ? ' sel' : '');
   row.innerHTML = `<div><b>${fecha ? escHtml(fecha) : hora}</b>${fecha ? `<small>${hora}</small>` : ''}</div>
-    <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${escHtml(p.telefono || '')}</small></div>
+    <div><b>${escHtml(p.nombre_cliente || 'Sin nombre')}</b><small>${parteGrupo(p) ? '<b>' + parteGrupo(p) + '</b> · ' : ''}${escHtml(p.telefono || '')}</small></div>
     <div>${escHtml(detallePedidoPOS(p))}<small><b style="color:var(--cocoa);">${p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : 'Recoge en local'}</b>${sub ? ' · ' + escHtml(sub) : ''}</small></div>
     <div class="m">${fmtDinero(tot)}<small>Total · pagó ${fmtDinero(pagadoDe(p))}</small></div>
     <div class="m" style="font-weight:700; color:${falta > 0 && !p.entregado ? 'var(--rojo)' : 'var(--sage)'};">${falta > 0 && !p.entregado ? fmtDinero(falta) + '<small>Falta</small>' : '✓ Pagado<small>Falta $0</small>'}</div>
@@ -361,26 +361,41 @@ function pintarPedidosPOS(cont){
   if(!posPedidos.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hay pedidos para recoger en el local hoy.'; cont.appendChild(e); return; }
   posPedidos.forEach(p=> cont.appendChild(filaPedidoPOS(p, false)));
 }
+// Pedidos agendados juntos (misma persona, varios productos): al tocar uno se agregan los demás
+// que sigan pendientes; cada uno se puede quitar tocándolo otra vez.
+function pedidosDelGrupo(p){
+  if(!p.grupo) return [p];
+  const todos = [...posPedidos, ...(Array.isArray(posBusqueda) ? posBusqueda : [])];
+  const vistos = new Set();
+  return todos.filter(x=> x.grupo === p.grupo && !x.entregado && !vistos.has(x.id) && vistos.add(x.id))
+    .sort((a, b)=> (Number(a.grupo_parte)||0) - (Number(b.grupo_parte)||0));
+}
+let colaCoronaPedidos = [];
 function alternarPedidoEnVenta(p){
   if(posEditando){ const m = document.getElementById('pos-msg'); m.className = 'msg err'; m.textContent = 'Al editar un ticket no se pueden agregar pedidos. Termina o cancela la edición.'; return; }
   const i = posVenta.findIndex(x=>x.tipo==='pedido' && x.pedido_id === p.id);
   if(i >= 0) posVenta.splice(i, 1);
   else {
-    const tot = Number(p.precio)||0;
-    const finHoy = new Date(); finHoy.setHours(23,59,59,999);
-    // Si el pedido es para hoy o ya pasó, se entrega; si es de días adelante, solo se cobra (se puede cambiar)
-    const esLocal = esEntregaLocal(p);
-    // Domicilio o casa: solo se cobra, nunca se entrega desde el punto de venta
-    const entregar = esLocal && (!p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy);
-    posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),
-      total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)), entregar, esLocal,
-      pagadoAntes: pagadoDe(p), lineasTicket: lineasTicketPedido(p), entregaTxt: entregaTxtPedido(p),
-      tipoEntrega: p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : '',
-      fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
-    if(entregar && p.categoria === 'pastel' && !p.corona_tipo) setTimeout(()=> preguntarCoronaPedido(p), 0);
+    const grupo = pedidosDelGrupo(p).filter(x=> x.id === p.id || !posVenta.some(v=> v.tipo === 'pedido' && v.pedido_id === x.id));
+    (grupo.length ? grupo : [p]).forEach(agregarPedidoAVenta);
+    if(colaCoronaPedidos.length) setTimeout(()=> preguntarCoronaPedido(colaCoronaPedidos.shift()), 0);
   }
   posTotalManual = false;
   pintarVenta(); pintarCatalogoPOS();
+}
+function agregarPedidoAVenta(p){
+  const tot = Number(p.precio)||0;
+  const finHoy = new Date(); finHoy.setHours(23,59,59,999);
+  // Si el pedido es para hoy o ya pasó, se entrega; si es de días adelante, solo se cobra (se puede cambiar)
+  const esLocal = esEntregaLocal(p);
+  // Domicilio o casa: solo se cobra, nunca se entrega desde el punto de venta
+  const entregar = esLocal && (!p.fecha_entrega || new Date(p.fecha_entrega) <= finHoy);
+  posVenta.push({ tipo:'pedido', pedido_id:p.id, nombre:p.nombre_cliente || 'Sin nombre', detalle:detallePedidoPOS(p),
+    total:tot, anticipo:Number(p.anticipo)||0, falta:Math.max(0, tot - pagadoDe(p)), entregar, esLocal,
+    pagadoAntes: pagadoDe(p), lineasTicket: lineasTicketPedido(p), entregaTxt: entregaTxtPedido(p),
+    tipoEntrega: p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : '',
+    fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
+  if(entregar && p.categoria === 'pastel' && !p.corona_tipo) colaCoronaPedidos.push(p);
 }
 function agregarAVenta(cat, nombre, tam){
   if(posDisponible(cat, nombre, tam) <= 0) return;
@@ -730,6 +745,8 @@ async function imprimirComprobantePOS(){
 function cerrarPreguntaCorona(){
   document.getElementById('cor-velo').classList.remove('on');
   document.getElementById('cor-hoja').classList.remove('on');
+  // Si se agregaron varios pedidos juntos, se pregunta la corona del siguiente
+  if(colaCoronaPedidos.length) setTimeout(()=> preguntarCoronaPedido(colaCoronaPedidos.shift()), 50);
 }
 function preguntarCorona(nombre, tam){
   if(posDisponible('pasteles', nombre, tam) <= 0) return;

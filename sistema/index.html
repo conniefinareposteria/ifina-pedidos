@@ -129,6 +129,10 @@
 
       <div class="hint" id="pedido-sin-cliente" style="margin:-6px 0 18px;">Busca o agrega un cliente para continuar con el pedido.</div>
       <div id="pedido-resto" style="display:none;">
+      <div id="productos-agregados-wrap" class="field" style="display:none;">
+        <label>Productos en este pedido</label>
+        <div id="productos-agregados"></div>
+      </div>
       <div class="field">
         <label>¿Qué va a llevar?</label>
         <div class="chip-group" id="categoria-chips">
@@ -215,6 +219,7 @@
         </div>
         <div class="hint" id="precio-hint">Puedes editarlo si es un precio especial.</div>
       </div>
+      <button type="button" class="btn-secundario" id="btn-agregar-producto" onclick="agregarOtroProducto()" style="display:none; margin:-4px 0 22px;">+ Agregar otro producto</button>
 
       <div class="field">
         <label>¿Recoge en el local o es a domicilio?</label>

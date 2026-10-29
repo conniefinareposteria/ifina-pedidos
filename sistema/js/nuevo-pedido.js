@@ -4,6 +4,7 @@
 let pedidoEnEdicion = null;
 let direccionTextoEdicion = null;   // pedidos viejos que solo guardaban la dirección como texto
 let edicionOrigen = 'view-lista';
+let productosPedido = [];   // productos ya agregados al pedido (cada uno se guarda como un pedido aparte)
 
 let carritos = {
   'cart-cupcake': { items: [], qtys: {} },
@@ -441,7 +442,7 @@ document.querySelectorAll('#pago-si-no-chips .chip').forEach(chip=>{
   });
 });
 function actualizarFaltaPago(){
-  const total = parseFloat(document.getElementById('precio').value) || 0;
+  const total = (parseFloat(document.getElementById('precio').value) || 0) + productosPedido.reduce((a, x)=> a + (Number(x.precio)||0), 0);
   const pagado = parseFloat(document.getElementById('anticipo').value) || 0;
   const falta = Math.max(0, total - pagado);
   document.getElementById('falta-pago-display').textContent = '$' + falta;
@@ -461,7 +462,8 @@ document.querySelectorAll('#categoria-chips .chip').forEach(chip=>{
     document.getElementById('detalle-individual').style.display = categoriaActual==='individual' ? 'block':'none';
     document.getElementById('detalle-panque').style.display = categoriaActual==='panque' ? 'block':'none';
     document.getElementById('precio-wrap').style.display = 'block';
-    document.getElementById('precio-label').textContent = 'Total';
+    document.getElementById('precio-label').textContent = productosPedido.length ? 'Precio de este producto' : 'Total';
+    actualizarBotonAgregar();
 
     if(categoriaActual==='cupcake'){
       renderCarrito('cart-cupcake');
@@ -506,50 +508,17 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     return;
   }
 
-  if(!categoriaActual){
+  // Productos: los ya agregados con "+ Agregar otro producto" y el que está en pantalla
+  const productos = [...productosPedido];
+  if(categoriaActual){
+    const r = leerProductoActual();
+    if(r.err){ msg.className = 'msg err'; msg.textContent = r.err; return; }
+    productos.push(r.producto);
+  }
+  if(!productos.length){
     msg.className = 'msg err';
     msg.textContent = 'Selecciona qué va a llevar el pedido (pastel, cupcake o individual).';
     return;
-  }
-
-  let tamano_o_sabor = '';
-  let coronaDatos = { corona_tipo:null, corona_tamano:null, corona_color:null, corona_precio:null };
-  let sabor = '';
-  let precioCalculado = document.getElementById('precio').value || '0';
-
-  if(categoriaActual === 'pastel'){
-    tamano_o_sabor = document.getElementById('sel-tamano').value;
-    sabor = document.getElementById('sel-sabor-pastel').value;
-    if(!tamano_o_sabor){ msg.className='msg err'; msg.textContent='Selecciona el tamaño del pastel.'; return; }
-    if(!sabor){ msg.className='msg err'; msg.textContent='Selecciona el sabor del pastel.'; return; }
-    if(saborIncluyeCorona()){
-      coronaDatos = { corona_tipo:'incluida', corona_tamano: coronaTamanoActual(), corona_color:null, corona_precio:0 };
-    } else {
-      if(!coronaQuiere){ msg.className='msg err'; msg.textContent='Indica si el pastel lleva corona.'; return; }
-      if(coronaQuiere === 'si'){
-        if(!coronaTipo){ msg.className='msg err'; msg.textContent='Elige si la corona es ámbar o de color.'; return; }
-        const color = document.getElementById('corona-color').value.trim();
-        if(coronaTipo === 'color' && !color){ msg.className='msg err'; msg.textContent='Escribe el color de la corona.'; return; }
-        const tam = coronaTamanoActual();
-        coronaDatos = { corona_tipo: coronaTipo, corona_tamano: tam, corona_color: coronaTipo === 'color' ? color : null, corona_precio: precioCorona(coronaTipo, tam) };
-      }
-    }
-    if(decoradoActual === 'si'){
-      if(!puede('pedidos_decorados')){ msg.className='msg err'; msg.textContent='Solo la directora puede agendar pasteles decorados.'; return; }
-      if(!document.getElementById('decorado-desc').value.trim()){ msg.className='msg err'; msg.textContent='Escribe la descripción del decorado.'; return; }
-      if(!(Number(document.getElementById('precio').value) > 0)){ msg.className='msg err'; msg.textContent='Es pastel decorado: escribe el precio total antes de guardar.'; return; }
-    }
-  } else if(categoriaActual === 'cupcake' || categoriaActual === 'individual' || categoriaActual === 'panque'){
-    const containerId = {cupcake:'cart-cupcake', individual:'cart-individual', panque:'cart-panque'}[categoriaActual];
-    const carrito = carritos[containerId];
-    const seleccionados = carrito.items.filter(item => (carrito.qtys[item.nombre]||0) > 0);
-    if(seleccionados.length === 0){
-      msg.className = 'msg err';
-      msg.textContent = 'Agrega al menos una cantidad mayor a 0.';
-      return;
-    }
-    tamano_o_sabor = categoriaActual;
-    sabor = seleccionados.map(item => `${carrito.qtys[item.nombre]} ${formatNombre(item.nombre)}`).join(', ');
   }
 
   if(!entregaActual){
@@ -604,27 +573,30 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     return;
   }
 
-  const pedido = {
+  const base = {
     cliente_id: clienteActual.id,
     nombre_cliente: nombreCompleto(clienteActual),
     telefono: clienteActual.telefono || '',
-    categoria: categoriaActual,
-    tamano_o_sabor: tamano_o_sabor,
-    sabor: sabor,
-    precio: precioCalculado || '0',
     fecha_entrega: fecha_entrega,
     entrega: entregaActual,
     direccion: conservaDirTexto ? direccionTextoEdicion : (direccionDetalle ? textoDireccion(direccionDetalle) : ''),
     direccion_detalle: direccionDetalle,
-    ...coronaDatos,
-    decorado: categoriaActual === 'pastel' && decoradoActual === 'si',
-    decorado_descripcion: (categoriaActual === 'pastel' && decoradoActual === 'si') ? document.getElementById('decorado-desc').value.trim() : null,
     recibe_nombre: recibeNombre || null,
     recibe_telefono: recibeTelefono || null,
     metodo_pago: metodoPagoActual || '',
-    anticipo: document.getElementById('anticipo').value || '0',
     notas: document.getElementById('notas').value
   };
+  // Un renglón por producto. El anticipo se reparte proporcional al precio de cada uno.
+  const anticipoTotal = Number(document.getElementById('anticipo').value) || 0;
+  const partes = repartirAnticipo(anticipoTotal, productos.map(x=> Number(x.precio) || 0));
+  const grupo = productos.length > 1 ? nuevoIdGrupo() : null;
+  const filas = productos.map((prod, k)=> ({
+    ...base, ...prod,
+    precio: prod.precio || '0',
+    anticipo: String(partes[k]),
+    ...(grupo ? { grupo, grupo_parte: k + 1, grupo_total: productos.length } : {})
+  }));
+  const pedido = filas[0];
 
   btn.disabled = true;
   btn.textContent = 'Guardando...';
@@ -642,7 +614,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     return;
   }
 
-  const { error } = await sb.from('pedidos').insert([pedido]);
+  const { error } = await sb.from('pedidos').insert(filas);
 
   btn.disabled = false;
   btn.textContent = 'Guardar pedido';
@@ -657,10 +629,11 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     document.getElementById('confirmacion').style.display = 'block';
     document.getElementById('conf-msg').className = 'msg';
     // En el local: si dejó anticipo (o pagó completo), ofrecer el comprobante impreso
-    if(rolActual === 'colaborador' && (Number(pedido.anticipo)||0) > 0){
-      ticketPendiente = { comprobante:true, fecha:new Date(), items:[itemTicketPedido(pedido)], subtotal:0, cort:0, total:0, metodo:null,
+    if(rolActual === 'colaborador' && anticipoTotal > 0){
+      const totalTodo = filas.reduce((a, f)=> a + (Number(f.precio)||0), 0);
+      ticketPendiente = { comprobante:true, fecha:new Date(), items:filas.map(itemTicketPedido), subtotal:0, cort:0, total:0, metodo:null,
         metodoAnticipo: pedido.metodo_pago || null, recibe:0, msgId:'conf-msg', nota:'El pedido sí quedó guardado.' };
-      document.getElementById('tk-sub').textContent = `${pedido.nombre_cliente || 'Pedido'} · pagó ${fmtDinero(pedido.anticipo)} de ${fmtDinero(pedido.precio)}`;
+      document.getElementById('tk-sub').textContent = `${pedido.nombre_cliente || 'Pedido'} · pagó ${fmtDinero(anticipoTotal)} de ${fmtDinero(totalTodo)}`;
       abrirModal('tk');
     }
   }
@@ -693,6 +666,9 @@ function limpiarFormularioPedido(){
   ponerRecibe('cliente');
   quitarCliente();
   document.getElementById('msg').className = 'msg';
+  productosPedido = [];
+  pintarProductosPedido();
+  actualizarBotonAgregar();
   // Sale del modo edición
   pedidoEnEdicion = null;
   direccionTextoEdicion = null;
@@ -705,6 +681,101 @@ function limpiarFormularioPedido(){
 function iniciarNuevoPedido(){
   document.getElementById('confirmacion').style.display = 'none';
   document.getElementById('form-pedido').style.display = 'block';
+}
+
+// ---------- Varios productos en un mismo pedido ----------
+// Lee el producto que está en pantalla. Regresa { producto } o { err }.
+function leerProductoActual(){
+  let tamano_o_sabor = '';
+  let coronaDatos = { corona_tipo:null, corona_tamano:null, corona_color:null, corona_precio:null };
+  let sabor = '';
+  let precioCalculado = document.getElementById('precio').value || '0';
+
+
+  if(categoriaActual === 'pastel'){
+    tamano_o_sabor = document.getElementById('sel-tamano').value;
+    sabor = document.getElementById('sel-sabor-pastel').value;
+    if(!tamano_o_sabor) return { err: 'Selecciona el tamaño del pastel.' };
+    if(!sabor) return { err: 'Selecciona el sabor del pastel.' };
+    if(saborIncluyeCorona()){
+      coronaDatos = { corona_tipo:'incluida', corona_tamano: coronaTamanoActual(), corona_color:null, corona_precio:0 };
+    } else {
+      if(!coronaQuiere) return { err: 'Indica si el pastel lleva corona.' };
+      if(coronaQuiere === 'si'){
+        if(!coronaTipo) return { err: 'Elige si la corona es ámbar o de color.' };
+        const color = document.getElementById('corona-color').value.trim();
+        if(coronaTipo === 'color' && !color) return { err: 'Escribe el color de la corona.' };
+        const tam = coronaTamanoActual();
+        coronaDatos = { corona_tipo: coronaTipo, corona_tamano: tam, corona_color: coronaTipo === 'color' ? color : null, corona_precio: precioCorona(coronaTipo, tam) };
+      }
+    }
+    if(decoradoActual === 'si'){
+      if(!puede('pedidos_decorados')) return { err: 'Solo la directora puede agendar pasteles decorados.' };
+      if(!document.getElementById('decorado-desc').value.trim()) return { err: 'Escribe la descripción del decorado.' };
+      if(!(Number(document.getElementById('precio').value) > 0)) return { err: 'Es pastel decorado: escribe el precio total antes de guardar.' };
+    }
+  } else if(categoriaActual === 'cupcake' || categoriaActual === 'individual' || categoriaActual === 'panque'){
+    const containerId = {cupcake:'cart-cupcake', individual:'cart-individual', panque:'cart-panque'}[categoriaActual];
+    const carrito = carritos[containerId];
+    const seleccionados = carrito.items.filter(item => (carrito.qtys[item.nombre]||0) > 0);
+    if(seleccionados.length === 0) return { err: 'Agrega al menos una cantidad mayor a 0.' };
+    tamano_o_sabor = categoriaActual;
+    sabor = seleccionados.map(item => `${carrito.qtys[item.nombre]} ${formatNombre(item.nombre)}`).join(', ');
+  }
+
+  const decorado = categoriaActual === 'pastel' && decoradoActual === 'si';
+  return { producto: { categoria: categoriaActual, tamano_o_sabor, sabor, precio: precioCalculado || '0', ...coronaDatos,
+    decorado, decorado_descripcion: decorado ? document.getElementById('decorado-desc').value.trim() : null } };
+}
+function agregarOtroProducto(){
+  const msg = document.getElementById('msg'); msg.className = 'msg';
+  if(!categoriaActual){ msg.className = 'msg err'; msg.textContent = 'Primero elige el producto que vas a agregar.'; return; }
+  const r = leerProductoActual();
+  if(r.err){ msg.className = 'msg err'; msg.textContent = r.err; return; }
+  productosPedido.push(r.producto);
+  categoriaActual = null;
+  document.querySelectorAll('#categoria-chips .chip').forEach(c=> c.classList.remove('selected'));
+  limpiarCamposCategoria();
+  ['detalle-pastel','detalle-cupcake','detalle-individual','detalle-panque','precio-wrap'].forEach(id=> document.getElementById(id).style.display = 'none');
+  pintarProductosPedido();
+  actualizarBotonAgregar();
+  document.getElementById('categoria-chips').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+// "+ Agregar otro producto" solo aparece con un producto en pantalla y al agendar (no al editar)
+function actualizarBotonAgregar(){
+  document.getElementById('btn-agregar-producto').style.display = (categoriaActual && !pedidoEnEdicion) ? '' : 'none';
+}
+function quitarProductoPedido(i){ productosPedido.splice(i, 1); pintarProductosPedido(); }
+function textoProducto(x){
+  if(x.categoria === 'pastel'){
+    const cor = x.corona_tipo === 'incluida' ? 'corona incluida' : x.corona_tipo === 'ambar' ? 'corona ámbar' : x.corona_tipo === 'color' ? 'corona de color' + (x.corona_color ? ' (' + x.corona_color + ')' : '') : '';
+    return ['Pastel ' + formatNombre(x.tamano_o_sabor), formatNombre(x.sabor), cor, x.decorado ? 'decorado' : ''].filter(Boolean).join(' · ');
+  }
+  return ({cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[x.categoria] || x.categoria) + ': ' + x.sabor;
+}
+function pintarProductosPedido(){
+  const wrap = document.getElementById('productos-agregados-wrap');
+  wrap.style.display = productosPedido.length ? 'block' : 'none';
+  const total = productosPedido.reduce((a, x)=> a + (Number(x.precio)||0), 0);
+  document.getElementById('productos-agregados').innerHTML = productosPedido.map((x, i)=> `<div class="prod-agregado">
+      <div><b>Producto ${i + 1}</b><div>${escHtml(textoProducto(x))}</div></div>
+      <div class="pa-der"><b>${fmtDinero(x.precio)}</b><a href="#" onclick="quitarProductoPedido(${i}); return false;">Quitar</a></div>
+    </div>`).join('') + `<div class="hint" style="margin:6px 0 0;">Llevas ${fmtDinero(total)} en ${productosPedido.length} ${productosPedido.length === 1 ? 'producto' : 'productos'}. Elige abajo el siguiente, o sigue con la entrega si ya es todo. Cada producto se guarda como pedido aparte.</div>`;
+  document.getElementById('precio-label').textContent = productosPedido.length ? 'Precio de este producto' : 'Total';
+  actualizarFaltaPago();
+}
+// Reparte el anticipo proporcional al precio de cada producto, en pesos cerrados (el ajuste va al último)
+function repartirAnticipo(total, precios){
+  const suma = precios.reduce((a, b)=> a + b, 0);
+  if(!(total > 0)) return precios.map(()=> 0);
+  if(!(suma > 0)) return precios.map((_, k)=> k === 0 ? total : 0);
+  const partes = precios.map(p=> Math.round(total * p / suma));
+  partes[partes.length - 1] = Math.round((total - partes.slice(0, -1).reduce((a, b)=> a + b, 0)) * 100) / 100;
+  return partes;
+}
+function nuevoIdGrupo(){
+  try { if(crypto.randomUUID) return crypto.randomUUID(); } catch(_){}
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 
 // ---------- Editar un pedido con este mismo formulario (directora) ----------
@@ -807,6 +878,7 @@ async function editarPedidoEnFormulario(p){
   pago.style.display = 'block';
 
   pedidoEnEdicion = p;
+  actualizarBotonAgregar();
   document.getElementById('edicion-titulo').textContent = 'Editando pedido de ' + (p.nombre_cliente || 'cliente');
   document.getElementById('edicion-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric', month:'long'}) : '') + (p.entregado ? ' · ya entregado' : '');
   document.getElementById('edicion-banner').style.display = 'flex';

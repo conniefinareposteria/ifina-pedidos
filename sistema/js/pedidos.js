@@ -24,9 +24,9 @@ function armarTextoRepartidor(fechaTitulo, pedidos){
     if(p.recibe_nombre){
       lineas.push(`*${i+1}. Entregar a: ${p.recibe_nombre}*${hora ? ' — ' + hora : ''}`);
       if(p.recibe_telefono) lineas.push(`📞 ${p.recibe_telefono}`);
-      lineas.push(`👤 Pidió: ${p.nombre_cliente || 'Sin nombre'}${p.telefono ? ' (' + p.telefono + ')' : ''}`);
+      lineas.push(`👤 Pidió: ${p.nombre_cliente || 'Sin nombre'}${p.telefono ? ' (' + p.telefono + ')' : ''}${parteGrupo(p) ? ' · ' + parteGrupo(p).toLowerCase() : ''}`);
     } else {
-      lineas.push(`*${i+1}. ${p.nombre_cliente || 'Sin nombre'}*${hora ? ' — ' + hora : ''}`);
+      lineas.push(`*${i+1}. ${p.nombre_cliente || 'Sin nombre'}*${parteGrupo(p) ? ' (' + parteGrupo(p).toLowerCase() + ')' : ''}${hora ? ' — ' + hora : ''}`);
       if(p.telefono) lineas.push(`📞 ${p.telefono}`);
     }
     lineas.push(`📍 ${p.direccion || 'Sin dirección, confirmar con la clienta'}`);
@@ -116,7 +116,7 @@ function pintarPedidosPorDia(data, cont){
   cont.className = '';
   cont.innerHTML = '';
   // Dentro de cada día, los pedidos van en orden alfabético por nombre del cliente
-  Object.values(grupos).forEach(lista=> lista.sort((x, y)=> (x.nombre_cliente||'').localeCompare(y.nombre_cliente||'', 'es', {sensitivity:'base'})));
+  Object.values(grupos).forEach(lista=> lista.sort(compararPedidosNombre));
   Object.keys(grupos).forEach(fecha=>{
     const g = document.createElement('div');
     g.className = 'day-group';
@@ -156,7 +156,7 @@ function pintarPedidosPorDia(data, cont){
         <tr>
           ${puede('pedidos_editar') ? `<td class="c"><button type="button" class="btn-editar-fila" onclick="event.stopPropagation(); elegirAccionPedido(${Number(p.id)})">Editar</button></td>` : ''}
           <td class="num">${idx+1}</td>
-          <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
+          <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${parteGrupo(p) ? `<span class="sub"><b>${parteGrupo(p)}</b></span>` : ''}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
           <td class="nowrap">${esc(p.telefono || '')}</td>
           <td class="nowrap">${producto}</td>
           <td class="nowrap">${esc(tamano)}</td>
@@ -313,7 +313,7 @@ async function guardarPagoPedido(){
 // ---------- Imprimir hoja de pedidos del día (carta horizontal) ----------
 function imprimirPedidosDia(titulo, pedidos){
   const e = escHtml;
-  const lista = pedidos.slice().sort((a,b)=> (a.nombre_cliente||'').localeCompare(b.nombre_cliente||'', 'es', {sensitivity:'base'}));
+  const lista = pedidos.slice().sort(compararPedidosNombre);
   const filas = lista.map((p, i)=>{
     const prod = {pastel:'Pastel', cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[p.categoria] || p.categoria || '';
     const tam = p.categoria === 'pastel' ? formatNombre(p.tamano_o_sabor) : '';
@@ -329,7 +329,7 @@ function imprimirPedidosDia(titulo, pedidos){
       : `<b>No ha pagado</b><small>Falta ${fmtDinero(falta)}</small>`;
     return `<tr>
       <td class="c">${i+1}</td>
-      <td><b>${e(p.nombre_cliente || '')}</b>${p.telefono ? `<small class="tel">${e(String(p.telefono).replace(/\s+/g,''))}</small>` : ''}${p.recibe_nombre ? `<small>Recibe: ${e(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + e(p.recibe_telefono) : ''}</small>` : ''}</td>
+      <td><b>${e(p.nombre_cliente || '')}</b>${parteGrupo(p) ? `<small>${parteGrupo(p)}</small>` : ''}${p.telefono ? `<small class="tel">${e(String(p.telefono).replace(/\s+/g,''))}</small>` : ''}${p.recibe_nombre ? `<small>Recibe: ${e(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + e(p.recibe_telefono) : ''}</small>` : ''}</td>
       <td>${e(prod)}${tam ? `<small>${e(tam)}</small>` : ''}</td>
       <td>${e(det)}</td>
       <td>${e(corona)}</td>

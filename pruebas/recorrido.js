@@ -136,6 +136,12 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'pedidos editar', ()=> page.click('#view-lista button:has-text("Editar") >> nth=0'));
     await paso(page, huella, 'pedidos ingresar pago', ()=> ev(()=> accionRegistrarPago()));
     await paso(page, huella, 'pedidos eliminados', async()=>{ await ev(()=> cerrarModal('pg')); await ev(()=> abrirEliminados()); });
+    await paso(page, huella, 'varios productos: pastel', async()=>{ await ev(()=> switchView('nuevo')); await page.fill('#cliente-busqueda','ana'); await page.waitForTimeout(400); await page.click('.resultado-cliente >> nth=0');
+      await page.click('#categoria-chips [data-cat=pastel]'); await page.selectOption('#sel-tamano','chico'); await page.selectOption('#sel-sabor-pastel','chocolate'); await page.click('#corona-si-no-chips [data-corona=no]'); });
+    await paso(page, huella, 'varios productos: agregar otro', ()=> page.click('#btn-agregar-producto'));
+    await paso(page, huella, 'varios productos: cupcakes', async()=>{ await page.click('#categoria-chips [data-cat=cupcake]'); await page.click('#cart-cupcake .qty-stepper button:has-text("+") >> nth=0'); await page.click('#cart-cupcake .qty-stepper button:has-text("+") >> nth=0'); });
+    await paso(page, huella, 'varios productos: guardar', async()=>{ await page.click('#entrega-chips [data-entrega=recoger]'); await page.fill('#fecha_entrega','2026-10-30');
+      await page.click('#pago-si-no-chips [data-pagosn=si]'); await page.click('#metodo-pago-chips [data-metodo=efectivo]'); await page.fill('#anticipo','300'); await page.click('#btn-guardar'); await page.waitForTimeout(400); });
     await paso(page, huella, 'editar pedido en formulario', async()=>{ await ev(()=> switchView('lista')); await page.waitForTimeout(400); await ev(()=>{ elegirAccionPedido(7); accionEditarPedido(); }); await page.waitForTimeout(400); });
     await paso(page, huella, 'editar cambia corona a color', async()=>{ await page.click('#corona-tipo-chips [data-coronatipo="color"]'); await page.fill('#corona-color','rosa'); });
     await paso(page, huella, 'editar guardar cambios', async()=>{ await page.click('#btn-guardar'); await page.waitForTimeout(400); });

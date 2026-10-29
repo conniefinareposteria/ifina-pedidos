@@ -143,4 +143,10 @@ function saborTraeCorona(nombre){
 }
 
 // El pedido se recoge en el local (no es domicilio ni recoger en casa)
+// Pedidos que se agendaron juntos (varios productos): "Pedido 1 de 3"
+function parteGrupo(p){ return p && p.grupo && Number(p.grupo_total) > 1 ? `Pedido ${p.grupo_parte} de ${p.grupo_total}` : ''; }
+// Orden: por nombre y, dentro de la misma persona, pedido 1, 2, 3…
+function compararPedidosNombre(x, y){
+  return (x.nombre_cliente||'').localeCompare(y.nombre_cliente||'', 'es', {sensitivity:'base'}) || String(x.grupo||'').localeCompare(String(y.grupo||'')) || (Number(x.grupo_parte)||0) - (Number(y.grupo_parte)||0);
+}
 function esEntregaLocal(p){ return !p.entrega || p.entrega === 'recoger' || p.entrega === 'local'; }

@@ -173,3 +173,7 @@ button.primary:disabled{background:#A8A296; color:#F3EDE2;}
 .cf-guardar{background:var(--cocoa); color:var(--yeso); border:none; border-radius:999px; padding:9px 22px; font:700 14px 'Arimo',Arial,sans-serif; cursor:pointer;}
 .edicion-banner{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; background:var(--cream-deep); border:1.5px solid var(--cocoa); border-radius:16px; padding:12px 16px; margin-bottom:18px;}
 .edicion-banner b{font-family:'Tinos',Georgia,serif; font-size:18px; font-weight:400;}
+.prod-agregado{display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:10px 14px; margin-bottom:8px; font-size:14px;}
+.prod-agregado b{font-weight:700;}
+.prod-agregado .pa-der{display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex:none;}
+.prod-agregado .pa-der a{color:var(--rojo); font-weight:700; font-size:13px; text-decoration:underline;}

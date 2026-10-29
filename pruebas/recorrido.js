@@ -136,6 +136,11 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'pedidos editar', ()=> page.click('#view-lista button:has-text("Editar") >> nth=0'));
     await paso(page, huella, 'pedidos ingresar pago', ()=> ev(()=> accionRegistrarPago()));
     await paso(page, huella, 'pedidos eliminados', async()=>{ await ev(()=> cerrarModal('pg')); await ev(()=> abrirEliminados()); });
+    await paso(page, huella, 'editar pedido en formulario', async()=>{ await ev(()=> switchView('lista')); await page.waitForTimeout(400); await ev(()=>{ elegirAccionPedido(7); accionEditarPedido(); }); await page.waitForTimeout(400); });
+    await paso(page, huella, 'editar cambia corona a color', async()=>{ await page.click('#corona-tipo-chips [data-coronatipo="color"]'); await page.fill('#corona-color','rosa'); });
+    await paso(page, huella, 'editar guardar cambios', async()=>{ await page.click('#btn-guardar'); await page.waitForTimeout(400); });
+    await paso(page, huella, 'editar pedido domicilio (cupcakes)', async()=>{ await ev(()=>{ elegirAccionPedido(9); accionEditarPedido(); }); await page.waitForTimeout(400); });
+    await paso(page, huella, 'editar guardar sin cambios', async()=>{ await page.click('#btn-guardar'); await page.waitForTimeout(400); });
     await paso(page, huella, 'historial', ()=> ev(()=> abrirHistorial()));
     await paso(page, huella, 'resumen', ()=> ev(()=> abrirResumen()));
     for(const t of ['local','pedidos','todo']) await paso(page, huella, 'resumen ' + t, ()=> ev(x=> ponerTabResumen(x), t));
@@ -149,6 +154,15 @@ async function paso(page, huella, nombre, fn){
       await page.setInputFiles('#cf-pagina-portada input[type=file]', [{ name:'p.png', mimeType:'image/png', buffer:PNG }]);
       await page.waitForFunction(()=> document.querySelectorAll('#cf-pagina-portada .cf-foto').length === 1); });
     await paso(page, huella, 'catalogo pasteles', ()=> page.click('.cf-chips .chip:has-text("Pasteles")'));
+    await paso(page, huella, 'catalogo arrastrar foto', async()=>{
+      const fotos = page.locator('#cf-sabores_pasteles-whitevelvet .cf-foto');
+      await fotos.nth(0).scrollIntoViewIfNeeded();
+      const a = await fotos.nth(1).boundingBox(), b = await fotos.nth(0).boundingBox();
+      await page.mouse.move(a.x + a.width/2, a.y + a.height/2); await page.mouse.down(); await page.waitForTimeout(500);
+      await page.mouse.move(b.x + 20, b.y + b.height/2, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(300); });
+    await paso(page, huella, 'catalogo guardar detalle', async()=>{
+      await page.fill('#cf-sabores_pasteles-chocolate-pan', 'Chocolate'); await page.fill('#cf-sabores_pasteles-chocolate-betun', 'Ganache');
+      await page.click('#cf-sabores_pasteles-chocolate-corona .chip[data-v=si]'); await page.click('#cf-sabores_pasteles-chocolate .cf-guardar'); });
     await paso(page, huella, 'catalogo hacer principal', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-btn'));
     await paso(page, huella, 'catalogo quitar foto', ()=> page.click('#cf-sabores_pasteles-whitevelvet .cf-quitar >> nth=0'));
     await paso(page, huella, 'catalogo ocultar producto', ()=> page.click('#cf-sabores_pasteles-chocolate .cf-estado button'));

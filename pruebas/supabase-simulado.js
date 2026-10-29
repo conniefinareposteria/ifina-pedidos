@@ -10,7 +10,7 @@
 
   const tablas = {
     perfiles: [{ user_id:'u1', rol: window.__ROL || 'director' }],
-    tamanos_pastel: [{tamano:'mini',precio:450},{tamano:'chico',precio:650},{tamano:'mediano',precio:1000},{tamano:'grande',precio:1400},{tamano:'cheesecake',precio:550}],
+    tamanos_pastel: [{tamano:'mini',precio:450,personas:8},{tamano:'chico',precio:650,personas:15},{tamano:'mediano',precio:1000,personas:25},{tamano:'grande',precio:1400},{tamano:'cheesecake',precio:550}],
     sabores_pasteles: [{nombre:'white_velvet',incluye_corona:true},{nombre:'chocolate',incluye_corona:false},{nombre:'zanahoria',incluye_corona:false},{nombre:'coco',incluye_corona:false},{nombre:'pistache',incluye_corona:true},{nombre:'cc_frutos_rojos',incluye_corona:false}],
     sabores_cupcakes: [{nombre:'limon'},{nombre:'pistache'},{nombre:'chocolate'},{nombre:'coco'}],
     individuales: [{nombre:'cupcake',precio:45},{nombre:'cuchareable_coco',precio:80},{nombre:'galletas_limon',precio:80},{nombre:'carlota_limon',precio:80}],

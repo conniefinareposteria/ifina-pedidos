@@ -56,7 +56,7 @@ async function cargarCatalogos(){
   [...tamanosData].sort((a,b)=> posTam(a.tamano) - posTam(b.tamano)).forEach(row=>{
     const opt = document.createElement('option');
     opt.value = row.tamano;
-    opt.textContent = formatNombre(row.tamano);
+    opt.textContent = etiquetaTamano(row.tamano);
     opt.dataset.precio = row.precio;
     selTamano.appendChild(opt);
   });
@@ -131,6 +131,11 @@ function posItemsCat(cat){
   return PASTEL_SABORES;
 }
 // ---------- Coronas en el punto de venta ----------
+// "Mini - 8 personas": las personas salen de Supabase (tamanos_pastel.personas)
+function etiquetaTamano(tam){
+  const r = tamanosData.find(x=> (x.tamano||'').toLowerCase() === (tam||'').toLowerCase());
+  return formatNombre(tam) + (r && r.personas ? ' - ' + r.personas + ' personas' : '');
+}
 function claveSabor(t){ return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
 function saborTraeCorona(nombre){
   const s = saboresPastelesData.find(x => claveSabor(x.nombre) === claveSabor(nombre));

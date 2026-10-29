@@ -1,4 +1,9 @@
 // Nuevo pedido (agendar): carrito, corona, decorado, cliente, dirección, pago y guardado.
+// También se usa para EDITAR un pedido (editarPedidoEnFormulario, al final).
+
+let pedidoEnEdicion = null;
+let direccionTextoEdicion = null;   // pedidos viejos que solo guardaban la dirección como texto
+let edicionOrigen = 'view-lista';
 
 let carritos = {
   'cart-cupcake': { items: [], qtys: {} },
@@ -554,7 +559,9 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
   }
 
   let direccionDetalle = null;
-  if(entregaActual === 'domicilio'){
+  // Editando un pedido viejo que solo tenía la dirección en texto: si no se llenaron los campos, se conserva
+  const conservaDirTexto = pedidoEnEdicion && direccionTextoEdicion && entregaActual === 'domicilio' && dirOpcion === 'nueva' && direccionVacia(leerDireccion('pd'));
+  if(entregaActual === 'domicilio' && !conservaDirTexto){
     direccionDetalle = dirOpcion === 'guardada' ? direccionDeCliente(clienteActual) : leerDireccion('pd');
     const faltan = direccionDetalle ? faltaEnDireccion(direccionDetalle) : ['calle','número exterior','colonia'];
     if(faltan.length){
@@ -586,12 +593,12 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
   if(!hora) hora = '11:00';
   const fecha_entrega = new Date(`${fecha}T${hora}:00`).toISOString();
 
-  if(!pagoDadoActual){
+  if(!pedidoEnEdicion && !pagoDadoActual){
     msg.className = 'msg err';
     msg.textContent = 'Indica si dio anticipo, ya pagó completo, o sigue pendiente.';
     return;
   }
-  if(pagoDadoActual === 'si' && !metodoPagoActual){
+  if(!pedidoEnEdicion && pagoDadoActual === 'si' && !metodoPagoActual){
     msg.className = 'msg err';
     msg.textContent = 'Selecciona el método de pago.';
     return;
@@ -607,7 +614,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     precio: precioCalculado || '0',
     fecha_entrega: fecha_entrega,
     entrega: entregaActual,
-    direccion: direccionDetalle ? textoDireccion(direccionDetalle) : '',
+    direccion: conservaDirTexto ? direccionTextoEdicion : (direccionDetalle ? textoDireccion(direccionDetalle) : ''),
     direccion_detalle: direccionDetalle,
     ...coronaDatos,
     decorado: categoriaActual === 'pastel' && decoradoActual === 'si',
@@ -621,6 +628,19 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
 
   btn.disabled = true;
   btn.textContent = 'Guardando...';
+
+  if(pedidoEnEdicion){
+    // Editar: mismo pedido, sin tocar los pagos (esos se registran con "Ingresar monto pagado")
+    const cambios = { ...pedido };
+    delete cambios.anticipo; delete cambios.metodo_pago;
+    if(!clienteActual.id) delete cambios.cliente_id;
+    const { data, error } = await sb.from('pedidos').update(cambios).eq('id', pedidoEnEdicion.id).select();
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
+    if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message; return; }
+    if(!data || !data.length){ msg.className = 'msg err'; msg.textContent = 'No se guardó. Revisa que ya se haya corrido el SQL de permisos para editar pedidos.'; return; }
+    terminarEdicionPedido();
+    return;
+  }
 
   const { error } = await sb.from('pedidos').insert([pedido]);
 
@@ -673,8 +693,142 @@ function limpiarFormularioPedido(){
   ponerRecibe('cliente');
   quitarCliente();
   document.getElementById('msg').className = 'msg';
+  // Sale del modo edición
+  pedidoEnEdicion = null;
+  direccionTextoEdicion = null;
+  document.getElementById('edicion-banner').style.display = 'none';
+  document.getElementById('pago-edicion').style.display = 'none';
+  document.getElementById('pago-nuevo-wrap').style.display = 'block';
+  document.getElementById('dir-edicion-hint').style.display = 'none';
+  document.getElementById('btn-guardar').textContent = 'Guardar pedido';
 }
 function iniciarNuevoPedido(){
   document.getElementById('confirmacion').style.display = 'none';
   document.getElementById('form-pedido').style.display = 'block';
+}
+
+// ---------- Editar un pedido con este mismo formulario (directora) ----------
+// Se llena todo con lo del pedido; al guardar se actualiza ese mismo pedido. La corona y el precio
+// funcionan igual que al agendar. Los pagos no se tocan aquí.
+function elegirChip(selector){ const c = document.querySelector(selector); if(c) c.click(); }
+function ponerOpcion(sel, valor, texto){
+  if(!valor) return;
+  if(![...sel.options].some(o=> o.value === valor)){
+    const o = document.createElement('option'); o.value = valor; o.textContent = texto || formatNombre(valor); sel.appendChild(o);
+  }
+  sel.value = valor;
+}
+async function editarPedidoEnFormulario(p){
+  const activa = document.querySelector('.view.active');
+  edicionOrigen = activa ? activa.id : 'view-lista';
+  switchView('nuevo');
+  window.scrollTo(0, 0);
+  // Cliente: el guardado, o uno con el nombre y teléfono del pedido si no está en Clientes
+  let cliente = null;
+  if(p.cliente_id){
+    const { data } = await sb.from('clientes').select('*').eq('id', p.cliente_id).maybeSingle();
+    cliente = data || null;
+  }
+  if(!cliente) cliente = { id:null, nombre: p.nombre_cliente || '', apellido:'', telefono: p.telefono || '' };
+  seleccionarCliente(cliente);
+
+  const avisos = [];
+  const cat = ['pastel','cupcake','individual','panque'].includes(p.categoria) ? p.categoria : 'pastel';
+  elegirChip(`#categoria-chips .chip[data-cat="${cat}"]`);
+  let precioCatalogo = null;
+  if(cat === 'pastel'){
+    const selT = document.getElementById('sel-tamano');
+    ponerOpcion(selT, p.tamano_o_sabor, etiquetaTamano(p.tamano_o_sabor));
+    selT.dispatchEvent(new Event('change'));
+    const selS = document.getElementById('sel-sabor-pastel');
+    ponerOpcion(selS, p.sabor);
+    if(p.decorado){ ponerDecorado('si'); document.getElementById('decorado-desc').value = p.decorado_descripcion || ''; }
+    if(!saborIncluyeCorona()){
+      if(p.corona_tipo === 'ambar' || p.corona_tipo === 'color'){
+        coronaQuiere = 'si'; coronaTipo = p.corona_tipo;
+        document.getElementById('corona-color').value = p.corona_color || '';
+      } else if(!p.corona_tipo){ coronaQuiere = 'no'; coronaTipo = null; }
+      else { coronaQuiere = null; avisos.push('Este sabor ya no incluye corona: indica si lleva.'); }
+    }
+    actualizarCoronaUI();
+    if(!p.decorado) precioCatalogo = Number(document.getElementById('precio').value) || null;
+  } else {
+    const id = {cupcake:'cart-cupcake', individual:'cart-individual', panque:'cart-panque'}[cat];
+    const carrito = carritos[id];
+    const noEncontrados = [];
+    String(p.sabor || '').split(',').map(x=> x.trim()).filter(Boolean).forEach(parte=>{
+      const m = parte.match(/^(\d+)\s+(.+)$/);
+      const item = m && carrito.items.find(it=> formatNombre(it.nombre).toLowerCase() === m[2].trim().toLowerCase());
+      if(item) carrito.qtys[item.nombre] = (carrito.qtys[item.nombre] || 0) + Number(m[1]);
+      else noEncontrados.push(parte);
+    });
+    renderCarrito(id);
+    precioCatalogo = Number(document.getElementById('precio').value) || null;
+    if(noEncontrados.length) avisos.push('No encontré en el catálogo: ' + noEncontrados.join(', ') + '. Agrégalo de nuevo o se va a quitar al guardar.');
+  }
+  // Precio: se respeta el que tenía el pedido; si con lo elegido el catálogo da otro, se avisa
+  const precioGuardado = Number(p.precio) || 0;
+  document.getElementById('precio').value = precioGuardado || '';
+  const hint = document.getElementById('precio-hint');
+  if(precioCatalogo && precioCatalogo !== precioGuardado){
+    hint.innerHTML = `Precio guardado ${fmtDinero(precioGuardado)}. Con lo elegido serían <b>${fmtDinero(precioCatalogo)}</b>. <a href="#" class="link-accion" style="margin:0; font-size:13.5px;" onclick="document.getElementById('precio').value=${precioCatalogo}; actualizarFaltaPago(); this.parentElement.textContent='Puedes editarlo si es un precio especial.'; return false;">Usar ${fmtDinero(precioCatalogo)}</a>`;
+  }
+
+  // Entrega
+  const entrega = (!p.entrega || p.entrega === 'local') ? 'recoger' : p.entrega;
+  elegirChip(`#entrega-chips .chip[data-entrega="${entrega}"]`);
+  if(entrega === 'domicilio'){
+    const det = p.direccion_detalle;
+    if(det && typeof det === 'object'){
+      dirOpcion = 'nueva'; actualizarDireccionUI();
+      CAMPOS_DIR.forEach(c=>{ document.getElementById('pd-' + c.k).value = det[c.k] || ''; });
+    } else if(p.direccion){
+      direccionTextoEdicion = p.direccion;
+      dirOpcion = 'nueva'; actualizarDireccionUI();
+      const h = document.getElementById('dir-edicion-hint');
+      h.textContent = 'Dirección guardada en el pedido: ' + p.direccion + '. Llena los campos solo si la quieres cambiar.';
+      h.style.display = 'block';
+    }
+    if(p.recibe_nombre){
+      ponerRecibe('otra');
+      document.getElementById('recibe-nombre').value = p.recibe_nombre || '';
+      document.getElementById('recibe-telefono').value = p.recibe_telefono || '';
+    }
+  }
+  const { f, h } = fechaLocalPartes(p.fecha_entrega);
+  document.getElementById('fecha_entrega').value = f;
+  document.getElementById('hora_entrega').value = h;
+  document.getElementById('notas').value = p.notas || '';
+
+  // Pagos: no se editan aquí
+  document.getElementById('pago-nuevo-wrap').style.display = 'none';
+  const pago = document.getElementById('pago-edicion');
+  pago.textContent = `Pagado hasta ahora: ${fmtDinero(pagadoDe(p))}. Los pagos se registran en Pedidos con "Ingresar monto pagado".`;
+  pago.style.display = 'block';
+
+  pedidoEnEdicion = p;
+  document.getElementById('edicion-titulo').textContent = 'Editando pedido de ' + (p.nombre_cliente || 'cliente');
+  document.getElementById('edicion-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric', month:'long'}) : '') + (p.entregado ? ' · ya entregado' : '');
+  document.getElementById('edicion-banner').style.display = 'flex';
+  document.getElementById('btn-guardar').textContent = 'Guardar cambios';
+  const msg = document.getElementById('msg');
+  if(avisos.length){ msg.className = 'msg err'; msg.textContent = avisos.join(' '); }
+}
+function terminarEdicionPedido(){
+  const origen = edicionOrigen;
+  limpiarFormularioPedido();
+  if(origen === 'view-cliente-detalle'){
+    activarVistaDirectora('tab-clientes', 'view-cliente-detalle');
+    cargarPedidosCliente();
+  } else switchView('lista');
+}
+function cancelarEdicionPedido(){ terminarEdicionPedido(); }
+async function borrarPedidoEnEdicion(){
+  const p = pedidoEnEdicion; if(!p) return;
+  if(!confirm(`¿Borrar el pedido de ${p.nombre_cliente || 'este cliente'}? Podrás recuperarlo en "Ver pedidos eliminados".`)) return;
+  const msg = document.getElementById('msg'); msg.className = 'msg';
+  const { data, error } = await sb.from('pedidos').delete().eq('id', p.id).select();
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo borrar: ' + error.message; return; }
+  if(!data || !data.length){ msg.className = 'msg err'; msg.textContent = 'No se borró. Revisa que ya se haya corrido el SQL de permisos para editar pedidos.'; return; }
+  terminarEdicionPedido();
 }

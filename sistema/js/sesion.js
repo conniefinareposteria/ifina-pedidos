@@ -18,7 +18,7 @@ function puede(accion){ return permisosDe(rolActual).acciones.includes(accion); 
 
 function switchView(view){
   const yaEstabaEnNuevo = document.getElementById('view-nuevo').classList.contains('active');
-  if(view === 'nuevo' && !yaEstabaEnNuevo){
+  if(view === 'nuevo' && (!yaEstabaEnNuevo || pedidoEnEdicion)){
     limpiarFormularioPedido();
     iniciarNuevoPedido();
   }
@@ -30,6 +30,7 @@ function switchView(view){
   document.getElementById('tab-clientes').classList.remove('active');
   document.getElementById('tab-pos').classList.remove('active');
   document.getElementById('tab-porhacer').classList.remove('active');
+  document.getElementById('tab-catalogo').classList.remove('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-nuevo').classList.toggle('active', view==='nuevo');
   document.getElementById('view-lista').classList.toggle('active', view==='lista');

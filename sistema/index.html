@@ -96,6 +96,14 @@
   <section id="view-nuevo" class="view active">
     <a href="#" class="link-inicio solo-colab" onclick="irInicio(); return false;">← Inicio</a>
     <form id="form-pedido">
+      <!-- Al editar un pedido se usa este mismo formulario (ver editarPedidoEnFormulario) -->
+      <div id="edicion-banner" class="edicion-banner" style="display:none;">
+        <div><b id="edicion-titulo">Editando pedido</b><div class="hint" id="edicion-sub" style="margin:2px 0 0;"></div></div>
+        <div class="botones-fila" style="margin:0;">
+          <button type="button" class="btn-secundario" onclick="cancelarEdicionPedido()">Cancelar</button>
+          <button type="button" class="btn-borrar" onclick="borrarPedidoEnEdicion()">Borrar pedido</button>
+        </div>
+      </div>
 
       <div class="field">
         <label>Cliente</label>
@@ -238,6 +246,7 @@
         <div id="dir-guardada-texto" class="cliente-card" style="display:none;"></div>
         <div id="dir-nueva-form" class="form-dir" style="display:none;"></div>
         <div class="hint" id="dir-nueva-hint" style="display:none; margin-top:0;">Esta dirección solo se usa en este pedido; no cambia la que el cliente tiene guardada.</div>
+        <div class="hint" id="dir-edicion-hint" style="display:none; margin-top:0;"></div>
       </div>
 
       <div class="row2">
@@ -252,6 +261,8 @@
       </div>
       <div class="hint" id="hora-hint" style="margin:-10px 0 18px;">Si no especificas hora, se agenda por default a las 11:00 am.</div>
 
+      <div class="hint" id="pago-edicion" style="display:none; margin:0 0 18px;"></div>
+      <div id="pago-nuevo-wrap">
       <div class="field">
         <label>¿Dio anticipo o ya pagó completo?</label>
         <div class="chip-group" id="pago-si-no-chips">
@@ -279,6 +290,7 @@
             <span class="amount" id="falta-pago-display">$0</span>
           </div>
         </div>
+      </div>
       </div>
 
       <div class="field">
@@ -639,56 +651,6 @@
   <div style="display:flex; flex-direction:column; gap:10px;" id="cor-opciones"></div>
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarPreguntaCorona()">Cancelar</button></div>
 </div>
-<div class="ep-velo" id="ep-velo" onclick="cerrarEditarPedido()"></div>
-<div class="ep-hoja" id="ep-hoja" role="dialog" aria-modal="true" aria-labelledby="ep-titulo">
-  <h2 id="ep-titulo">Pedido</h2>
-  <div class="ep-sub" id="ep-sub"></div>
-
-  <div class="ep-sec">Cliente</div>
-  <div class="ep-grid">
-    <div><label for="ep-nombre">Nombre</label><input id="ep-nombre" maxlength="80"></div>
-    <div><label for="ep-tel">Teléfono</label><input id="ep-tel" type="tel" maxlength="20"></div>
-  </div>
-
-  <div class="ep-sec">Producto</div>
-  <div class="ep-grid">
-    <div><label for="ep-cat">Categoría</label>
-      <select id="ep-cat"><option value="pastel">Pastel</option><option value="cupcake">Cupcakes</option><option value="individual">Cuchareables</option><option value="panque">Panqués</option></select></div>
-    <div><label for="ep-tam">Tamaño</label><input id="ep-tam" maxlength="60"></div>
-    <div class="full"><label for="ep-sabor">Sabor / detalle</label><input id="ep-sabor" maxlength="300"></div>
-    <div id="ep-cor-wrap"><label for="ep-cor">Corona</label>
-      <select id="ep-cor"><option value="">Sin corona</option><option value="incluida">Incluida</option><option value="ambar">Ámbar</option><option value="color">De color</option></select></div>
-    <div id="ep-color-wrap"><label for="ep-color">Color de la corona</label><input id="ep-color" maxlength="60"></div>
-  </div>
-
-  <div class="ep-sec">Entrega</div>
-  <div class="ep-grid">
-    <div><label for="ep-fecha">Fecha</label><input id="ep-fecha" type="date"></div>
-    <div><label for="ep-hora">Hora</label><input id="ep-hora" type="time"></div>
-    <div><label for="ep-entrega">Tipo de entrega</label>
-      <select id="ep-entrega"><option value="recoger">Recoge en local</option><option value="casa">Recoger en casa</option><option value="domicilio">Domicilio</option></select></div>
-    <div class="full ep-dom"><label for="ep-dir">Dirección</label><input id="ep-dir" maxlength="300"></div>
-    <div class="ep-dom"><label for="ep-rnombre">Recibe (nombre)</label><input id="ep-rnombre" maxlength="80"></div>
-    <div class="ep-dom"><label for="ep-rtel">Recibe (teléfono)</label><input id="ep-rtel" type="tel" maxlength="20"></div>
-  </div>
-
-  <div class="ep-sec">Precio</div>
-  <div class="ep-grid">
-    <div><label for="ep-precio">Total del pedido</label><input id="ep-precio" type="number" inputmode="numeric"></div>
-    <div class="hint" style="align-self:end; margin:0 0 10px;">Los pagos se registran con "Ingresar monto pagado".</div>
-  </div>
-
-  <div class="ep-sec">Comentarios</div>
-  <textarea id="ep-notas" maxlength="1000"></textarea>
-
-  <div class="ep-acc">
-    <button type="button" class="btn-borrar" onclick="borrarPedido()">Borrar</button>
-    <button type="button" class="btn-cerrar-ep" onclick="cerrarEditarPedido()">Cancelar</button>
-    <button type="button" class="primary" id="ep-guardar" onclick="guardarEdicionPedido()">Guardar cambios</button>
-  </div>
-  <div class="msg" id="ep-msg"></div>
-</div>
-
 <script src="js/nucleo.js"></script>
 <script src="js/catalogos.js"></script>
 <script src="js/cuentas.js"></script>

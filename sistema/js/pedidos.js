@@ -215,102 +215,13 @@ function pintarPedidosPorDia(data, cont){
     cont.appendChild(g);
   });
 }
-// ---------- Ver / editar / borrar pedido ----------
+// ---------- Editar pedido: se abre en el mismo formulario de Nuevo pedido (nuevo-pedido.js) ----------
 const pedidosPorId = {};
-let pedidoEditando = null;
-function epVal(id){ return document.getElementById(id).value; }
-function epSet(id, v){ document.getElementById(id).value = v ?? ''; }
-function epActualizarUI(){
-  const esPastel = epVal('ep-cat') === 'pastel';
-  document.getElementById('ep-cor-wrap').style.display = esPastel ? 'block' : 'none';
-  document.getElementById('ep-color-wrap').style.display = esPastel && epVal('ep-cor') === 'color' ? 'block' : 'none';
-  const dom = epVal('ep-entrega') === 'domicilio';
-  document.querySelectorAll('.ep-dom').forEach(e => e.style.display = dom ? 'block' : 'none');
-  const extra = pedidoEditando ? (Number(pedidoEditando.pago_entrega)||0) + (Number(pedidoEditando.descuento_entrega)||0) + sumaPagos(pedidoEditando) : 0;
-
-}
-['ep-cat','ep-cor','ep-entrega'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', epActualizarUI);
-  document.getElementById(id).addEventListener('change', epActualizarUI);
-});
 function abrirEditarPedido(id){
   if(!puede('pedidos_editar')) return; // Producción solo puede ver
   const p = pedidosPorId[id];
-  if(!p) return;
-  pedidoEditando = p;
-  const {f, h} = fechaLocalPartes(p.fecha_entrega);
-  document.getElementById('ep-titulo').textContent = p.nombre_cliente || 'Pedido';
-  document.getElementById('ep-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'long'}) : '')
-    + (p.decorado ? ' · Decorado: ' + (p.decorado_descripcion || '') : '')
-    + (p.entregado ? ' · Entregado' + (Number(p.pago_entrega) > 0 ? `, cobró ${fmtDinero(p.pago_entrega)} al entregar (${formatNombre(p.metodo_entrega || '')})` : '') + (Number(p.descuento_entrega) > 0 ? `, descuento ${fmtDinero(p.descuento_entrega)}` : '') : '');
-  epSet('ep-nombre', p.nombre_cliente); epSet('ep-tel', p.telefono);
-  epSet('ep-cat', p.categoria || 'pastel');
-  epSet('ep-tam', p.categoria === 'pastel' ? p.tamano_o_sabor : '');
-  epSet('ep-sabor', p.sabor);
-  epSet('ep-cor', p.corona_tipo || ''); epSet('ep-color', p.corona_color);
-  epSet('ep-fecha', f); epSet('ep-hora', h);
-  epSet('ep-entrega', p.entrega === 'local' ? 'recoger' : (p.entrega || 'recoger'));
-  epSet('ep-dir', p.direccion); epSet('ep-rnombre', p.recibe_nombre); epSet('ep-rtel', p.recibe_telefono);
-  epSet('ep-precio', p.precio);
-  epSet('ep-notas', p.notas);
-  document.getElementById('ep-msg').className = 'msg';
-  epActualizarUI();
-  document.getElementById('ep-velo').classList.add('on');
-  document.getElementById('ep-hoja').classList.add('on');
+  if(p) editarPedidoEnFormulario(p);
 }
-function cerrarEditarPedido(){
-  document.getElementById('ep-velo').classList.remove('on');
-  document.getElementById('ep-hoja').classList.remove('on');
-  pedidoEditando = null;
-}
-async function guardarEdicionPedido(){
-  const msg = document.getElementById('ep-msg'); msg.className = 'msg';
-  const p = pedidoEditando; if(!p) return;
-  const nombre = epVal('ep-nombre').trim();
-  const fecha = epVal('ep-fecha');
-  if(!nombre){ msg.className='msg err'; msg.textContent='Falta el nombre del cliente.'; return; }
-  if(!fecha){ msg.className='msg err'; msg.textContent='Falta la fecha de entrega.'; return; }
-  const cat = epVal('ep-cat');
-  const entrega = epVal('ep-entrega');
-  const cor = cat === 'pastel' ? epVal('ep-cor') : '';
-  if(cor === 'color' && !epVal('ep-color').trim()){ msg.className='msg err'; msg.textContent='Escribe el color de la corona.'; return; }
-  if(entrega === 'domicilio' && !epVal('ep-dir').trim()){ msg.className='msg err'; msg.textContent='Falta la dirección de entrega.'; return; }
-  const hora = epVal('ep-hora') || '11:00';
-  const cambios = {
-    nombre_cliente: nombre,
-    telefono: epVal('ep-tel').trim(),
-    categoria: cat,
-    tamano_o_sabor: cat === 'pastel' ? epVal('ep-tam').trim() : cat,
-    sabor: epVal('ep-sabor').trim(),
-    corona_tipo: cor || null,
-    corona_color: cor === 'color' ? epVal('ep-color').trim() : null,
-    fecha_entrega: new Date(`${fecha}T${hora}:00`).toISOString(),
-    entrega,
-    direccion: entrega === 'domicilio' ? epVal('ep-dir').trim() : '',
-    recibe_nombre: entrega === 'domicilio' ? (epVal('ep-rnombre').trim() || null) : null,
-    recibe_telefono: entrega === 'domicilio' ? (epVal('ep-rtel').trim() || null) : null,
-    precio: Number(epVal('ep-precio')) || 0,
-    notas: epVal('ep-notas')
-  };
-  const btn = document.getElementById('ep-guardar'); btn.disabled = true; btn.textContent = 'Guardando...';
-  const { data, error } = await sb.from('pedidos').update(cambios).eq('id', p.id).select();
-  btn.disabled = false; btn.textContent = 'Guardar cambios';
-  if(error){ msg.className='msg err'; msg.textContent='No se pudo guardar: ' + error.message; return; }
-  if(!data || !data.length){ msg.className='msg err'; msg.textContent='No se guardó. Revisa que ya se haya corrido el SQL de permisos para editar pedidos.'; return; }
-  cerrarEditarPedido();
-  refrescarVistaActual();
-}
-async function borrarPedido(){
-  const p = pedidoEditando; if(!p) return;
-  if(!confirm(`¿Borrar el pedido de ${p.nombre_cliente || 'este cliente'}? Podrás recuperarlo en "Ver pedidos eliminados".`)) return;
-  const msg = document.getElementById('ep-msg'); msg.className = 'msg';
-  const { data, error } = await sb.from('pedidos').delete().eq('id', p.id).select();
-  if(error){ msg.className='msg err'; msg.textContent='No se pudo borrar: ' + error.message; return; }
-  if(!data || !data.length){ msg.className='msg err'; msg.textContent='No se borró. Revisa que ya se haya corrido el SQL de permisos para editar pedidos.'; return; }
-  cerrarEditarPedido();
-  refrescarVistaActual();
-}
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && pedidoEditando) cerrarEditarPedido(); });
 // ---------- Pedidos eliminados (solo directora) ----------
 async function abrirEliminados(){
   activarVistaDirectora('tab-lista', 'view-eliminados');

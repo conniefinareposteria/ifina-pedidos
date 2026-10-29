@@ -70,7 +70,7 @@ function filaProductoFotos(tabla, producto, titulo, nota, ocultable){
   const oculto = ocultable && ocultosCatalogo.has(tabla + '|' + producto);
   const pArg = escHtml(producto).replace(/'/g, '&#39;');
   const id = idFila(tabla, producto);
-  const miniaturas = fotos.map((f, i)=> `<div class="cf-foto${i === 0 ? ' principal' : ''}">
+  const miniaturas = fotos.map((f, i)=> `<div class="cf-foto${i === 0 ? ' principal' : ''}" data-id="${Number(f.id)}">
       <img src="${escHtml(f.url)}" alt="" loading="lazy">
       ${i === 0 ? '<span class="cf-tag">Principal</span>' : `<button type="button" class="cf-btn" onclick="hacerPrincipal(${Number(f.id)})">Hacer principal</button>`}
       <button type="button" class="cf-quitar" aria-label="Quitar foto" onclick="quitarFoto(${Number(f.id)})">×</button>
@@ -80,11 +80,104 @@ function filaProductoFotos(tabla, producto, titulo, nota, ocultable){
     ${ocultable ? `<div class="cf-estado"><span>${oculto ? 'No se muestra en la página' : 'Se muestra en la página'}</span>
       <button type="button" class="cf-ocultar" onclick="cambiarOcultoProducto('${tabla}', '${pArg}', ${!oculto})">${oculto ? 'Volver a mostrar' : 'Ocultar en la página'}</button></div>` : ''}
     ${nota ? `<div class="hint" style="margin:-4px 0 10px;">${escHtml(nota)}</div>` : ''}
+    ${fotos.length > 1 ? '<div class="hint" style="margin:0 0 8px;">Para cambiar el orden, deja presionada una foto y arrástrala. La de la izquierda es la principal.</div>' : ''}
     <div class="cf-fotos">${miniaturas}
       <label class="cf-agregar">+ agregar foto<input type="file" accept="image/*" multiple hidden onchange="subirFotos(this, '${tabla}', '${pArg}')"></label>
     </div>
+    ${ocultable ? detalleProductoHtml(tabla, producto, id) : ''}
     <div class="msg" id="${id}-msg"></div>
   </div>`;
+}
+// ---------- De qué está hecho + incluye corona (sql/023) ----------
+function filaCatalogo(tabla, producto){ return datosDeTabla(tabla).find(r=> r.nombre === producto) || {}; }
+function detalleProductoHtml(tabla, producto, id){
+  const r = filaCatalogo(tabla, producto);
+  const campo = (k, label, ph) => `<div class="field"><label>${label}</label><input type="text" id="${id}-${k}" value="${escHtml(r[k] || '')}" placeholder="${ph}"></div>`;
+  const corona = tabla === 'sabores_pasteles' ? `<div class="field"><label>Incluye corona</label>
+      <div class="chip-group" id="${id}-corona">
+        <div class="chip${r.incluye_corona ? ' selected' : ''}" data-v="si" onclick="elegirCoronaCatalogo('${id}','si')">Sí</div>
+        <div class="chip${r.incluye_corona ? '' : ' selected'}" data-v="no" onclick="elegirCoronaCatalogo('${id}','no')">No</div>
+      </div><div class="hint" style="margin:6px 0 0;">Aplica en todo el sistema: punto de venta, nuevo pedido y página.</div></div>` : '';
+  return `<div class="cf-detalle">
+    <div class="row3">${campo('pan','Pan','Ej. vainilla')}${campo('relleno','Relleno','Ej. cajeta')}${campo('betun','Betún','Ej. merengue')}</div>
+    ${campo('descripcion','Algo más (opcional)','Ej. con nuez')}
+    ${corona}
+    <button type="button" class="cf-guardar" onclick="guardarDetalleProducto('${tabla}', '${escHtml(producto).replace(/'/g, '&#39;')}')">Guardar</button>
+  </div>`;
+}
+function elegirCoronaCatalogo(id, v){
+  document.querySelectorAll('#' + id + '-corona .chip').forEach(c=> c.classList.toggle('selected', c.dataset.v === v));
+}
+async function guardarDetalleProducto(tabla, producto){
+  const id = idFila(tabla, producto);
+  const val = k => document.getElementById(id + '-' + k).value.trim();
+  const msg = document.getElementById(id + '-msg');
+  const sel = document.querySelector('#' + id + '-corona .chip.selected');
+  const incluye = tabla === 'sabores_pasteles' && sel ? sel.dataset.v === 'si' : null;
+  const datos = { pan: val('pan'), relleno: val('relleno'), betun: val('betun'), descripcion: val('descripcion') };
+  msg.className = 'msg ok'; msg.textContent = 'Guardando...';
+  const { error } = await sb.rpc('catalogo_guardar_producto', { p_tabla: tabla, p_nombre: producto, p_pan: datos.pan, p_relleno: datos.relleno, p_betun: datos.betun, p_descripcion: datos.descripcion, p_incluye_corona: incluye });
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message + ' (revisa que ya se haya corrido el SQL del catálogo).'; return; }
+  // Se actualiza también en memoria para que punto de venta y nuevo pedido usen el cambio sin recargar
+  const r = filaCatalogo(tabla, producto);
+  Object.keys(datos).forEach(k=> r[k] = datos[k] || null);
+  if(incluye !== null) r.incluye_corona = incluye;
+  msg.className = 'msg ok'; msg.textContent = 'Guardado. Ya aparece así en la página.';
+}
+
+// ---------- Reordenar fotos: dejar presionada y arrastrar ----------
+let cfArrastre = null;
+document.addEventListener('pointerdown', e=>{
+  const foto = e.target.closest && e.target.closest('#view-catalogo .cf-foto');
+  if(!foto || e.target.closest('button')) return;
+  const inicio = { x:e.clientX, y:e.clientY };
+  const timer = setTimeout(()=>{
+    cfArrastre = { foto, cont: foto.parentElement, x0: inicio.x, y0: inicio.y };
+    foto.classList.add('arrastrando');
+    if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
+  }, 350);
+  const mover = ev=>{
+    if(!cfArrastre){ if(Math.abs(ev.clientX - inicio.x) > 8 || Math.abs(ev.clientY - inicio.y) > 8) soltar(); return; }
+    const a = cfArrastre;
+    a.foto.style.transform = `translate(${ev.clientX - a.x0}px, ${ev.clientY - a.y0}px)`;
+    a.foto.style.pointerEvents = 'none';
+    const bajo = document.elementFromPoint(ev.clientX, ev.clientY);
+    const otra = bajo && bajo.closest('.cf-foto');
+    if(otra && otra !== a.foto && otra.parentElement === a.cont){
+      const lista = [...a.cont.querySelectorAll('.cf-foto')];
+      const antes = lista.indexOf(otra) < lista.indexOf(a.foto);
+      const r0 = a.foto.getBoundingClientRect();
+      a.cont.insertBefore(a.foto, antes ? otra : otra.nextSibling);
+      const r1 = a.foto.getBoundingClientRect();
+      a.x0 += r1.left - r0.left; a.y0 += r1.top - r0.top;   // la foto sigue bajo el dedo
+      a.foto.style.transform = `translate(${ev.clientX - a.x0}px, ${ev.clientY - a.y0}px)`;
+    }
+  };
+  const soltar = ()=>{
+    clearTimeout(timer);
+    document.removeEventListener('pointermove', mover);
+    document.removeEventListener('pointerup', soltar);
+    document.removeEventListener('pointercancel', soltar);
+    if(!cfArrastre) return;
+    const a = cfArrastre; cfArrastre = null;
+    a.foto.classList.remove('arrastrando'); a.foto.style.transform = ''; a.foto.style.pointerEvents = '';
+    guardarOrdenFotos([...a.cont.querySelectorAll('.cf-foto')].map(x=> Number(x.dataset.id)));
+  };
+  document.addEventListener('pointermove', mover);
+  document.addEventListener('pointerup', soltar);
+  document.addEventListener('pointercancel', soltar);
+});
+// Mientras se arrastra, que la pantalla no se desplace
+document.addEventListener('touchmove', e=>{ if(cfArrastre) e.preventDefault(); }, { passive:false });
+document.addEventListener('contextmenu', e=>{ if(e.target.closest && e.target.closest('#view-catalogo .cf-foto')) e.preventDefault(); });
+async function guardarOrdenFotos(ids){
+  const cambios = ids.map((id, i)=> ({ f: fotosCatalogo.find(x=> x.id === id), orden: i })).filter(x=> x.f && x.f.orden !== x.orden);
+  if(!cambios.length){ pintarCatalogoFotos(); return; }
+  const res = await Promise.all(cambios.map(x=> sb.from('fotos_catalogo').update({ orden: x.orden }).eq('id', x.f.id)));
+  const err = res.find(x=> x.error);
+  if(err){ alert('No se pudo guardar el orden: ' + err.error.message); }
+  else cambios.forEach(x=> x.f.orden = x.orden);
+  pintarCatalogoFotos();
 }
 
 // Copia para la página: respeta la orientación de la foto y reduce solo si pasa de 2400 px

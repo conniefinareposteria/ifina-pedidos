@@ -100,7 +100,7 @@ function pintarCatalogoPOS(){
       const card = document.createElement('div'); card.className = 'pos-pastel';
       card.innerHTML = `<div class="nm">${escHtml(nombre)}</div><div class="pos-tam"></div>`;
       const wrap = card.querySelector('.pos-tam');
-      [['mini','Mini',dm],['chico','Chico',dc]].forEach(([tam, lbl, disp])=>{
+      [['mini',etiquetaTamano('mini'),dm],['chico',etiquetaTamano('chico'),dc]].forEach(([tam, lbl, disp])=>{
         const precio = posPrecio(cat, nombre, tam);
         const en = posEnVenta(cat, nombre, tam);
         const btn = document.createElement('button'); btn.type = 'button';

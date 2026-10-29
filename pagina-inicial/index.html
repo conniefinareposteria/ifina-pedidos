@@ -172,6 +172,10 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 @media(min-width:700px){.hoja .foto .cover{object-fit:contain}}
 .hoja .cuerpo{padding:18px 20px}
 .hoja h2{font-size:34px}
+.hecho{margin-top:10px;display:grid;gap:4px;font-size:14px;color:var(--char)}
+.hecho span{display:inline-block;min-width:66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.hecho.mini{margin:6px 4px 0;font-size:12.5px;gap:2px}
+.hecho.mini span{min-width:56px;font-size:9.5px}
 .hoja .desc{font-size:13.5px;color:var(--soft);margin-top:4px;line-height:1.5}
 .lbl{margin:20px 0 9px;color:var(--soft)}
 .opt{display:flex;justify-content:space-between;align-items:center;width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:11px 13px;font-size:14px;margin-bottom:8px;text-align:left}
@@ -291,6 +295,7 @@ textarea{min-height:80px;resize:vertical}
   <div class="foto" id="hp-foto"></div>
   <div class="cuerpo">
     <h2 class="serif" id="hp-nombre"></h2>
+    <div class="hecho" id="hp-hecho"></div>
     <p class="desc" id="hp-desc"></p>
     <div class="caps lbl">Tamaño</div>
     <div id="hp-tam"></div>
@@ -431,11 +436,16 @@ function cardSabor(s, grupo){
     <div class="ph">${galeriaHtml(s._fotos, s.foto_url, nombreBonito(s.nombre))}${s.incluye_corona && grupo==='pastel'?`<span class="tag"><img src="${CORONA}" alt="">Corona incluida</span>`:''}</div>
     <div class="t serif">${esc(nombreBonito(s.nombre))}</div><div class="d">${s._desde?'Desde '+dinero(s._desde):''}</div></div>`;
 }
+// De qué está hecho (se llena en el sistema: Catálogo). Solo se muestran los campos llenos.
+function hechoHtml(r){
+  const l = [['Pan', r.pan], ['Relleno', r.relleno], ['Betún', r.betun]].filter(x=> x[1]);
+  return l.map(([k, v])=> `<div><span>${k}</span>${esc(v)}</div>`).join('');
+}
 function cardCantidad(tipo, r, precio){
   const it = carrito.find(x=>x.tipo===tipo && x.nombre===r.nombre);
   const n = it ? it.qty : 0;
   return `<div class="card"><div class="ph" style="aspect-ratio:3/4">${galeriaHtml(r._fotos, r.foto_url, nombreBonito(r.nombre))}</div>
-    <div class="t serif">${esc(nombreBonito(r.nombre))}</div><div class="d">${dinero(precio)}</div>
+    <div class="t serif">${esc(nombreBonito(r.nombre))}</div><div class="d">${dinero(precio)}</div>${hechoHtml(r) ? `<div class="hecho mini">${hechoHtml(r)}</div>` : ''}${r.descripcion ? `<div class="d">${esc(r.descripcion)}</div>` : ''}
     <div class="step${n?' con':''}"><button aria-label="Quitar uno" onclick="cambiar('${tipo}','${esc(r.nombre)}',${Number(precio)||0},-1,'${esc(r.foto_url||'')}')">−</button><span>${n}</span><button aria-label="Agregar uno" onclick="cambiar('${tipo}','${esc(r.nombre)}',${Number(precio)||0},1,'${esc(r.foto_url||'')}')">+</button></div></div>`;
 }
 function banner(titulo, precio){
@@ -502,7 +512,8 @@ function abrirProducto(grupo, nombre){
   const sf = s._fotos || s.foto_url ? s : (grupo==='tresleches' ? D.sab.find(x=>clave(x.nombre)==='tresleches') || s : s);
   document.getElementById('hp-foto').innerHTML = galeriaHtml(sf._fotos, sf.foto_url, nombreBonito(nombre));
   document.getElementById('hp-nombre').textContent = (grupo==='cheesecake'?'Cheesecake ':'') + nombreBonito(nombre);
-  document.getElementById('hp-desc').textContent = s.descripcion || '';
+  document.getElementById('hp-hecho').innerHTML = hechoHtml(sf);
+  document.getElementById('hp-desc').textContent = sf.descripcion || '';
   document.getElementById('hp-color').value = '';
   document.getElementById('hp-msg').textContent = '';
   pintarHP();

@@ -70,8 +70,10 @@ function filaProductoFotos(tabla, producto, titulo, nota, ocultable){
   const oculto = ocultable && ocultosCatalogo.has(tabla + '|' + producto);
   const pArg = escHtml(producto).replace(/'/g, '&#39;');
   const id = idFila(tabla, producto);
-  const miniaturas = fotos.map((f, i)=> `<div class="cf-foto${i === 0 ? ' principal' : ''}" data-id="${Number(f.id)}">
-      <img src="${escHtml(f.url)}" alt="" loading="lazy">
+  const proporcion = proporcionFoto(tabla);
+  const miniaturas = fotos.map((f, i)=> `<div class="cf-foto${i === 0 ? ' principal' : ''}" data-id="${Number(f.id)}" style="aspect-ratio:${proporcion};">
+      <img src="${escHtml(f.url)}" alt="" loading="lazy" style="${estiloEncuadre(f)}">
+      ${proporcion ? `<button type="button" class="cf-enc" onclick="abrirEncuadre(${Number(f.id)})">Encuadrar</button>` : ''}
       ${i === 0 ? '<span class="cf-tag">Principal</span>' : `<button type="button" class="cf-btn" onclick="hacerPrincipal(${Number(f.id)})">Hacer principal</button>`}
       <button type="button" class="cf-quitar" aria-label="Quitar foto" onclick="quitarFoto(${Number(f.id)})">×</button>
     </div>`).join('');
@@ -253,5 +255,58 @@ async function cambiarOcultoProducto(tabla, producto, ocultar){
   const { error } = await q;
   if(error){ alert('No se pudo cambiar: ' + error.message); return; }
   if(ocultar) ocultosCatalogo.add(tabla + '|' + producto); else ocultosCatalogo.delete(tabla + '|' + producto);
+  pintarCatalogoFotos();
+}
+
+// ---------- Encuadrar: mover y acercar la foto dentro del recuadro de la tarjeta (sql/026) ----------
+// Mismo recuadro que en la página: pasteles y cheesecakes 4:5, cupcakes/cuchareables/panqués 3:4.
+function proporcionFoto(tabla){ return tabla === 'sabores_pasteles' ? '4/5' : ['sabores_cupcakes','individuales','panques'].includes(tabla) ? '3/4' : ''; }
+function estiloEncuadre(f){
+  const x = f.pos_x ?? 50, y = f.pos_y ?? 50, z = f.zoom ?? 1;
+  return `object-position:${x}% ${y}%;transform:scale(${z});transform-origin:${x}% ${y}%;`;
+}
+let encFoto = null, encX = 50, encY = 50, encZ = 1;
+function abrirEncuadre(id){
+  const f = fotosCatalogo.find(x=> x.id === id); if(!f) return;
+  encFoto = f; encX = f.pos_x ?? 50; encY = f.pos_y ?? 50; encZ = f.zoom ?? 1;
+  document.getElementById('enc-marco').style.aspectRatio = proporcionFoto(f.tabla);
+  document.getElementById('enc-img').src = f.url;
+  document.getElementById('enc-zoom').value = encZ;
+  document.getElementById('enc-msg').className = 'msg';
+  pintarEncuadre();
+  abrirModal('enc');
+}
+function pintarEncuadre(){ document.getElementById('enc-img').setAttribute('style', estiloEncuadre({ pos_x:encX, pos_y:encY, zoom:encZ })); }
+function restablecerEncuadre(){ encX = 50; encY = 50; encZ = 1; document.getElementById('enc-zoom').value = 1; pintarEncuadre(); }
+document.getElementById('enc-zoom').addEventListener('input', e=>{ encZ = Number(e.target.value) || 1; pintarEncuadre(); });
+(function(){
+  const marco = document.getElementById('enc-marco');
+  let ult = null;
+  marco.addEventListener('pointerdown', e=>{ ult = { x:e.clientX, y:e.clientY }; marco.setPointerCapture(e.pointerId); e.preventDefault(); });
+  marco.addEventListener('pointermove', e=>{
+    if(!ult) return;
+    const img = document.getElementById('enc-img');
+    const fw = marco.clientWidth, fh = marco.clientHeight, iw = img.naturalWidth || fw, ih = img.naturalHeight || fh;
+    const s0 = Math.max(fw / iw, fh / ih);
+    const ox = iw * s0 - fw, oy = ih * s0 - fh;          // lo que sobra de la foto a los lados / arriba y abajo
+    const rx = encZ * ox + (encZ - 1) * fw, ry = encZ * oy + (encZ - 1) * fh;
+    if(rx > 0.5) encX = Math.min(100, Math.max(0, encX - (e.clientX - ult.x) * 100 / rx));
+    if(ry > 0.5) encY = Math.min(100, Math.max(0, encY - (e.clientY - ult.y) * 100 / ry));
+    ult = { x:e.clientX, y:e.clientY };
+    pintarEncuadre();
+  });
+  const fin = ()=>{ ult = null; };
+  marco.addEventListener('pointerup', fin); marco.addEventListener('pointercancel', fin);
+})();
+async function guardarEncuadre(){
+  const f = encFoto; if(!f) return;
+  const msg = document.getElementById('enc-msg'); msg.className = 'msg';
+  const datos = { pos_x: Math.round(encX * 10) / 10, pos_y: Math.round(encY * 10) / 10, zoom: Math.round(encZ * 100) / 100 };
+  const btn = document.getElementById('enc-guardar'); btn.disabled = true;
+  const { error } = await sb.from('fotos_catalogo').update(datos).eq('id', f.id);
+  btn.disabled = false;
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message + ' (revisa que ya se haya corrido el SQL del encuadre).'; return; }
+  Object.assign(f, datos);
+  cerrarModal('enc');
   pintarCatalogoFotos();
 }

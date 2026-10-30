@@ -610,6 +610,19 @@
   <div id="rd-lista" class="loading">Cargando...</div>
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarModal('rd')">Cerrar</button></div>
 </div>
+<div class="ep-velo" id="enc-velo" onclick="cerrarModal('enc')"></div>
+<div class="ep-hoja" id="enc-hoja" role="dialog" aria-modal="true" style="width:min(440px,94vw);">
+  <h2>Encuadrar foto</h2>
+  <div class="ep-sub" id="enc-sub">Arrastra la foto para acomodarla. Así se va a ver en la tarjeta y al abrir el producto.</div>
+  <div class="enc-marco" id="enc-marco"><img id="enc-img" alt="" draggable="false"></div>
+  <div class="field" style="margin:14px 0 6px;"><label for="enc-zoom">Acercar</label><input type="range" id="enc-zoom" min="1" max="3" step="0.01" value="1"></div>
+  <div class="ep-acc">
+    <button type="button" class="btn-cerrar-ep" onclick="restablecerEncuadre()">Centrar</button>
+    <button type="button" class="btn-cerrar-ep" onclick="cerrarModal('enc')">Cancelar</button>
+    <button type="button" class="primary" id="enc-guardar" onclick="guardarEncuadre()">Guardar</button>
+  </div>
+  <div class="msg" id="enc-msg"></div>
+</div>
 <div class="ep-velo" id="tk-velo" onclick="responderTicket(false)"></div>
 <div class="ep-hoja" id="tk-hoja" role="dialog" aria-modal="true" style="width:min(420px,94vw);">
   <h2>¿Quiere ticket?</h2>

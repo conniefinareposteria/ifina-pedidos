@@ -118,7 +118,7 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .sinfoto{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
 .gal{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .gal::-webkit-scrollbar{display:none}
-.gal img{flex:0 0 100%;scroll-snap-align:start}
+.gal .sl{flex:0 0 100%;height:100%;overflow:hidden;scroll-snap-align:start}
 .gal-n{position:absolute;right:10px;top:10px;background:rgba(43,38,32,.72);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;pointer-events:none}
 .hoja .gal-n{top:auto;bottom:12px;right:14px;font-size:12px}
 .sinfoto img{height:42%;opacity:.35}
@@ -168,8 +168,7 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .hoja-top{padding:14px 18px 12px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center}
 .hoja-top .logo{height:30px;justify-self:center}
 .hoja-top button{font-size:22px;width:40px;height:40px}
-.hoja .foto{height:min(125vw,74vh);background:var(--yeso);position:relative}
-@media(min-width:700px){.hoja .foto .cover{object-fit:contain}}
+.hoja .foto{aspect-ratio:4/5;width:min(100%,59vh);margin:22px auto 0;background:var(--yeso);position:relative;overflow:hidden}
 .hoja .cuerpo{padding:18px 20px}
 .hoja h2{font-size:34px}
 .hecho{margin-top:10px;display:grid;gap:4px;font-size:14px;color:var(--char)}
@@ -349,11 +348,14 @@ const ORDEN = ['mini','chico','mediano','grande','extragrande','plancha50','plan
 const pos = t => { const i = ORDEN.indexOf(clave(t)); return i<0 ? 50 + (clave(t).includes('cheesecake')?10:0) : i; };
 const esCheeseT = t => clave(t).includes('cheesecake');
 const esTresT = t => clave(t).includes('tresleches');
-function fotoHtml(url, alt){ return url ? `<img class="cover" src="${esc(url)}" alt="${esc(alt||'')}" loading="lazy">` : `<div class="sinfoto"><img src="${CORONA}" alt=""></div>`; }
+// Encuadre de cada foto (se ajusta en el sistema: Catálogo → Encuadrar). Por url de la foto.
+const ENC = {};
+function encStyle(url){ const e = ENC[url]; return e ? ` style="object-position:${e.x}% ${e.y}%;transform:scale(${e.z});transform-origin:${e.x}% ${e.y}%"` : ''; }
+function fotoHtml(url, alt){ return url ? `<img class="cover" src="${esc(url)}" alt="${esc(alt||'')}" loading="lazy"${encStyle(url)}>` : `<div class="sinfoto"><img src="${CORONA}" alt=""></div>`; }
 // Varias fotos: se deslizan de lado; el contador dice en cuál vas (ej. 2 / 4)
 function galeriaHtml(fotos, url, alt){
   if(!fotos || fotos.length < 2) return fotoHtml((fotos && fotos[0]) || url, alt);
-  return `<div class="gal" onscroll="galMover(this)">${fotos.map(f=>`<img class="cover" src="${esc(f)}" alt="${esc(alt||'')}" loading="lazy">`).join('')}</div><span class="gal-n">1 / ${fotos.length}</span>`;
+  return `<div class="gal" onscroll="galMover(this)">${fotos.map(f=>`<div class="sl"><img class="cover" src="${esc(f)}" alt="${esc(alt||'')}" loading="lazy"${encStyle(f)}></div>`).join('')}</div><span class="gal-n">1 / ${fotos.length}</span>`;
 }
 function galMover(el){
   const n = el.nextElementSibling; if(!n) return;
@@ -371,7 +373,10 @@ async function cargar(){
   if(err){ document.getElementById('cat-cont').innerHTML = '<div class="cargando">No pudimos cargar el catálogo. Intenta de nuevo en un momento.</div>'; document.getElementById('lista-linea').innerHTML=''; console.error(err.error); return; }
   // Fotos subidas desde el sistema (Catálogo); la primera es la principal
   const fotos = {};
-  (fot.data||[]).forEach(f=>{ (fotos[f.tabla+'|'+f.producto] = fotos[f.tabla+'|'+f.producto] || []).push(f.url); });
+  (fot.data||[]).forEach(f=>{
+    (fotos[f.tabla+'|'+f.producto] = fotos[f.tabla+'|'+f.producto] || []).push(f.url);
+    if(f.pos_x != null || f.pos_y != null || f.zoom != null) ENC[f.url] = { x: f.pos_x ?? 50, y: f.pos_y ?? 50, z: f.zoom ?? 1 };
+  });
   const conFotos = tabla => r => { const l = fotos[tabla+'|'+r.nombre]; if(l && l.length){ r._fotos = l; r.foto_url = l[0]; } return r; };
   (sp.data||[]).forEach(conFotos('sabores_pasteles')); (sc.data||[]).forEach(conFotos('sabores_cupcakes'));
   (ind.data||[]).forEach(conFotos('individuales')); (pan.data||[]).forEach(conFotos('panques'));

@@ -651,3 +651,25 @@ set incluye_corona = regexp_replace(lower(nombre),'[^a-z]','','g') in ('whitevel
 -- 4) Personas por tamaño (según la lista de precios)
 update tamanos_pastel set personas = 8 where regexp_replace(lower(tamano),'[^a-z0-9]','','g') = 'mini';
 
+
+-- ===== 024 Varios productos en un pedido (grupo) =====
+-- Al agendar se pueden agregar varios productos; cada uno se guarda como un pedido aparte
+-- y quedan ligados con el mismo "grupo" (Pedido 1 de 3, 2 de 3…).
+
+alter table pedidos add column if not exists grupo text;          -- mismo valor en los pedidos que se agendaron juntos
+alter table pedidos add column if not exists grupo_parte int;     -- 1, 2, 3…
+alter table pedidos add column if not exists grupo_total int;     -- cuántos son en total
+create index if not exists pedidos_grupo on pedidos (grupo) where grupo is not null;
+
+
+-- ===== 026 Encuadre de fotos =====
+-- Desde Catálogo → "Encuadrar" se mueve y acerca la foto dentro del recuadro de la tarjeta.
+-- pos_x / pos_y: punto de la foto que queda al centro del recuadro (0 a 100). zoom: 1 = sin acercar.
+-- Vacío = como se ve hoy (centrada, sin acercar).
+
+alter table fotos_catalogo add column if not exists pos_x numeric;
+alter table fotos_catalogo add column if not exists pos_y numeric;
+alter table fotos_catalogo add column if not exists zoom numeric;
+
+
+-- (025 solo renombró el mostachón a cc_ en los datos; no cambia la estructura)

@@ -101,11 +101,20 @@ function detalleProductoHtml(tabla, producto, id){
         <div class="chip${r.incluye_corona ? '' : ' selected'}" data-v="no" onclick="elegirCoronaCatalogo('${id}','no')">No</div>
       </div><div class="hint" style="margin:6px 0 0;">Aplica en todo el sistema: punto de venta, nuevo pedido y página.</div></div>` : '';
   const esCheese = tabla === 'sabores_pasteles' && /^cc_/i.test(producto);
-  // Cheesecakes: Base / Betún / Por encima. Panqués: solo Pan y Betún. Los demás: Pan / Relleno / Betún / Algo más.
+  // Cheesecakes: Base / Betún / Por encima. Pasteles: Pan / Relleno / Por encima / Por debajo / Algo más. Panqués: solo Pan y Betún. Los demás: Pan / Relleno / Betún / Algo más.
   const campos = esCheese
     ? `<div class="row3">${campo('pan','Base','Ej. cheesecake')}${campo('betun','Betún','Ej. mermelada')}${campo('descripcion','Por encima','Ej. frutos rojos')}</div>`
     : tabla === 'panques'
     ? `<div class="row2">${campo('pan','Pan','Ej. plátano')}${campo('betun','Betún','Ej. glaseado')}</div>`
+    : tabla === 'sabores_pasteles'
+    ? (()=>{ const doble = !!r.betun_abajo;   // "Doble betún" (Bi Cajeta, Bi Chocolate…): por encima y por debajo
+      return `<div class="row2">${campo('pan','Pan','Ej. vainilla')}${campo('relleno','Relleno','Ej. cajeta')}</div>
+    <div class="field"><label>Doble betún</label><div class="chip-group" id="${id}-doble">
+      <div class="chip${doble ? ' selected' : ''}" data-v="si" onclick="elegirDobleBetun('${id}','si')">Sí</div>
+      <div class="chip${doble ? '' : ' selected'}" data-v="no" onclick="elegirDobleBetun('${id}','no')">No</div></div></div>
+    <div class="row2"><div class="field"><label id="${id}-betun-lbl">${doble ? 'Por encima' : 'Betún'}</label><input type="text" id="${id}-betun" value="${escHtml(r.betun || '')}" placeholder="Ej. merengue"></div>
+      <div class="field" id="${id}-abajo-wrap" style="${doble ? '' : 'display:none;'}"><label>Por debajo</label><input type="text" id="${id}-betun_abajo" value="${escHtml(r.betun_abajo || '')}" placeholder="Ej. cajeta"></div></div>
+    ${campo('descripcion','Algo más (opcional)','Ej. con nuez')}`; })()
     : `<div class="row3">${campo('pan','Pan','Ej. vainilla')}${campo('relleno','Relleno','Ej. cajeta')}${campo('betun','Betún','Ej. merengue')}</div>
     ${campo('descripcion','Algo más (opcional)','Ej. con nuez')}`;
   return `<div class="cf-detalle">
@@ -113,6 +122,11 @@ function detalleProductoHtml(tabla, producto, id){
     ${corona}
     <button type="button" class="cf-guardar" onclick="guardarDetalleProducto('${tabla}', '${escHtml(producto).replace(/'/g, '&#39;')}')">Guardar</button>
   </div>`;
+}
+function elegirDobleBetun(id, v){
+  document.querySelectorAll('#' + id + '-doble .chip').forEach(c=> c.classList.toggle('selected', c.dataset.v === v));
+  document.getElementById(id + '-abajo-wrap').style.display = v === 'si' ? '' : 'none';
+  document.getElementById(id + '-betun-lbl').textContent = v === 'si' ? 'Por encima' : 'Betún';
 }
 function elegirCoronaCatalogo(id, v){
   document.querySelectorAll('#' + id + '-corona .chip').forEach(c=> c.classList.toggle('selected', c.dataset.v === v));
@@ -126,8 +140,12 @@ async function guardarDetalleProducto(tabla, producto){
   const sel = document.querySelector('#' + id + '-corona .chip.selected');
   const incluye = tabla === 'sabores_pasteles' && sel ? sel.dataset.v === 'si' : null;
   const datos = { pan: val('pan'), relleno: val('relleno'), betun: val('betun'), descripcion: val('descripcion') };
+  if(tabla === 'sabores_pasteles'){
+    const doble = document.querySelector('#' + id + '-doble .chip.selected');
+    datos.betun_abajo = doble && doble.dataset.v === 'si' ? val('betun_abajo') : '';
+  }
   msg.className = 'msg ok'; msg.textContent = 'Guardando...';
-  const { error } = await sb.rpc('catalogo_guardar_producto', { p_tabla: tabla, p_nombre: producto, p_pan: datos.pan, p_relleno: datos.relleno, p_betun: datos.betun, p_descripcion: datos.descripcion, p_incluye_corona: incluye });
+  const { error } = await sb.rpc('catalogo_guardar_producto', { p_tabla: tabla, p_nombre: producto, p_pan: datos.pan, p_relleno: datos.relleno, p_betun: datos.betun, p_descripcion: datos.descripcion, p_incluye_corona: incluye, ...(tabla === 'sabores_pasteles' ? { p_betun_abajo: datos.betun_abajo } : {}) });
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message + ' (revisa que ya se haya corrido el SQL del catálogo).'; return; }
   // Se actualiza también en memoria para que punto de venta y nuevo pedido usen el cambio sin recargar
   const r = filaCatalogo(tabla, producto);

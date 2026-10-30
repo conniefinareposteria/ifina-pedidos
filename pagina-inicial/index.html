@@ -457,6 +457,8 @@ function cardSabor(s, grupo){
 function hechoHtml(r, esCheese){
   const l = (esCheese
     ? [['Base', r.pan], ['Betún', r.betun], ['Por encima', r.descripcion]]
+    : r.betun_abajo   // doble betún (Bi Cajeta, Bi Chocolate…): por encima y por debajo
+    ? [['Pan', r.pan], ['Relleno', r.relleno], ['Por encima', r.betun], ['Por debajo', r.betun_abajo]]
     : [['Pan', r.pan], ['Relleno', r.relleno], ['Betún', r.betun]]).filter(x=> x[1]);
   return l.map(([k, v])=> `<div><span>${k}</span>${esc(v)}</div>`).join('');
 }

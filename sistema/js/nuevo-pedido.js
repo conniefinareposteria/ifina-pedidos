@@ -73,7 +73,8 @@ function recalcularPrecioPastel(){
   if(categoriaActual !== 'pastel') return;
   const base = precioBasePastel();
   let extra = 0;
-  if(!saborIncluyeCorona() && coronaQuiere === 'si' && coronaTipo) extra = precioCorona(coronaTipo, coronaTamanoActual());
+  // Ámbar en un sabor que la incluye no cuesta; la de color siempre se cobra
+  if(coronaQuiere === 'si' && coronaTipo && !(saborIncluyeCorona() && coronaTipo === 'ambar')) extra = precioCorona(coronaTipo, coronaTamanoActual());
   const hint = document.getElementById('precio-hint');
   if(decoradoActual === 'si'){
     // El decorado se cotiza: el precio lo escribe quien captura (no se llena solo)
@@ -106,11 +107,12 @@ function actualizarCoronaUI(){
   wrap.style.display = 'block';
   decWrap.style.display = puede('pedidos_decorados') ? 'block' : 'none';
   const incluida = saborIncluyeCorona();
+  // Siempre se pregunta: aunque el sabor la incluya, la pueden quitar o cambiar a color
   document.getElementById('corona-incluida').style.display = incluida ? 'block' : 'none';
-  document.getElementById('corona-pregunta').style.display = incluida ? 'none' : 'block';
+  document.getElementById('corona-pregunta').style.display = 'block';
   const tam = coronaTamanoActual();
   document.getElementById('corona-tipo-label').textContent = 'Tipo de corona ' + (tam === 'mini' ? 'mini' : 'normal');
-  document.querySelector('#corona-tipo-chips [data-coronatipo="ambar"]').textContent = `Ámbar (+${fmtDinero(precioCorona('ambar', tam))})`;
+  document.querySelector('#corona-tipo-chips [data-coronatipo="ambar"]').textContent = incluida ? 'Ámbar (incluida)' : `Ámbar (+${fmtDinero(precioCorona('ambar', tam))})`;
   document.querySelector('#corona-tipo-chips [data-coronatipo="color"]').textContent = `De color (+${fmtDinero(precioCorona('color', tam))})`;
   document.getElementById('corona-tipo-wrap').style.display = coronaQuiere === 'si' ? 'block' : 'none';
   document.getElementById('corona-color-wrap').style.display = (coronaQuiere === 'si' && coronaTipo === 'color') ? 'block' : 'none';
@@ -143,7 +145,13 @@ document.querySelectorAll('#corona-tipo-chips .chip').forEach(chip=>{
     actualizarCoronaUI();
   });
 });
-document.getElementById('sel-sabor-pastel').addEventListener('change', actualizarCoronaUI);
+// Al elegir sabor: si incluye corona, queda marcada la ámbar incluida; si no, se tiene que contestar
+document.getElementById('sel-sabor-pastel').addEventListener('change', ()=>{
+  if(saborIncluyeCorona()){ coronaQuiere = 'si'; coronaTipo = 'ambar'; }
+  else { coronaQuiere = null; coronaTipo = null; }
+  document.getElementById('corona-color').value = '';
+  actualizarCoronaUI();
+});
 function limpiarCamposCategoria(){
   document.getElementById('sel-tamano').value = '';
   const selSabor = document.getElementById('sel-sabor-pastel');
@@ -697,11 +705,11 @@ function leerProductoActual(){
     sabor = document.getElementById('sel-sabor-pastel').value;
     if(!tamano_o_sabor) return { err: 'Selecciona el tamaño del pastel.' };
     if(!sabor) return { err: 'Selecciona el sabor del pastel.' };
-    if(saborIncluyeCorona()){
-      coronaDatos = { corona_tipo:'incluida', corona_tamano: coronaTamanoActual(), corona_color:null, corona_precio:0 };
-    } else {
+    {
       if(!coronaQuiere) return { err: 'Indica si el pastel lleva corona.' };
-      if(coronaQuiere === 'si'){
+      if(coronaQuiere === 'si' && coronaTipo === 'ambar' && saborIncluyeCorona()){
+        coronaDatos = { corona_tipo:'incluida', corona_tamano: coronaTamanoActual(), corona_color:null, corona_precio:0 };
+      } else if(coronaQuiere === 'si'){
         if(!coronaTipo) return { err: 'Elige si la corona es ámbar o de color.' };
         const color = document.getElementById('corona-color').value.trim();
         if(coronaTipo === 'color' && !color) return { err: 'Escribe el color de la corona.' };
@@ -814,7 +822,11 @@ async function editarPedidoEnFormulario(p){
     const selS = document.getElementById('sel-sabor-pastel');
     ponerOpcion(selS, p.sabor);
     if(p.decorado){ ponerDecorado('si'); document.getElementById('decorado-desc').value = p.decorado_descripcion || ''; }
-    if(!saborIncluyeCorona()){
+    if(saborIncluyeCorona()){
+      if(p.corona_tipo === 'color'){ coronaQuiere = 'si'; coronaTipo = 'color'; document.getElementById('corona-color').value = p.corona_color || ''; }
+      else if(p.corona_tipo){ coronaQuiere = 'si'; coronaTipo = 'ambar'; }
+      else { coronaQuiere = 'no'; coronaTipo = null; }
+    } else {
       if(p.corona_tipo === 'ambar' || p.corona_tipo === 'color'){
         coronaQuiere = 'si'; coronaTipo = p.corona_tipo;
         document.getElementById('corona-color').value = p.corona_color || '';

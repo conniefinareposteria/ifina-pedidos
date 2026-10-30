@@ -310,6 +310,10 @@ textarea{min-height:80px;resize:vertical}
     <p class="desc" id="hp-desc"></p>
     <div class="caps lbl">Tamaño</div>
     <div id="hp-tam"></div>
+    <div id="hp-rel-wrap" style="display:none">
+      <div class="caps lbl">Relleno</div>
+      <div class="ch" id="hp-rel"></div>
+    </div>
     <div id="hp-cor-wrap">
       <div class="caps lbl">Corona</div>
       <div class="desc" id="hp-cor-nota" style="margin:-4px 0 10px;display:none">Este sabor incluye corona ámbar sin costo. Si no la quieres, elige "Sin corona".</div>
@@ -454,12 +458,15 @@ function cardSabor(s, grupo){
     <div class="t serif">${esc(nombreBonito(s.nombre))}</div><div class="d">${s._desde?'Desde '+dinero(s._desde):''}</div></div>`;
 }
 // De qué está hecho (se llena en el sistema: Catálogo). Solo se muestran los campos llenos.
+// Relleno a elegir (ej. Vintage): "A elegir: mermelada de fresa o cajeta"
+function rellenosDe(r){ return Array.isArray(r.relleno_opciones) && r.relleno_opciones.length >= 2 ? r.relleno_opciones : null; }
+function rellenoTxt(r){ const o = rellenosDe(r); return o ? 'A elegir: ' + o.slice(0, -1).join(', ') + ' o ' + o[o.length - 1] : r.relleno; }
 function hechoHtml(r, esCheese){
   const l = (esCheese
     ? [['Base', r.pan], ['Betún', r.betun], ['Por encima', r.descripcion]]
     : r.betun_abajo   // doble betún (Bi Cajeta, Bi Chocolate…): por encima y por debajo
-    ? [['Pan', r.pan], ['Relleno', r.relleno], ['Por encima', r.betun], ['Por debajo', r.betun_abajo]]
-    : [['Pan', r.pan], ['Relleno', r.relleno], ['Betún', r.betun]]).filter(x=> x[1]);
+    ? [['Pan', r.pan], ['Relleno', rellenoTxt(r)], ['Por encima', r.betun], ['Por debajo', r.betun_abajo]]
+    : [['Pan', r.pan], ['Relleno', rellenoTxt(r)], ['Betún', r.betun]]).filter(x=> x[1]);
   return l.map(([k, v])=> `<div><span>${k}</span>${esc(v)}</div>`).join('');
 }
 function cardCantidad(tipo, r, precio){
@@ -530,7 +537,8 @@ function abrirProducto(grupo, nombre){
              : grupo==='tresleches' ? D.tam.filter(t=>esTresT(t.tamano))
              : D.tam.filter(t=>!esCheeseT(t.tamano) && !esTresT(t.tamano));
   // Tamaño: por default el primero (el más chico). Corona: si el sabor la incluye, ámbar por default; si no, sin corona.
-  hp = {grupo, sabor:nombre, tams, tamano: tams.length ? tams[0].tamano : null, tamAbierto:false, corona: s.incluye_corona ? 'ambar' : 'no', incluye: !!s.incluye_corona, foto:s.foto_url||''};
+  const sr = s.relleno_opciones ? s : (D.sab.find(x=>clave(x.nombre)===clave(nombre)) || s);
+  hp = {grupo, sabor:nombre, rellenos: rellenosDe(sr), relleno: null, tams, tamano: tams.length ? tams[0].tamano : null, tamAbierto:false, corona: s.incluye_corona ? 'ambar' : 'no', incluye: !!s.incluye_corona, foto:s.foto_url||''};
   const sf = s._fotos || s.foto_url ? s : (grupo==='tresleches' ? D.sab.find(x=>clave(x.nombre)==='tresleches') || s : s);
   document.getElementById('hp-foto').innerHTML = galeriaHtml(sf._fotos, sf.foto_url, nombreBonito(nombre));
   document.getElementById('hp-nombre').textContent = (grupo==='cheesecake'?'Cheesecake ':'') + nombreBonito(nombre);
@@ -554,6 +562,9 @@ function pintarHP(){
       ${fila(t)}<div class="der"><b>${dinero(t.precio)}</b><span class="ck">${hp.tamano===t.tamano?'✓':''}</span></div></button>`).join('')}</div>`;
   } else html = `<div class="opt on">${fila(sel)}<div class="der"><b>${dinero(sel.precio)}</b></div></div>`;
   document.getElementById('hp-tam').innerHTML = html;
+  // Relleno a elegir
+  document.getElementById('hp-rel-wrap').style.display = hp.rellenos ? 'block' : 'none';
+  if(hp.rellenos) document.getElementById('hp-rel').innerHTML = hp.rellenos.map((o, i)=>`<button class="${hp.relleno===o?'on':''}" onclick="hp.relleno=hp.rellenos[${i}];document.getElementById('hp-msg').textContent='';pintarHP()">${hp.relleno===o?'✓ ':''}${esc(o)}</button>`).join('');
   // Corona: siempre se pregunta en pasteles (aunque la incluya, la pueden quitar)
   const lleva = hp.grupo==='pastel';
   document.getElementById('hp-cor-wrap').style.display = lleva ? 'block' : 'none';
@@ -576,9 +587,10 @@ function precioHP(){
 function agregarPastel(){
   const msg = document.getElementById('hp-msg');
   if(!hp.tamano){ msg.textContent = 'Elige un tamaño.'; return; }
+  if(hp.rellenos && !hp.relleno){ msg.textContent = 'Elige el relleno.'; return; }
   const color = document.getElementById('hp-color').value.trim();
   if(hp.grupo==='pastel' && hp.corona==='color' && !color){ msg.textContent = 'Escribe el color de la corona.'; return; }
-  let det = nombreBonito(hp.tamano);
+  let det = nombreBonito(hp.tamano) + (hp.relleno ? ' · relleno de ' + hp.relleno.toLowerCase() : '');
   let corona = null;
   if(hp.grupo==='pastel'){
     if(hp.corona==='ambar' && hp.incluye){ det += ' · corona incluida'; corona = 'incluida'; }
@@ -588,7 +600,7 @@ function agregarPastel(){
   }
   const titulo = hp.grupo==='cheesecake' ? 'Cheesecake ' + nombreBonito(hp.sabor) : hp.grupo==='tresleches' ? 'Pastel de tres leches' : 'Pastel de ' + nombreBonito(hp.sabor);
   carrito.push({tipo:hp.grupo, nombre:hp.sabor, titulo, detalle:det, precio:precioHP(), qty:1, foto:hp.foto,
-    datos:{tamano:hp.tamano, corona, corona_color: hp.corona==='color'?color:null}});
+    datos:{tamano:hp.tamano, corona, corona_color: hp.corona==='color'?color:null, ...(hp.relleno ? {relleno: hp.relleno} : {})}});
   cerrarTodo(); actualizarBarra();
 }
 

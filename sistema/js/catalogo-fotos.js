@@ -108,7 +108,16 @@ function detalleProductoHtml(tabla, producto, id){
     ? `<div class="row2">${campo('pan','Pan','Ej. plátano')}${campo('betun','Betún','Ej. glaseado')}</div>`
     : tabla === 'sabores_pasteles'
     ? (()=>{ const doble = !!r.betun_abajo;   // "Doble betún" (Bi Cajeta, Bi Chocolate…): por encima y por debajo
-      return `<div class="row2">${campo('pan','Pan','Ej. vainilla')}${campo('relleno','Relleno','Ej. cajeta')}</div>
+      const opciones = Array.isArray(r.relleno_opciones) ? r.relleno_opciones : [];
+      const elige = opciones.length >= 2;      // "Relleno a elegir" (ej. Vintage: mermelada de fresa o cajeta)
+      const filaOpc = v => `<div class="cf-opc"><input type="text" class="ropc" value="${escHtml(v)}" placeholder="Ej. cajeta"><button type="button" aria-label="Quitar opción" onclick="this.parentElement.remove()">×</button></div>`;
+      return `<div class="row2">${campo('pan','Pan','Ej. vainilla')}<div class="field" id="${id}-relleno-wrap" style="${elige ? 'display:none;' : ''}"><label>Relleno</label><input type="text" id="${id}-relleno" value="${escHtml(r.relleno || '')}" placeholder="Ej. cajeta"></div></div>
+    <div class="field"><label>¿El cliente elige el relleno?</label><div class="chip-group" id="${id}-elige">
+      <div class="chip${elige ? ' selected' : ''}" data-v="si" onclick="elegirRellenoOpc('${id}','si')">Sí</div>
+      <div class="chip${elige ? '' : ' selected'}" data-v="no" onclick="elegirRellenoOpc('${id}','no')">No</div></div></div>
+    <div class="field" id="${id}-opc-wrap" style="${elige ? '' : 'display:none;'}"><label>Opciones de relleno</label>
+      <div id="${id}-opc">${(elige ? opciones : ['', '']).map(filaOpc).join('')}</div>
+      <button type="button" class="link-accion" style="margin:4px 0 0; background:none; border:none; cursor:pointer;" onclick="agregarOpcionRelleno('${id}')">+ agregar opción</button></div>
     <div class="field"><label>Doble betún</label><div class="chip-group" id="${id}-doble">
       <div class="chip${doble ? ' selected' : ''}" data-v="si" onclick="elegirDobleBetun('${id}','si')">Sí</div>
       <div class="chip${doble ? '' : ' selected'}" data-v="no" onclick="elegirDobleBetun('${id}','no')">No</div></div></div>
@@ -122,6 +131,17 @@ function detalleProductoHtml(tabla, producto, id){
     ${corona}
     <button type="button" class="cf-guardar" onclick="guardarDetalleProducto('${tabla}', '${escHtml(producto).replace(/'/g, '&#39;')}')">Guardar</button>
   </div>`;
+}
+function elegirRellenoOpc(id, v){
+  document.querySelectorAll('#' + id + '-elige .chip').forEach(c=> c.classList.toggle('selected', c.dataset.v === v));
+  document.getElementById(id + '-opc-wrap').style.display = v === 'si' ? '' : 'none';
+  document.getElementById(id + '-relleno-wrap').style.display = v === 'si' ? 'none' : '';
+}
+function agregarOpcionRelleno(id){
+  const d = document.createElement('div'); d.className = 'cf-opc';
+  d.innerHTML = '<input type="text" class="ropc" placeholder="Ej. cajeta"><button type="button" aria-label="Quitar opción" onclick="this.parentElement.remove()">×</button>';
+  document.getElementById(id + '-opc').appendChild(d);
+  d.querySelector('input').focus();
 }
 function elegirDobleBetun(id, v){
   document.querySelectorAll('#' + id + '-doble .chip').forEach(c=> c.classList.toggle('selected', c.dataset.v === v));
@@ -143,9 +163,17 @@ async function guardarDetalleProducto(tabla, producto){
   if(tabla === 'sabores_pasteles'){
     const doble = document.querySelector('#' + id + '-doble .chip.selected');
     datos.betun_abajo = doble && doble.dataset.v === 'si' ? val('betun_abajo') : '';
+    const elige = document.querySelector('#' + id + '-elige .chip.selected');
+    if(elige){
+      if(elige.dataset.v === 'si'){
+        const opc = [...document.querySelectorAll('#' + id + '-opc .ropc')].map(x=> x.value.trim()).filter(Boolean);
+        if(opc.length < 2){ msg.className = 'msg err'; msg.textContent = 'Escribe al menos dos opciones de relleno (o marca No).'; return; }
+        datos.relleno_opciones = opc;
+      } else datos.relleno_opciones = null;
+    }
   }
   msg.className = 'msg ok'; msg.textContent = 'Guardando...';
-  const { error } = await sb.rpc('catalogo_guardar_producto', { p_tabla: tabla, p_nombre: producto, p_pan: datos.pan, p_relleno: datos.relleno, p_betun: datos.betun, p_descripcion: datos.descripcion, p_incluye_corona: incluye, ...(tabla === 'sabores_pasteles' ? { p_betun_abajo: datos.betun_abajo } : {}) });
+  const { error } = await sb.rpc('catalogo_guardar_producto', { p_tabla: tabla, p_nombre: producto, p_pan: datos.pan, p_relleno: datos.relleno, p_betun: datos.betun, p_descripcion: datos.descripcion, p_incluye_corona: incluye, ...(tabla === 'sabores_pasteles' ? { p_betun_abajo: datos.betun_abajo, ...('relleno_opciones' in datos ? { p_relleno_opciones: datos.relleno_opciones } : {}) } : {}) });
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message + ' (revisa que ya se haya corrido el SQL del catálogo).'; return; }
   // Se actualiza también en memoria para que punto de venta y nuevo pedido usen el cambio sin recargar
   const r = filaCatalogo(tabla, producto);

@@ -165,16 +165,28 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .hoja{position:fixed;inset:0;z-index:80;background:var(--cream);overflow-y:auto;transform:translateY(100%);transition:transform .28s ease,visibility .28s;padding-bottom:110px;visibility:hidden}
 .hoja.on{transform:none;visibility:visible}
 @media(min-width:760px){.hoja{left:50%;right:auto;width:560px;top:4vh;bottom:4vh;border-radius:24px;transform:translate(-50%,110%)}.hoja.on{transform:translate(-50%,0)}}
-.hoja-top{padding:14px 18px 12px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center}
+.hoja-top{padding:14px 18px 12px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;position:sticky;top:0;z-index:5}
 .hoja-top .logo{height:30px;justify-self:center}
 .hoja-top button{font-size:22px;width:40px;height:40px}
-.hoja .foto{aspect-ratio:4/5;width:min(100%,59vh);margin:22px auto 0;background:var(--yeso);position:relative;overflow:hidden}
+.hoja .foto{aspect-ratio:4/5;width:min(100%,59vh);margin:0 auto;background:var(--yeso);position:relative;overflow:hidden}
 .hoja .cuerpo{padding:18px 20px}
 .hoja h2{font-size:34px}
-.hecho{margin-top:10px;display:grid;gap:4px;font-size:14px;color:var(--char)}
-.hecho span{display:inline-block;min-width:92px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
-.hecho.mini{margin:6px 4px 0;font-size:12.5px;gap:2px}
-.hecho.mini span{min-width:56px;font-size:9.5px}
+.hecho{margin-top:14px;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:2px 16px;color:var(--char)}
+.hecho:empty{display:none}
+.hecho div{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:baseline;padding:12px 0;font-size:16px;line-height:1.35}
+.hecho div+div{border-top:1px solid var(--line)}
+.hecho span{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.hecho.mini{margin:8px 4px 0;padding:0 10px;border-radius:12px;border-width:1px}
+.hecho.mini div{grid-template-columns:62px 1fr;gap:6px;padding:6px 0;font-size:12.5px}
+.hecho.mini span{font-size:9px;letter-spacing:.1em}
+/* Selector de tamaño (se abre como lista) */
+.sel-tam{display:flex;justify-content:space-between;align-items:center;width:100%;border:2px solid var(--char);background:#fff;border-radius:16px;padding:13px 14px;font-size:15px;text-align:left}
+.sel-tam small{display:block;color:var(--soft);font-size:12.5px;margin-top:1px}
+.sel-tam .der{display:flex;gap:12px;align-items:center}
+.sel-tam .der b{font-size:16px}
+.chev{width:10px;height:10px;border-right:2px solid var(--char);border-bottom:2px solid var(--char);transform:rotate(45deg);margin:-4px 4px 0 2px;transition:transform .2s}
+.sel-tam.abierto .chev{transform:rotate(-135deg);margin-top:4px}
+.lista-tam{margin-top:8px}
 .hoja .desc{font-size:13.5px;color:var(--soft);margin-top:4px;line-height:1.5}
 .lbl{margin:20px 0 9px;color:var(--soft)}
 .opt{display:flex;justify-content:space-between;align-items:center;width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:11px 13px;font-size:14px;margin-bottom:8px;text-align:left}
@@ -300,10 +312,10 @@ textarea{min-height:80px;resize:vertical}
     <div id="hp-tam"></div>
     <div id="hp-cor-wrap">
       <div class="caps lbl">Corona</div>
+      <div class="desc" id="hp-cor-nota" style="margin:-4px 0 10px;display:none">Este sabor incluye corona ámbar sin costo. Si no la quieres, elige "Sin corona".</div>
       <div class="ch" id="hp-cor"></div>
       <input id="hp-color" placeholder="Color de la corona (ej. rosa pastel)" style="margin-top:10px;display:none" maxlength="60">
     </div>
-    <div id="hp-incl" class="desc" style="display:none;margin-top:14px">✓ Este sabor ya incluye corona.</div>
   </div>
   <div class="hoja-pie"><button class="btn char" id="hp-btn" onclick="agregarPastel()">Elige un tamaño</button><div class="msg" id="hp-msg"></div></div>
 </div>
@@ -515,7 +527,8 @@ function abrirProducto(grupo, nombre){
   const tams = grupo==='cheesecake' ? D.tam.filter(t=>esCheeseT(t.tamano))
              : grupo==='tresleches' ? D.tam.filter(t=>esTresT(t.tamano))
              : D.tam.filter(t=>!esCheeseT(t.tamano) && !esTresT(t.tamano));
-  hp = {grupo, sabor:nombre, tams, tamano: tams.length===1 ? tams[0].tamano : null, corona:'no', incluye: !!s.incluye_corona, foto:s.foto_url||''};
+  // Tamaño: por default el primero (el más chico). Corona: si el sabor la incluye, ámbar por default; si no, sin corona.
+  hp = {grupo, sabor:nombre, tams, tamano: tams.length ? tams[0].tamano : null, tamAbierto:false, corona: s.incluye_corona ? 'ambar' : 'no', incluye: !!s.incluye_corona, foto:s.foto_url||''};
   const sf = s._fotos || s.foto_url ? s : (grupo==='tresleches' ? D.sab.find(x=>clave(x.nombre)==='tresleches') || s : s);
   document.getElementById('hp-foto').innerHTML = galeriaHtml(sf._fotos, sf.foto_url, nombreBonito(nombre));
   document.getElementById('hp-nombre').textContent = (grupo==='cheesecake'?'Cheesecake ':'') + nombreBonito(nombre);
@@ -528,15 +541,24 @@ function abrirProducto(grupo, nombre){
   mostrar('hoja-prod');
 }
 function pintarHP(){
-  document.getElementById('hp-tam').innerHTML = hp.tams.map(t=>`<button class="opt${hp.tamano===t.tamano?' on':''}" onclick="hp.tamano='${esc(t.tamano)}';pintarHP()">
-    <div>${hp.tamano===t.tamano?'<b>':''}${esc(nombreBonito(t.tamano))}${hp.tamano===t.tamano?'</b>':''}${t.personas?`<small>${t.personas} personas</small>`:''}</div>
-    <div class="der"><b>${dinero(t.precio)}</b><span class="ck">${hp.tamano===t.tamano?'✓':''}</span></div></button>`).join('');
-  const lleva = hp.grupo==='pastel' && !hp.incluye;
+  // Tamaño: se ve el elegido; al tocarlo se abre la lista de todos
+  const sel = hp.tams.find(t=>t.tamano===hp.tamano);
+  const fila = t => `<div>${esc(nombreBonito(t.tamano))}${t.personas?`<small>${t.personas} personas</small>`:''}</div>`;
+  let html = '';
+  if(hp.tams.length > 1 || !sel){
+    html += `<button class="sel-tam${hp.tamAbierto?' abierto':''}" onclick="hp.tamAbierto=!hp.tamAbierto;pintarHP()" aria-expanded="${hp.tamAbierto}">
+      ${sel ? fila(sel) : '<div>Elige un tamaño</div>'}<div class="der">${sel?`<b>${dinero(sel.precio)}</b>`:''}<span class="chev"></span></div></button>`;
+    if(hp.tamAbierto) html += `<div class="lista-tam">${hp.tams.map(t=>`<button class="opt${hp.tamano===t.tamano?' on':''}" onclick="hp.tamano='${esc(t.tamano)}';hp.tamAbierto=false;pintarHP()">
+      ${fila(t)}<div class="der"><b>${dinero(t.precio)}</b><span class="ck">${hp.tamano===t.tamano?'✓':''}</span></div></button>`).join('')}</div>`;
+  } else html = `<div class="opt on">${fila(sel)}<div class="der"><b>${dinero(sel.precio)}</b></div></div>`;
+  document.getElementById('hp-tam').innerHTML = html;
+  // Corona: siempre se pregunta en pasteles (aunque la incluya, la pueden quitar)
+  const lleva = hp.grupo==='pastel';
   document.getElementById('hp-cor-wrap').style.display = lleva ? 'block' : 'none';
-  document.getElementById('hp-incl').style.display = hp.grupo==='pastel' && hp.incluye ? 'block' : 'none';
+  document.getElementById('hp-cor-nota').style.display = lleva && hp.incluye ? 'block' : 'none';
   if(lleva){
     const tc = (hp.tamano||'').toLowerCase()==='mini' ? 'mini' : 'normal';
-    const ops = [['no','Sin corona',null],['ambar','Ámbar',precioCorona('ambar',tc)],['color','De color',precioCorona('color',tc)]];
+    const ops = [['no','Sin corona',null],['ambar', hp.incluye ? 'Ámbar · incluida' : 'Ámbar', hp.incluye ? null : precioCorona('ambar',tc)],['color','De color',precioCorona('color',tc)]];
     document.getElementById('hp-cor').innerHTML = ops.map(([v,t,p])=>`<button class="${hp.corona===v?'on':''}" onclick="hp.corona='${v}';pintarHP()">${hp.corona===v?'✓ ':''}${t}${p!=null?' +'+dinero(p):''}</button>`).join('');
     document.getElementById('hp-color').style.display = hp.corona==='color' ? 'block' : 'none';
   }
@@ -545,20 +567,22 @@ function pintarHP(){
 function precioHP(){
   const t = hp.tams.find(x=>x.tamano===hp.tamano); if(!t) return 0;
   let p = Number(t.precio)||0;
-  if(hp.grupo==='pastel' && !hp.incluye && hp.corona!=='no') p += precioCorona(hp.corona, (hp.tamano||'').toLowerCase()==='mini'?'mini':'normal');
+  // Ámbar en un sabor que la incluye no cuesta; la de color siempre se cobra
+  if(hp.grupo==='pastel' && hp.corona!=='no' && !(hp.incluye && hp.corona==='ambar')) p += precioCorona(hp.corona, (hp.tamano||'').toLowerCase()==='mini'?'mini':'normal');
   return p;
 }
 function agregarPastel(){
   const msg = document.getElementById('hp-msg');
   if(!hp.tamano){ msg.textContent = 'Elige un tamaño.'; return; }
   const color = document.getElementById('hp-color').value.trim();
-  if(hp.grupo==='pastel' && !hp.incluye && hp.corona==='color' && !color){ msg.textContent = 'Escribe el color de la corona.'; return; }
+  if(hp.grupo==='pastel' && hp.corona==='color' && !color){ msg.textContent = 'Escribe el color de la corona.'; return; }
   let det = nombreBonito(hp.tamano);
   let corona = null;
   if(hp.grupo==='pastel'){
-    if(hp.incluye){ det += ' · corona incluida'; corona = 'incluida'; }
+    if(hp.corona==='ambar' && hp.incluye){ det += ' · corona incluida'; corona = 'incluida'; }
     else if(hp.corona==='ambar'){ det += ' · corona ámbar'; corona='ambar'; }
     else if(hp.corona==='color'){ det += ` · corona de color (${color})`; corona='color'; }
+    else det += ' · sin corona';
   }
   const titulo = hp.grupo==='cheesecake' ? 'Cheesecake ' + nombreBonito(hp.sabor) : hp.grupo==='tresleches' ? 'Pastel de tres leches' : 'Pastel de ' + nombreBonito(hp.sabor);
   carrito.push({tipo:hp.grupo, nombre:hp.sabor, titulo, detalle:det, precio:precioHP(), qty:1, foto:hp.foto,

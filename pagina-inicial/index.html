@@ -162,7 +162,7 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .barra button{background:var(--yeso);color:var(--char);padding:12px 18px;border-radius:999px;font-weight:700;font-size:14px}
 
 /* ===== Hojas ===== */
-.hoja{position:fixed;inset:0;z-index:80;background:var(--cream);overflow-y:auto;transform:translateY(100%);transition:transform .28s ease,visibility .28s;padding-bottom:110px;visibility:hidden}
+.hoja{position:fixed;inset:0;z-index:80;background:var(--cream);overflow-y:auto;transform:translateY(100%);transition:transform .28s ease,visibility .28s;padding-bottom:calc(180px + env(safe-area-inset-bottom));visibility:hidden}
 .hoja.on{transform:none;visibility:visible}
 @media(min-width:760px){.hoja{left:50%;right:auto;width:560px;top:4vh;bottom:4vh;border-radius:24px;transform:translate(-50%,110%)}.hoja.on{transform:translate(-50%,0)}}
 .hoja-top{padding:14px 18px 12px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;position:sticky;top:0;z-index:5}

@@ -100,9 +100,16 @@ function detalleProductoHtml(tabla, producto, id){
         <div class="chip${r.incluye_corona ? ' selected' : ''}" data-v="si" onclick="elegirCoronaCatalogo('${id}','si')">Sí</div>
         <div class="chip${r.incluye_corona ? '' : ' selected'}" data-v="no" onclick="elegirCoronaCatalogo('${id}','no')">No</div>
       </div><div class="hint" style="margin:6px 0 0;">Aplica en todo el sistema: punto de venta, nuevo pedido y página.</div></div>` : '';
+  const esCheese = tabla === 'sabores_pasteles' && /^cc_/i.test(producto);
+  // Cheesecakes: Base / Cheesecake / Betún / Por encima. Panqués: solo Pan y Betún. Los demás: Pan / Relleno / Betún / Algo más.
+  const campos = esCheese
+    ? `<div class="row2">${campo('pan','Base','Ej. galleta')}${campo('relleno','Cheesecake','Ej. queso crema')}</div><div class="row2">${campo('betun','Betún','Ej. mermelada')}${campo('descripcion','Por encima','Ej. frutos rojos')}</div>`
+    : tabla === 'panques'
+    ? `<div class="row2">${campo('pan','Pan','Ej. plátano')}${campo('betun','Betún','Ej. glaseado')}</div>`
+    : `<div class="row3">${campo('pan','Pan','Ej. vainilla')}${campo('relleno','Relleno','Ej. cajeta')}${campo('betun','Betún','Ej. merengue')}</div>
+    ${campo('descripcion','Algo más (opcional)','Ej. con nuez')}`;
   return `<div class="cf-detalle">
-    <div class="row3">${campo('pan','Pan','Ej. vainilla')}${campo('relleno','Relleno','Ej. cajeta')}${campo('betun','Betún','Ej. merengue')}</div>
-    ${campo('descripcion','Algo más (opcional)','Ej. con nuez')}
+    ${campos}
     ${corona}
     <button type="button" class="cf-guardar" onclick="guardarDetalleProducto('${tabla}', '${escHtml(producto).replace(/'/g, '&#39;')}')">Guardar</button>
   </div>`;
@@ -112,7 +119,9 @@ function elegirCoronaCatalogo(id, v){
 }
 async function guardarDetalleProducto(tabla, producto){
   const id = idFila(tabla, producto);
-  const val = k => document.getElementById(id + '-' + k).value.trim();
+  const actual = filaCatalogo(tabla, producto);
+  // Campos que no se muestran (ej. Relleno en panqués) conservan lo que ya tenían
+  const val = k => { const el = document.getElementById(id + '-' + k); return el ? el.value.trim() : (actual[k] || ''); };
   const msg = document.getElementById(id + '-msg');
   const sel = document.querySelector('#' + id + '-corona .chip.selected');
   const incluye = tabla === 'sabores_pasteles' && sel ? sel.dataset.v === 'si' : null;

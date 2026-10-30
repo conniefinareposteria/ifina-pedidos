@@ -172,7 +172,7 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .hoja .cuerpo{padding:18px 20px}
 .hoja h2{font-size:34px}
 .hecho{margin-top:10px;display:grid;gap:4px;font-size:14px;color:var(--char)}
-.hecho span{display:inline-block;min-width:66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.hecho span{display:inline-block;min-width:92px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
 .hecho.mini{margin:6px 4px 0;font-size:12.5px;gap:2px}
 .hecho.mini span{min-width:56px;font-size:9.5px}
 .hoja .desc{font-size:13.5px;color:var(--soft);margin-top:4px;line-height:1.5}
@@ -442,8 +442,10 @@ function cardSabor(s, grupo){
     <div class="t serif">${esc(nombreBonito(s.nombre))}</div><div class="d">${s._desde?'Desde '+dinero(s._desde):''}</div></div>`;
 }
 // De qué está hecho (se llena en el sistema: Catálogo). Solo se muestran los campos llenos.
-function hechoHtml(r){
-  const l = [['Pan', r.pan], ['Relleno', r.relleno], ['Betún', r.betun]].filter(x=> x[1]);
+function hechoHtml(r, esCheese){
+  const l = (esCheese
+    ? [['Base', r.pan], ['Cheesecake', r.relleno], ['Betún', r.betun], ['Por encima', r.descripcion]]
+    : [['Pan', r.pan], ['Relleno', r.relleno], ['Betún', r.betun]]).filter(x=> x[1]);
   return l.map(([k, v])=> `<div><span>${k}</span>${esc(v)}</div>`).join('');
 }
 function cardCantidad(tipo, r, precio){
@@ -517,8 +519,9 @@ function abrirProducto(grupo, nombre){
   const sf = s._fotos || s.foto_url ? s : (grupo==='tresleches' ? D.sab.find(x=>clave(x.nombre)==='tresleches') || s : s);
   document.getElementById('hp-foto').innerHTML = galeriaHtml(sf._fotos, sf.foto_url, nombreBonito(nombre));
   document.getElementById('hp-nombre').textContent = (grupo==='cheesecake'?'Cheesecake ':'') + nombreBonito(nombre);
-  document.getElementById('hp-hecho').innerHTML = hechoHtml(sf);
-  document.getElementById('hp-desc').textContent = sf.descripcion || '';
+  document.getElementById('hp-hecho').innerHTML = hechoHtml(sf, grupo === 'cheesecake');
+  // En cheesecakes la descripción es "Por encima" y ya sale en la lista
+  document.getElementById('hp-desc').textContent = grupo === 'cheesecake' ? '' : (sf.descripcion || '');
   document.getElementById('hp-color').value = '';
   document.getElementById('hp-msg').textContent = '';
   pintarHP();

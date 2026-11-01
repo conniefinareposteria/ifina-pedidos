@@ -97,11 +97,9 @@ def pared(vb):
         cx, top, rx = (min(xs)+max(xs))/2, min(ys), (max(xs)-min(xs))/2
         cuerpo += f"""<g><clipPath id='p{i}'><path d='{d}'/></clipPath>
 <path d='{d}' fill='url(#fondo)'/>
-<g clip-path='url(#p{i})'><ellipse cx='{cx:.0f}' cy='{top+20:.0f}' rx='{rx*1.05:.0f}' ry='160' fill='url(#calida)'/></g>
 <path d='{d}' fill='#000' filter='url(#sombra)'/>
 <path d='{d}' fill='none' stroke='#a9c4ea' stroke-opacity='.28' stroke-width='3'/>
-<path d='{led}' fill='none' stroke='#ffb45a' stroke-opacity='.6' stroke-width='12' stroke-linecap='round' filter='url(#brillo)'/>
-<path d='{led}' fill='none' stroke='#ffe4b8' stroke-width='3.2' stroke-linecap='round'/></g>\n"""
+</g>\n"""   # sin tira de luz: en la página no se usa (en el local sí)
     return lienzo(2000, 1500, []).replace("viewBox='0 0 2000 1500'", f"viewBox='{vb}'").replace('</defs>\n\n</svg>', '</defs>\n' + cuerpo + '</svg>')
 open(os.path.join(dest, 'pared-local.svg'), 'w').write(pared('0 250 2000 900'))
 print('pared lista')

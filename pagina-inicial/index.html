@@ -149,19 +149,25 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
   url("img/pared-local.svg") 18% 62%/250% auto no-repeat,
   url("img/muro.jpg") center/cover, #1E4675}}
 .pared .wrap{text-align:center}
-.pared .pgrid{max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:28px 10px}
-.pared .pgrid .pc{flex:0 0 calc(50% - 10px)}
-@media(min-width:760px){.pared .pgrid .pc{flex:0 0 200px}}
-/* Rayita de luz cálida bajo el título, como la tira de los nichos */
-.pared h2::after{content:'';display:block;width:90px;height:2px;margin:14px auto 6px;border-radius:2px;background:#FFE2B0;box-shadow:0 0 8px 2px rgba(255,190,110,.6)}
-.pared .pc{background:none;border:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:4px 6px;text-align:center;text-shadow:0 2px 10px rgba(5,15,35,.55)}
-.pared .pc .n{font-size:30px}
-.pared .pc .p{opacity:.85;font-size:13px;margin-top:6px}
-.pared .pc .r{font-size:24px;margin-top:8px;color:#F2C46E}
-.pared .pc.wide{display:block;grid-column:1/-1}
+.pared{padding:40px 0 34px !important}
+.pared h2{margin-bottom:8px !important}
+/* Botón para desplegar tamaños y precios (cerrado al entrar para no hacer larga la página) */
+.ver-precios{display:none}
+.pared .ver-precios{display:inline-flex;align-items:center;gap:12px;margin-top:6px;padding:12px 22px;border-radius:999px;background:rgba(255,253,248,.94);color:var(--char);font-weight:700;font-size:15px}
+.pared .ver-precios .chev{border-color:var(--char)}
+.pared .ver-precios[aria-expanded="true"] .chev{transform:rotate(-135deg);margin-top:4px}
+.pared #precios-cuerpo{display:none;margin-top:18px}
+.pared.abierto #precios-cuerpo{display:block}
+.pared .pgrid{max-width:760px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+@media(min-width:760px){.pared .pgrid{grid-template-columns:repeat(4,1fr)}}
+.pared .pc{background:rgba(8,22,46,.45);border:none;border-radius:12px;-webkit-backdrop-filter:none;backdrop-filter:none;padding:8px 6px;text-align:center;text-shadow:0 2px 8px rgba(5,15,35,.5)}
+.pared .pc .n{font-size:19px}
+.pared .pc .p{opacity:.85;font-size:11.5px;margin-top:2px}
+.pared .pc .r{font-size:16px;margin-top:3px;color:#F2C46E}
+.pared .pc.wide{display:block;grid-column:auto}
 .pared .pc+.pc{position:relative}
-.pared #lista-esp{max-width:600px}
-.pared .esp-t{margin-top:34px}
+.pared #lista-esp{max-width:380px}
+.pared .esp-t{margin:16px 0 8px;font-size:20px}
 /* La sección de precios lleva atrás la pared con sus nichos (cada uno distinto), como en el local */
 .precios.wall{background:
   linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.35) 100%),
@@ -245,7 +251,12 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .cj-chip.ok{background:var(--char);color:#fff;border-color:var(--char)}
 .cj-chip.ok small{color:#E6DCCB}
 .cj-cuenta{margin:14px 2px 0;font-size:15px}
-.cj-pie{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom));margin:6px 0 24px;z-index:5}
+.cj-pie{margin:14px 0 30px}
+.cj-ayuda{margin-top:16px;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;font-size:14px;line-height:1.45}
+.cj-ayuda b{display:block;font-family:'Tinos',Georgia,serif;font-weight:400;font-size:19px;margin-bottom:6px}
+.cj-ayuda div{display:flex;gap:10px;margin-top:6px}
+.cj-ayuda span{flex:none;width:22px;height:22px;border-radius:50%;background:var(--char);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.cj-off{opacity:.45}
 .cj-pie .btn[disabled]{opacity:.55}
 .step button[disabled]{opacity:.3}
 
@@ -367,10 +378,13 @@ textarea{min-height:80px;resize:vertical}
     <div class="wrap">
       <div class="caps" style="color:var(--amber-l)">Lista de precios</div>
       <h2 class="serif">Pasteles de línea</h2>
+      <button class="ver-precios" id="ver-precios" onclick="alternarPrecios()" aria-expanded="false">Ver tamaños y precios <span class="chev"></span></button>
+      <div id="precios-cuerpo">
       <div class="pgrid" id="lista-linea"><div class="cargando" style="color:#fff;grid-column:1/-1">Cargando precios…</div></div><div class="vit-base"><span></span><span></span></div>
       <div id="esp-wrap" style="display:none">
         <div class="esp-t serif">Especialidades</div>
         <div class="pgrid" id="lista-esp"></div>
+      </div>
       </div>
     </div>
   </section>
@@ -678,14 +692,18 @@ function saborCaja(nombre, d){
 }
 function htmlCajas(vacio){
   const pc = D.precioCup;
-  const paso1 = `<div class="cj-paso"><div class="caps lbl">1 · ¿Qué cajas quieres?</div>
+  const ayuda = `<div class="cj-ayuda"><b>Cómo pedir tus cupcakes</b>
+    <div><span>1</span>Elige el tamaño de caja que quieres (1, 2, 4, 6 o 12). Puedes elegir una o varias cajas.</div>
+    <div><span>2</span>Toca cada caja y escoge los cupcakes que van dentro. Cuando se llena, se marca como completa.</div>
+    <div><span>3</span>Con todas las cajas completas, agrégalas a tu pedido.</div></div>`;
+  const paso1 = ayuda + `<div class="cj-paso"><div class="caps lbl">Paso 1 · Elige tus cajas</div>
     <div class="cj-tipos">${CAJAS.map(cap=>{ const n = cajasPedidas[cap] || 0; return `<div class="cj-tipo${n ? ' on' : ''}">
       <b class="serif">Caja de ${cap}</b><small>${dinero(cap * pc)}</small>
       <div class="step${n ? ' con' : ''}"><button aria-label="Quitar una caja de ${cap}" onclick="cambiarCaja(${cap},-1)">−</button><span>${n}</span><button aria-label="Agregar una caja de ${cap}" onclick="cambiarCaja(${cap},1)">+</button></div></div>`; }).join('')}</div></div>`;
-  if(!cajas.length) return paso1;
+  if(!cajas.length) return paso1 + `<div class="cj-paso cj-off"><div class="caps lbl">Paso 2 · Llena tus cajas</div><div class="cj-cuenta">Primero elige al menos una caja en el paso 1.</div></div>`;
   const c = cajas[cajaSel], lleva = llenas(c);
   const listas = cajas.filter(x=> llenas(x) === x.cap).length;
-  const paso2 = `<div class="cj-paso"><div class="caps lbl">2 · Llena tus cajas</div>
+  const paso2 = `<div class="cj-paso"><div class="caps lbl">Paso 2 · Llena tus cajas</div>
     <div class="cj-lista">${cajas.map((x, i)=>{ const ok = llenas(x) === x.cap; return `<button class="cj-chip${i === cajaSel ? ' sel' : ''}${ok ? ' ok' : ''}" onclick="elegirCaja(${i})">${ok ? '✓ ' : ''}Caja de ${x.cap}<small>${ok ? 'Completa' : llenas(x) + ' de ' + x.cap}</small></button>`; }).join('')}</div>
     <div class="cj-cuenta">Caja de ${c.cap}: llevas <b>${lleva} de ${c.cap}</b>${lleva === c.cap ? ' · completa' : ''}</div>
     <div class="grid">${D.cup.map(rw=>{ const n = c.sab[rw.nombre] || 0; return `<div class="card"><div class="ph" style="aspect-ratio:3/4">${galeriaHtml(rw._fotos, rw.foto_url, nombreBonito(rw.nombre))}</div>
@@ -893,6 +911,11 @@ function ponerJaladeras(){
   });
 }
 addEventListener('resize', ()=> ponerJaladeras());
+function alternarPrecios(){
+  const sec = document.getElementById('precios'), b = document.getElementById('ver-precios');
+  const ab = sec.classList.toggle('abierto');
+  b.setAttribute('aria-expanded', ab); b.firstChild.textContent = ab ? 'Ocultar tamaños y precios ' : 'Ver tamaños y precios ';
+}
 // Diseño de la lista de precios: 'muro' (pared azul con nichos) o 'vitrina' (repisa de herrería). Para probar: ?precios=vitrina
 (function(){
   const d = new URLSearchParams(location.search).get('precios') || document.getElementById('precios').dataset.diseno;

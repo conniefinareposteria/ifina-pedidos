@@ -105,6 +105,32 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(min-width:760px){.pgrid{grid-template-columns:repeat(4,1fr)}}
 .pc{border-radius:14px;padding:16px 18px;background:rgba(9,22,46,.58);border:1px solid rgba(190,212,245,.16);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+/* ===== Opción "vitrina": la repisa de herrería negra del local, con luz cálida arriba y cada tamaño como pastel en su repisa ===== */
+.precios.vitrina{background:
+  radial-gradient(60% 50% at 85% 20%, rgba(190,170,120,.18), transparent 70%),
+  radial-gradient(70% 60% at 10% 90%, rgba(120,105,70,.12), transparent 70%),
+  linear-gradient(180deg,#141513,#0d0e0c);color:#FFFDF8}
+.vitrina .caps{color:#D9C9A3 !important}
+.vitrina .pgrid{gap:9px;background:linear-gradient(180deg,#262825,#1b1d1a);padding:9px;border-radius:4px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 24px 50px rgba(0,0,0,.55)}
+.vitrina .pc{position:relative;overflow:hidden;border-radius:2px;border:none;text-align:center;padding:30px 12px 40px;min-height:158px;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  background:
+    linear-gradient(112deg, transparent 38%, rgba(255,255,255,.07) 44%, transparent 52%),
+    linear-gradient(0deg, rgba(255,255,255,.22) 0 2px, rgba(0,0,0,.35) 2px 6px, transparent 6px) bottom/100% 22px no-repeat,
+    radial-gradient(90% 70% at 50% 0%, rgba(255,236,200,.30), transparent 70%),
+    linear-gradient(180deg,#4a4535 0%,#353227 45%,#24231c 100%)}
+.vitrina .pc::before{content:'';position:absolute;top:7px;left:12%;right:12%;height:2px;border-radius:2px;background:#FFF4DC;box-shadow:0 0 10px 3px rgba(255,226,170,.55),0 0 26px 8px rgba(255,214,150,.25)}
+/* La "base" dorada del pastel, sobre la repisa de vidrio */
+.vitrina .pc::after{content:'';position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:62%;height:9px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 35%, #F3D58C, #B98A35 70%, #7A5A22);box-shadow:0 3px 6px rgba(0,0,0,.45)}
+.vitrina .pc .n{font-size:24px}
+.vitrina .pc .p{opacity:.8}
+.vitrina .pc .r{color:#F2C778}
+.vitrina .pc.wide{display:block}
+.vitrina .esp-t{color:#F3EBD8}
+@media(min-width:760px){.vitrina .pgrid{gap:12px;padding:12px}}
+.vitrina #lista-esp{width:fit-content;max-width:100%;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(150px,262px)}
 /* La sección de precios lleva atrás la pared con sus nichos (cada uno distinto), como en el local */
 .precios.wall{background:
   linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.35) 100%),
@@ -287,7 +313,7 @@ textarea{min-height:80px;resize:vertical}
     <p id="txt-bienvenida_texto">Texto de presentación: aquí va una descripción corta de la repostería.</p>
   </section>
 
-  <section class="precios wall" id="precios">
+  <section class="precios wall" id="precios" data-diseno="muro">
     <div class="wrap">
       <div class="caps" style="color:var(--amber-l)">Lista de precios</div>
       <h2 class="serif">Pasteles de línea</h2>
@@ -742,6 +768,11 @@ function cerrarTodo(){
 }
 document.addEventListener('keydown', e => { if(e.key==='Escape') cerrarTodo(); });
 // El logo de Connie lleva al inicio desde cualquier parte (producto, pedido, menú) sin borrar el carrito
+// Diseño de la lista de precios: 'muro' (pared azul con nichos) o 'vitrina' (repisa de herrería). Para probar: ?precios=vitrina
+(function(){
+  const d = new URLSearchParams(location.search).get('precios') || document.getElementById('precios').dataset.diseno;
+  if(d === 'vitrina'){ const el = document.getElementById('precios'); el.classList.remove('wall'); el.classList.add('vitrina'); }
+})();
 // ===== Lo que hay hoy en el local (lo guarda el punto de venta; sql/030) =====
 async function abrirLocal(){
   mostrar('hoja-local');

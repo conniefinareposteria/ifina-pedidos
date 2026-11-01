@@ -104,7 +104,16 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .precios h2{font-size:34px;margin:6px 0 18px}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(min-width:760px){.pgrid{grid-template-columns:repeat(4,1fr)}}
-.pc{border-radius:18px;padding:34px 22px 18px}
+.pc{border-radius:14px;padding:16px 18px;background:rgba(9,22,46,.58);border:1px solid rgba(190,212,245,.16);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+/* La sección de precios lleva atrás la pared con sus nichos (cada uno distinto), como en el local */
+.precios.wall{background:
+  linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.35) 100%),
+  url("img/nichos-ancho.svg") center/cover no-repeat,
+  url("img/muro.jpg") center/cover, #1E4675}
+@media(max-width:759px){.precios.wall{background:
+  linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.35) 100%),
+  url("img/nichos-alto.svg") center top/cover no-repeat,
+  url("img/muro.jpg") center/cover, #1E4675}}
 .pc .n{font-size:22px;line-height:1}
 .pc .p{font-size:12px;opacity:.72;margin-top:5px}
 .pc .r{font-size:20px;font-weight:700;color:var(--amber-l);margin-top:12px}
@@ -465,17 +474,17 @@ async function cargar(){
 
 // ===== Lista de precios =====
 function pintarPrecios(){
-  const pc = (t, wide) => `<div class="pc nicho${wide?' wide':''}"><div${wide?'':''}><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}${wide?'</div>':''}<div class="r">${dinero(t.precio)}</div>${wide?'':'</div>'}</div>`;
+  const pc = (t, wide) => `<div class="pc${wide?' wide':''}"><div${wide?'':''}><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}${wide?'</div>':''}<div class="r">${dinero(t.precio)}</div>${wide?'':'</div>'}</div>`;
   const linea = D.tam.filter(t=>!esCheeseT(t.tamano) && !esTresT(t.tamano));
   const esp = D.tam.filter(t=>esCheeseT(t.tamano) || esTresT(t.tamano));
   document.getElementById('lista-linea').innerHTML = linea.map((t,i)=>{
     const wide = linea.length % 2 === 1 && i === linea.length-1;
     return wide
-      ? `<div class="pc nicho wide"><div><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}</div><div class="r">${dinero(t.precio)}</div></div>`
-      : `<div class="pc nicho"><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}<div class="r">${dinero(t.precio)}</div></div>`;
+      ? `<div class="pc wide"><div><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}</div><div class="r">${dinero(t.precio)}</div></div>`
+      : `<div class="pc"><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}<div class="r">${dinero(t.precio)}</div></div>`;
   }).join('');
   document.getElementById('esp-wrap').style.display = esp.length ? 'block' : 'none';
-  document.getElementById('lista-esp').innerHTML = esp.map(t=>`<div class="pc nicho"><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}<div class="r">${dinero(t.precio)}</div></div>`).join('');
+  document.getElementById('lista-esp').innerHTML = esp.map(t=>`<div class="pc"><div class="n serif">${esc(nombreBonito(t.tamano))}</div>${t.personas?`<div class="p">${t.personas} personas</div>`:''}<div class="r">${dinero(t.precio)}</div></div>`).join('');
 }
 function pintarDeco(){
   if(!D.deco.length) return;

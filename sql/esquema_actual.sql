@@ -738,3 +738,42 @@ end $$;
 revoke all on function catalogo_guardar_producto(text,text,text,text,text,text,boolean,text,jsonb) from public, anon;
 grant execute on function catalogo_guardar_producto(text,text,text,text,text,text,boolean,text,jsonb) to authenticated;
 
+
+-- ===== 029_textos_pagina =====
+
+create table if not exists textos_pagina (
+  clave text primary key,     -- bienvenida_titulo, bienvenida_texto, visitanos_direccion, visitanos_detalle
+  texto text,
+  updated_at timestamptz default now()
+);
+
+alter table textos_pagina enable row level security;
+drop policy if exists "textos ver publico" on textos_pagina;
+drop policy if exists "textos crear director" on textos_pagina;
+drop policy if exists "textos editar director" on textos_pagina;
+-- Cualquiera los lee (la página pública); solo la directora los escribe
+create policy "textos ver publico" on textos_pagina for select to anon, authenticated using (true);
+create policy "textos crear director" on textos_pagina for insert to authenticated with check (
+  exists (select 1 from perfiles where perfiles.user_id = auth.uid() and perfiles.rol = 'director'));
+create policy "textos editar director" on textos_pagina for update to authenticated using (
+  exists (select 1 from perfiles where perfiles.user_id = auth.uid() and perfiles.rol = 'director'));
+
+
+-- ===== 030_existencias_local =====
+-- El punto de venta guarda aquí lo disponible cada vez que se actualiza (abrir, vender, merma, cortesía).
+-- La página lo muestra solo para consultar. No guarda precios ni dinero.
+
+create table if not exists existencias_local (
+  id int primary key default 1 check (id = 1),   -- un solo renglón
+  datos jsonb,
+  updated_at timestamptz default now()
+);
+
+alter table existencias_local enable row level security;
+drop policy if exists "existencias ver publico" on existencias_local;
+drop policy if exists "existencias crear personal" on existencias_local;
+drop policy if exists "existencias editar personal" on existencias_local;
+create policy "existencias ver publico" on existencias_local for select to anon, authenticated using (true);
+create policy "existencias crear personal" on existencias_local for insert to authenticated with check (exists (select 1 from perfiles where user_id = auth.uid()));
+create policy "existencias editar personal" on existencias_local for update to authenticated using (exists (select 1 from perfiles where user_id = auth.uid()));
+

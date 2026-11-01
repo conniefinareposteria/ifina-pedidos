@@ -107,9 +107,10 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .pc{border-radius:14px;padding:16px 18px;background:rgba(9,22,46,.58);border:1px solid rgba(190,212,245,.16);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 /* ===== Opción "vitrina": la repisa de herrería del local (grafito con toque azul), cristales con luz cálida =====
    Colores tomados de las fotos: barras #3D434D, sombra #23272D, fondo cálido #D2AA63 */
-.precios.vitrina{--graf:#3D434D;--graf-l:#555C68;--graf-d:#23272D;color:#FFFDF8;background:
-  radial-gradient(70% 60% at 80% 10%, rgba(255,226,160,.18), transparent 70%),
-  linear-gradient(180deg,#7E7259,#6A5F49 70%,#5C523F)}
+.precios.vitrina{--graf:#3D434D;--graf-l:#555C68;--graf-d:#23272D;color:#FFFDF8;background:#7C684D}   /* color exacto de la pared del local */
+.vitrina .wrap{text-align:center}
+.vitrina .pgrid,.vitrina .vit-base{margin-left:auto;margin-right:auto}
+.vitrina #lista-esp{margin-left:auto;margin-right:auto}
 .vitrina .caps{color:#F3E3BC !important}
 .vitrina .pgrid{gap:0;padding:0;border:12px solid var(--graf);border-radius:3px;background:var(--graf);
   outline:1px solid var(--graf-d);box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 1px var(--graf-d)}
@@ -320,7 +321,7 @@ textarea{min-height:80px;resize:vertical}
     <p id="txt-bienvenida_texto">Texto de presentación: aquí va una descripción corta de la repostería.</p>
   </section>
 
-  <section class="precios wall" id="precios" data-diseno="muro">
+  <section class="precios wall" id="precios" data-diseno="vitrina">
     <div class="wrap">
       <div class="caps" style="color:var(--amber-l)">Lista de precios</div>
       <h2 class="serif">Pasteles de línea</h2>

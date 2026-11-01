@@ -70,6 +70,7 @@ async function cargarDatosPOS(){
     const k = it.clave + '|' + (it.tam||'');
     posStock[it.cat][k] = (posStock[it.cat][k]||0) - (Number(it.cantidad)||0);
   }));
+  if(!posEditando) publicarExistencias(fecha);
   posPedidos = peds.data || [];
   const pend = posPedidos.filter(p=>!p.entregado).length;
   const b = document.getElementById('pos-badge-ped');
@@ -804,4 +805,23 @@ function agregarCoronaVenta(tipoCor, tipo, etiqueta, incluida, precio){
     nombre: `${etiqueta} ${tipoCor.toLowerCase()}${incluida ? ' (incluida)' : ''}`, precio: Number(precio)||0, sinPrecio:false, cantidad:1 });
   posTotalManual = false;
   pintarVenta(); pintarCatalogoPOS();
+}
+
+// "Lo que hay hoy en el local" en la página web (sql/030): se guarda lo disponible cada vez que se
+// actualiza el punto de venta. Solo nombres y cantidades; nada de dinero. Si falla, no estorba la venta.
+async function publicarExistencias(fecha){
+  try {
+    const cats = {};
+    ['pasteles','cupcakes','individuales','panques'].forEach(cat=>{
+      cats[cat] = posItemsCat(cat).map(nombre=>{
+        if(cat === 'pasteles'){
+          const mini = Math.max(0, (posStock[cat] || {})[nombre + '|mini'] || 0), chico = Math.max(0, (posStock[cat] || {})[nombre + '|chico'] || 0);
+          return mini + chico > 0 ? { n: nombre, mini, chico } : null;
+        }
+        const c = Math.max(0, (posStock[cat] || {})[nombre + '|'] || 0);
+        return c > 0 ? { n: nombre, c } : null;
+      }).filter(Boolean);
+    });
+    await sb.from('existencias_local').upsert([{ id: 1, datos: { fecha, cats }, updated_at: new Date().toISOString() }], { onConflict: 'id' });
+  } catch(_){ /* sin internet o sin el SQL: no afecta la venta */ }
 }

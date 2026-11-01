@@ -78,3 +78,30 @@ borde_ancho = [(60, 120, 120, 85, 23), (1150, 90, 130, 75, 37), (1120, 330, 110,
 borde_alto = [(360, 60, 110, 70, 23), (20, 470, 70, 95, 41), (390, 760, 70, 80, 53), (60, 1080, 110, 60, 67)]
 open(os.path.join(dest, 'nichos-borde-ancho.svg'), 'w').write(lienzo(1200, 480, borde_ancho))
 open(os.path.join(dest, 'nichos-borde-alto.svg'), 'w').write(lienzo(400, 1100, borde_alto))
+
+# Opción "pared": la pared del local tal cual (calcada de la foto), 4 nichos con su tira de luz
+PARED = [
+ dict(c=[(25,600),(60,520),(150,470),(300,440),(450,430),(560,420),(700,400),(850,395),(940,410),(985,470),(995,560),(985,650),(950,740),(890,800),(800,840),(680,860),(560,870),(470,862),(380,850),(260,830),(140,800),(60,760),(25,690)],
+      l=[(160,522),(300,490),(450,472),(600,457),(750,437),(870,427),(962,457)]),
+ dict(c=[(1060,420),(1075,340),(1150,300),(1300,280),(1500,280),(1680,295),(1790,330),(1835,400),(1825,490),(1780,560),(1700,620),(1610,690),(1520,760),(1420,805),(1300,820),(1150,815),(1080,780),(1050,700),(1045,560)],
+      l=[(1088,362),(1250,334),(1450,326),(1620,334),(1702,366)]),
+ dict(c=[(770,940),(800,875),(880,835),(1000,825),(1130,840),(1210,880),(1250,950),(1255,1030),(1225,1075),(1100,1090),(950,1090),(820,1080),(775,1040)],
+      l=[(792,908),(880,862),(1000,852),(1120,862),(1196,897)]),
+ dict(c=[(1330,900),(1350,860),(1450,840),(1600,800),(1720,730),(1830,715),(1910,740),(1935,820),(1935,960),(1915,1060),(1880,1100),(1700,1110),(1500,1110),(1360,1100),(1320,1060),(1310,980)],
+      l=[(1348,886),(1500,862),(1650,802),(1762,734),(1862,728)]),
+]
+def pared(vb):
+    cuerpo = ''
+    for i, n in enumerate(PARED):
+        d = suave(n['c']); led = abierta(n['l']); xs = [p[0] for p in n['c']]; ys = [p[1] for p in n['c']]
+        cx, top, rx = (min(xs)+max(xs))/2, min(ys), (max(xs)-min(xs))/2
+        cuerpo += f"""<g><clipPath id='p{i}'><path d='{d}'/></clipPath>
+<path d='{d}' fill='url(#fondo)'/>
+<g clip-path='url(#p{i})'><ellipse cx='{cx:.0f}' cy='{top+20:.0f}' rx='{rx*1.05:.0f}' ry='160' fill='url(#calida)'/></g>
+<path d='{d}' fill='#000' filter='url(#sombra)'/>
+<path d='{d}' fill='none' stroke='#a9c4ea' stroke-opacity='.28' stroke-width='3'/>
+<path d='{led}' fill='none' stroke='#ffb45a' stroke-opacity='.6' stroke-width='12' stroke-linecap='round' filter='url(#brillo)'/>
+<path d='{led}' fill='none' stroke='#ffe4b8' stroke-width='3.2' stroke-linecap='round'/></g>\n"""
+    return lienzo(2000, 1500, []).replace("viewBox='0 0 2000 1500'", f"viewBox='{vb}'").replace('</defs>\n\n</svg>', '</defs>\n' + cuerpo + '</svg>')
+open(os.path.join(dest, 'pared-local.svg'), 'w').write(pared('0 250 2000 900'))
+print('pared lista')

@@ -142,11 +142,11 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 /* ===== Opción "pared": el mismo muro de Pasteles decorados; los precios escritos sobre la pared, sin cajas ===== */
 .precios.pared{color:#FFFDF8;background:
   linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.3) 100%),
-  url("img/nichos-borde-ancho.svg") center/cover no-repeat,
+  url("img/pared-local.svg") center 55%/max(100%,1100px) auto no-repeat,
   url("img/muro.jpg") center/cover, #1E4675}
 @media(max-width:759px){.precios.pared{background:
   linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.3) 100%),
-  url("img/nichos-borde-alto.svg") center top/100% auto no-repeat,
+  url("img/pared-local.svg") 18% 62%/250% auto no-repeat,
   url("img/muro.jpg") center/cover, #1E4675}}
 .pared .wrap{text-align:center}
 .pared .pgrid{max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:28px 10px}
@@ -229,6 +229,25 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .banner h2{font-size:28px}
 .banner .pr{color:var(--amber-l);font-weight:700}
 .vacio{color:var(--soft);font-size:14px;padding:10px 4px 30px}
+/* Cajas de cupcakes */
+.cj-paso{margin-top:18px}
+.cj-tipos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:760px){.cj-tipos{grid-template-columns:repeat(5,1fr)}}
+.cj-tipo{border:1.5px solid var(--line);background:#fff;border-radius:18px;padding:14px 12px 12px;text-align:center}
+.cj-tipo.on{border:2px solid var(--char)}
+.cj-tipo b{display:block;font-size:20px;font-weight:400}
+.cj-tipo small{display:block;color:var(--soft);font-size:13px;margin-top:2px}
+.cj-tipo .step{margin:10px 0 0}
+.cj-lista{display:flex;gap:8px;flex-wrap:wrap}
+.cj-chip{border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:9px 13px;font-size:14px;font-weight:700;text-align:left}
+.cj-chip small{display:block;font-weight:500;color:var(--soft);font-size:12px}
+.cj-chip.sel{border:2px solid var(--char)}
+.cj-chip.ok{background:var(--char);color:#fff;border-color:var(--char)}
+.cj-chip.ok small{color:#E6DCCB}
+.cj-cuenta{margin:14px 2px 0;font-size:15px}
+.cj-pie{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom));margin:6px 0 24px;z-index:5}
+.cj-pie .btn[disabled]{opacity:.55}
+.step button[disabled]{opacity:.3}
 
 /* Decorados */
 .decorados{border-radius:34px 52px 38px 56px/44px 36px 52px 40px;padding:28px 18px 18px;margin:6px 0 30px;text-align:center;overflow:hidden}
@@ -344,7 +363,7 @@ textarea{min-height:80px;resize:vertical}
     <p id="txt-bienvenida_texto">Texto de presentación: aquí va una descripción corta de la repostería.</p>
   </section>
 
-  <section class="precios wall" id="precios" data-diseno="vitrina">
+  <section class="precios wall" id="precios" data-diseno="pared">
     <div class="wrap">
       <div class="caps" style="color:var(--amber-l)">Lista de precios</div>
       <h2 class="serif">Pasteles de línea</h2>
@@ -611,7 +630,7 @@ function pintarCat(c){
   } else if(c === 'cuchareables'){
     cont.innerHTML = banner('Cuchareables','') + `<div class="grid">${D.cuch.map(r=>cardCantidad('cuchareable', r, r.precio)).join('') || vacio}</div>`;
   } else if(c === 'cupcakes'){
-    cont.innerHTML = banner('Cupcakes', dinero(D.precioCup)+' cada uno') + `<div class="grid">${D.cup.map(r=>cardCantidad('cupcake', r, D.precioCup)).join('') || vacio}</div>`;
+    cont.innerHTML = banner('Cupcakes', dinero(D.precioCup)+' cada uno') + htmlCajas(vacio);
   } else if(c === 'panques'){
     cont.innerHTML = banner('Panqués','') + `<div class="grid">${D.pan.map(r=>cardCantidad('panque', r, r.precio)).join('') || vacio}</div>`;
   } else if(c === 'decorados'){
@@ -627,6 +646,68 @@ function pintarCat(c){
 }
 
 // ===== Cantidades =====
+// ===== Cupcakes por caja: 1) elige cajas (1, 2, 4, 6, 12) y cuántas  2) llena cada caja con sabores =====
+const CAJAS = [1, 2, 4, 6, 12];
+let cajasPedidas = {};      // tamaño -> cuántas
+let cajas = [];             // [{cap, sab:{nombre:cant}}] una por caja
+let cajaSel = 0;
+function rehacerCajas(){
+  const nuevas = [];
+  CAJAS.forEach(cap=>{
+    const viejas = cajas.filter(c=> c.cap === cap);
+    for(let i = 0; i < (cajasPedidas[cap] || 0); i++) nuevas.push(viejas[i] || { cap, sab:{} });
+  });
+  cajas = nuevas;
+  if(cajaSel >= cajas.length) cajaSel = 0;
+}
+function llenas(c){ return Object.values(c.sab).reduce((a, b)=> a + b, 0); }
+function cambiarCaja(cap, d){
+  cajasPedidas[cap] = Math.max(0, Math.min(20, (cajasPedidas[cap] || 0) + d));
+  rehacerCajas(); pintarCat('cupcakes');
+}
+function elegirCaja(i){ cajaSel = i; pintarCat('cupcakes'); }
+function saborCaja(nombre, d){
+  const c = cajas[cajaSel]; if(!c) return;
+  const ya = c.sab[nombre] || 0;
+  if(d > 0 && llenas(c) >= c.cap) return;
+  c.sab[nombre] = Math.max(0, ya + d);
+  if(!c.sab[nombre]) delete c.sab[nombre];
+  // Al completar una caja, pasa sola a la siguiente que falte
+  if(llenas(c) === c.cap){ const sig = cajas.findIndex(x=> llenas(x) < x.cap); if(sig >= 0) cajaSel = sig; }
+  pintarCat('cupcakes');
+}
+function htmlCajas(vacio){
+  const pc = D.precioCup;
+  const paso1 = `<div class="cj-paso"><div class="caps lbl">1 · ¿Qué cajas quieres?</div>
+    <div class="cj-tipos">${CAJAS.map(cap=>{ const n = cajasPedidas[cap] || 0; return `<div class="cj-tipo${n ? ' on' : ''}">
+      <b class="serif">Caja de ${cap}</b><small>${dinero(cap * pc)}</small>
+      <div class="step${n ? ' con' : ''}"><button aria-label="Quitar una caja de ${cap}" onclick="cambiarCaja(${cap},-1)">−</button><span>${n}</span><button aria-label="Agregar una caja de ${cap}" onclick="cambiarCaja(${cap},1)">+</button></div></div>`; }).join('')}</div></div>`;
+  if(!cajas.length) return paso1;
+  const c = cajas[cajaSel], lleva = llenas(c);
+  const listas = cajas.filter(x=> llenas(x) === x.cap).length;
+  const paso2 = `<div class="cj-paso"><div class="caps lbl">2 · Llena tus cajas</div>
+    <div class="cj-lista">${cajas.map((x, i)=>{ const ok = llenas(x) === x.cap; return `<button class="cj-chip${i === cajaSel ? ' sel' : ''}${ok ? ' ok' : ''}" onclick="elegirCaja(${i})">${ok ? '✓ ' : ''}Caja de ${x.cap}<small>${ok ? 'Completa' : llenas(x) + ' de ' + x.cap}</small></button>`; }).join('')}</div>
+    <div class="cj-cuenta">Caja de ${c.cap}: llevas <b>${lleva} de ${c.cap}</b>${lleva === c.cap ? ' · completa' : ''}</div>
+    <div class="grid">${D.cup.map(rw=>{ const n = c.sab[rw.nombre] || 0; return `<div class="card"><div class="ph" style="aspect-ratio:3/4">${galeriaHtml(rw._fotos, rw.foto_url, nombreBonito(rw.nombre))}</div>
+      <div class="t serif">${esc(nombreBonito(rw.nombre))}</div>${hechoHtml(rw) ? `<div class="hecho mini">${hechoHtml(rw)}</div>` : ''}
+      <div class="step${n ? ' con' : ''}"><button aria-label="Quitar uno" onclick="saborCaja('${esc(rw.nombre)}',-1)">−</button><span>${n}</span><button aria-label="Agregar uno" onclick="saborCaja('${esc(rw.nombre)}',1)"${lleva >= c.cap ? ' disabled' : ''}>+</button></div></div>`; }).join('') || vacio}</div></div>`;
+  const total = cajas.reduce((a, x)=> a + x.cap * pc, 0);
+  const todo = listas === cajas.length;
+  const pie = `<div class="cj-pie"><button class="btn char" onclick="agregarCajas()"${todo ? '' : ' disabled'}>${todo ? `Agregar ${cajas.length === 1 ? 'la caja' : cajas.length + ' cajas'} al pedido · ${dinero(total)}` : `Faltan ${cajas.length - listas} ${cajas.length - listas === 1 ? 'caja' : 'cajas'} por llenar`}</button></div>`;
+  return paso1 + paso2 + pie;
+}
+function agregarCajas(){
+  if(!cajas.length || cajas.some(x=> llenas(x) !== x.cap)) return;
+  cajas.forEach(x=>{
+    const det = Object.entries(x.sab).map(([n, q])=> `${q} ${nombreBonito(n)}`).join(' · ');
+    const primero = D.cup.find(rw=> rw.nombre === Object.keys(x.sab)[0]) || {};
+    carrito.push({ tipo:'cupcake', nombre:'Caja de ' + x.cap, titulo:`Caja de ${x.cap} ${x.cap === 1 ? 'cupcake' : 'cupcakes'}`, detalle:det,
+      precio: x.cap * D.precioCup, qty:1, foto: primero.foto_url || '', datos:{ caja:x.cap, sabores:x.sab } });
+  });
+  cajasPedidas = {}; cajas = []; cajaSel = 0;
+  pintarCat('cupcakes'); actualizarBarra();
+  document.getElementById('catalogo').scrollIntoView({ behavior:'smooth' });
+}
 function cambiar(tipo, nombre, precio, delta, foto){
   let it = carrito.find(x=>x.tipo===tipo && x.nombre===nombre);
   if(!it){ if(delta<0) return; it = {tipo, nombre, precio, qty:0, foto}; carrito.push(it); }

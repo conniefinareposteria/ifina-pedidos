@@ -22,6 +22,16 @@ const FOTOS_PAGINA = [
   { producto:'galeria_decorados', titulo:'Galería de pasteles decorados', nota:'Aparecen todas en la sección Decorados.' },
 ];
 let fotosCatalogo = [];   // renglones de fotos_catalogo
+let textosPagina = {};    // clave -> texto (sql/029)
+// Textos de la página que se editan aquí, en el orden en que aparecen en la página
+const TEXTOS_PAGINA = {
+  bienvenida: { titulo:'Bienvenida', nota:'Va debajo de la foto principal.', campos:[
+    { clave:'bienvenida_titulo', label:'Título', ph:'Título de bienvenida', lineas:2 },
+    { clave:'bienvenida_texto',  label:'Texto de presentación', ph:'Una descripción corta de la repostería', lineas:4 } ] },
+  visitanos: { titulo:'Visítanos (textos)', nota:'Al final de la página, arriba de la foto del local.', campos:[
+    { clave:'visitanos_direccion', label:'Dirección', ph:'Dirección del local', lineas:2 },
+    { clave:'visitanos_detalle',   label:'Horario, teléfono, Instagram', ph:'Horario · Teléfono · Instagram', lineas:3 } ] }
+};
 let decoracionesCat = []; // base blanca, corona de color, decorado simple, decorado de evento…
 let catSeccion = 'pagina';
 let ocultosCatalogo = new Set(); // "tabla|producto" que no se muestran en la página (sql/022)
@@ -40,11 +50,12 @@ async function cargarCatalogoFotos(){
   const cont = document.getElementById('catalogo-contenido');
   cont.className = 'loading'; cont.textContent = 'Cargando...';
   if(catalogosListos) await catalogosListos;
-  const [fot, dec, ocu] = await Promise.all([sb.from('fotos_catalogo').select('*').order('orden'), sb.from('decoraciones').select('nombre,orden').order('orden'), sb.from('productos_ocultos').select('tabla,producto')]);
+  const [fot, dec, ocu, txt] = await Promise.all([sb.from('fotos_catalogo').select('*').order('orden'), sb.from('decoraciones').select('nombre,orden').order('orden'), sb.from('productos_ocultos').select('tabla,producto'), sb.from('textos_pagina').select('clave,texto')]);
   if(fot.error){ cont.className = 'empty'; cont.textContent = 'No se pudieron cargar las fotos: ' + fot.error.message; return; }
   fotosCatalogo = fot.data || [];
   decoracionesCat = dec.data || [];
   ocultosCatalogo = new Set((ocu.data || []).map(o=> o.tabla + '|' + o.producto));
+  textosPagina = {}; (txt.data || []).forEach(t=> textosPagina[t.clave] = t.texto || '');
   pintarCatalogoFotos();
 }
 function elegirSeccionCatalogo(id){ catSeccion = id; pintarCatalogoFotos(); }
@@ -55,9 +66,12 @@ function pintarCatalogoFotos(){
   const sec = CATALOGO_SECCIONES.find(x=> x.id === catSeccion) || CATALOGO_SECCIONES[0];
   let cuerpo;
   if(sec.id === 'pagina'){
-    cuerpo = FOTOS_PAGINA.map(f=> filaProductoFotos('pagina', f.producto, f.titulo, f.nota)).join('')
+    // Mismo orden que en la página: portada, bienvenida, Hazlo especial, galería de decorados, Visítanos
+    const foto = k => { const f = FOTOS_PAGINA.find(x=> x.producto === k); return filaProductoFotos('pagina', f.producto, f.titulo, f.nota); };
+    cuerpo = foto('portada') + bloqueTextos('bienvenida')
       + (decoracionesCat.length ? `<h3 class="cf-sub">Hazlo especial</h3><div class="hint" style="margin:0 0 10px;">Las opciones que se suman al precio del pastel. Se usa la foto principal.</div>`
-        + decoracionesCat.map(d=> filaProductoFotos('decoraciones', d.nombre, d.nombre)).join('') : '');
+        + decoracionesCat.map(d=> filaProductoFotos('decoraciones', d.nombre, d.nombre)).join('') : '')
+      + foto('galeria_decorados') + bloqueTextos('visitanos') + foto('visitanos');
   } else {
     const filas = datosDeTabla(sec.tabla).filter(sec.filtro).slice().sort((a,b)=> formatNombre(a.nombre).localeCompare(formatNombre(b.nombre), 'es'));
     cuerpo = filas.map(r=> filaProductoFotos(sec.tabla, r.nombre, null, null, true)).join('') || '<div class="empty">Sin productos.</div>';
@@ -364,4 +378,25 @@ async function guardarEncuadre(){
   Object.assign(f, datos);
   cerrarModal('enc');
   pintarCatalogoFotos();
+}
+
+// ---------- Textos de la página (sql/029) ----------
+function bloqueTextos(k){
+  const b = TEXTOS_PAGINA[k];
+  return `<div class="cf-producto" id="cf-txt-${k}">
+    <div class="cf-cab"><b>${b.titulo}</b><span class="hint" style="margin:0;">Texto</span></div>
+    <div class="hint" style="margin:-4px 0 10px;">${b.nota} Si lo dejas vacío, se queda el texto de siempre.</div>
+    ${b.campos.map(c=> `<div class="field"><label>${c.label}</label><textarea id="txt-${c.clave}" rows="${c.lineas}" placeholder="${c.ph}">${escHtml(textosPagina[c.clave] || '')}</textarea></div>`).join('')}
+    <button type="button" class="cf-guardar" onclick="guardarTextosPagina('${k}')">Guardar</button>
+    <div class="msg" id="cf-txt-${k}-msg"></div>
+  </div>`;
+}
+async function guardarTextosPagina(k){
+  const msg = document.getElementById('cf-txt-' + k + '-msg');
+  const filas = TEXTOS_PAGINA[k].campos.map(c=> ({ clave: c.clave, texto: document.getElementById('txt-' + c.clave).value.trim(), updated_at: new Date().toISOString() }));
+  msg.className = 'msg ok'; msg.textContent = 'Guardando...';
+  const { error } = await sb.from('textos_pagina').upsert(filas, { onConflict:'clave' });
+  if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message + ' (revisa que ya se haya corrido el SQL de textos).'; return; }
+  filas.forEach(f=> textosPagina[f.clave] = f.texto);
+  msg.className = 'msg ok'; msg.textContent = 'Guardado. Ya aparece así en la página.';
 }

@@ -72,3 +72,9 @@ dest = os.path.join(os.path.dirname(__file__), '..', 'pagina-inicial', 'img')
 open(os.path.join(dest, 'nichos-ancho.svg'), 'w').write(lienzo(1200, 480, ancho))
 open(os.path.join(dest, 'nichos-alto.svg'), 'w').write(lienzo(400, 660, alto))
 print('listo')
+
+# Opción "pared": los nichos van a las orillas para que los precios queden escritos sobre la pared, sin taparse
+borde_ancho = [(60, 120, 120, 85, 23), (1150, 90, 130, 75, 37), (1120, 330, 110, 90, 41), (90, 400, 100, 70, 53), (640, 470, 170, 45, 67)]
+borde_alto = [(360, 60, 110, 70, 23), (20, 470, 70, 95, 41), (390, 760, 70, 80, 53), (60, 1080, 110, 60, 67)]
+open(os.path.join(dest, 'nichos-borde-ancho.svg'), 'w').write(lienzo(1200, 480, borde_ancho))
+open(os.path.join(dest, 'nichos-borde-alto.svg'), 'w').write(lienzo(400, 1100, borde_alto))

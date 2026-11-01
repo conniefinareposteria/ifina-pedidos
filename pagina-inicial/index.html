@@ -139,6 +139,29 @@ header.top{position:sticky;top:0;z-index:30;padding:12px 0 10px}
 .vit-base{display:none}
 .vitrina .vit-base{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--graf);border:12px solid var(--graf);border-top-width:0;outline:1px solid var(--graf-d);margin-top:-1px;height:70px;border-radius:0 0 3px 3px}
 .vitrina .vit-base span{border:1px solid var(--graf-d);box-shadow:inset 0 0 0 6px var(--graf),inset 0 0 0 7px var(--graf-d),inset 0 2px 8px rgba(0,0,0,.35)}
+/* ===== Opción "pared": el mismo muro de Pasteles decorados; los precios escritos sobre la pared, sin cajas ===== */
+.precios.pared{color:#FFFDF8;background:
+  linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.3) 100%),
+  url("img/nichos-borde-ancho.svg") center/cover no-repeat,
+  url("img/muro.jpg") center/cover, #1E4675}
+@media(max-width:759px){.precios.pared{background:
+  linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.3) 100%),
+  url("img/nichos-borde-alto.svg") center top/100% auto no-repeat,
+  url("img/muro.jpg") center/cover, #1E4675}}
+.pared .wrap{text-align:center}
+.pared .pgrid{max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:28px 10px}
+.pared .pgrid .pc{flex:0 0 calc(50% - 10px)}
+@media(min-width:760px){.pared .pgrid .pc{flex:0 0 200px}}
+/* Rayita de luz cálida bajo el título, como la tira de los nichos */
+.pared h2::after{content:'';display:block;width:90px;height:2px;margin:14px auto 6px;border-radius:2px;background:#FFE2B0;box-shadow:0 0 8px 2px rgba(255,190,110,.6)}
+.pared .pc{background:none;border:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:4px 6px;text-align:center;text-shadow:0 2px 10px rgba(5,15,35,.55)}
+.pared .pc .n{font-size:30px}
+.pared .pc .p{opacity:.85;font-size:13px;margin-top:6px}
+.pared .pc .r{font-size:24px;margin-top:8px;color:#F2C46E}
+.pared .pc.wide{display:block;grid-column:1/-1}
+.pared .pc+.pc{position:relative}
+.pared #lista-esp{max-width:600px}
+.pared .esp-t{margin-top:34px}
 /* La sección de precios lleva atrás la pared con sus nichos (cada uno distinto), como en el local */
 .precios.wall{background:
   linear-gradient(180deg, rgba(10,28,60,0) 0%, rgba(8,20,44,.35) 100%),
@@ -793,6 +816,7 @@ addEventListener('resize', ()=> ponerJaladeras());
 (function(){
   const d = new URLSearchParams(location.search).get('precios') || document.getElementById('precios').dataset.diseno;
   if(d === 'vitrina'){ const el = document.getElementById('precios'); el.classList.remove('wall'); el.classList.add('vitrina'); ponerJaladeras(); }
+  if(d === 'pared'){ const el = document.getElementById('precios'); el.classList.remove('wall'); el.classList.add('pared'); }
 })();
 // ===== Lo que hay hoy en el local (lo guarda el punto de venta; sql/030) =====
 async function abrirLocal(){

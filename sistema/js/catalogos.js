@@ -136,6 +136,13 @@ function etiquetaTamano(tam){
   const r = tamanosData.find(x=> (x.tamano||'').toLowerCase() === (tam||'').toLowerCase());
   return formatNombre(tam) + (r && r.personas ? ' - ' + r.personas + ' personas' : '');
 }
+// Solo los pasteles llevan corona: cheesecakes, mostachón, tres leches (y cupcakes, panqués, etc.) no
+function llevaCorona(sabor, tamano){
+  const k = t => (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const s = k(sabor), t = k(tamano);
+  if(/^cc_/i.test(sabor || '') || /cheesecake|mostachon|tresleches/.test(s) || /cheesecake|tresleches/.test(t)) return false;
+  return true;
+}
 function claveSabor(t){ return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
 function saborTraeCorona(nombre){
   const s = saboresPastelesData.find(x => claveSabor(x.nombre) === claveSabor(nombre));

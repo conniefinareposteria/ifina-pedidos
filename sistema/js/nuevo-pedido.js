@@ -103,6 +103,10 @@ function actualizarCoronaUI(){
   const sabor = document.getElementById('sel-sabor-pastel').value;
   const wrap = document.getElementById('corona-wrap');
   const decWrap = document.getElementById('decorado-wrap');
+  if(categoriaActual === 'pastel' && tamano && sabor && !llevaCorona(sabor, tamano)){
+    coronaQuiere = 'no'; coronaTipo = null; wrap.style.display = 'none';
+    decWrap.style.display = puede('pedidos_decorados') ? 'block' : 'none'; recalcularPrecioPastel(); return;
+  }
   if(categoriaActual !== 'pastel' || !tamano || !sabor){ wrap.style.display = 'none'; decWrap.style.display = 'none'; recalcularPrecioPastel(); return; }
   wrap.style.display = 'block';
   decWrap.style.display = puede('pedidos_decorados') ? 'block' : 'none';
@@ -705,7 +709,7 @@ function leerProductoActual(){
     sabor = document.getElementById('sel-sabor-pastel').value;
     if(!tamano_o_sabor) return { err: 'Selecciona el tamaño del pastel.' };
     if(!sabor) return { err: 'Selecciona el sabor del pastel.' };
-    {
+    if(llevaCorona(sabor, tamano_o_sabor)){
       if(!coronaQuiere) return { err: 'Indica si el pastel lleva corona.' };
       if(coronaQuiere === 'si' && coronaTipo === 'ambar' && saborIncluyeCorona()){
         coronaDatos = { corona_tipo:'incluida', corona_tamano: coronaTamanoActual(), corona_color:null, corona_precio:0 };

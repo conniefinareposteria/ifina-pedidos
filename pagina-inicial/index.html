@@ -775,7 +775,9 @@ function pintarHP(){
   document.getElementById('hp-rel-wrap').style.display = hp.rellenos ? 'block' : 'none';
   if(hp.rellenos) document.getElementById('hp-rel').innerHTML = hp.rellenos.map((o, i)=>`<button class="${hp.relleno===o?'on':''}" onclick="hp.relleno=hp.rellenos[${i}];document.getElementById('hp-msg').textContent='';pintarHP()">${hp.relleno===o?'✓ ':''}${esc(o)}</button>`).join('');
   // Corona: siempre se pregunta en pasteles (aunque la incluya, la pueden quitar)
-  const lleva = hp.grupo==='pastel';
+  // Solo los pasteles llevan corona (cheesecake, mostachón, tres leches no)
+  const lleva = hp.grupo==='pastel' && !/mostachon|cheesecake|tresleches/.test(clave(hp.sabor));
+  if(!lleva) hp.corona = 'no';
   document.getElementById('hp-cor-wrap').style.display = lleva ? 'block' : 'none';
   document.getElementById('hp-cor-nota').style.display = lleva && hp.incluye ? 'block' : 'none';
   if(lleva){

@@ -108,7 +108,7 @@ function pintarCatalogoPOS(){
         if(en) btn.className = 'en';
         btn.disabled = disp <= 0;
         btn.innerHTML = `${lbl}<b>${precio == null ? 'Sin precio' : fmtDinero(precio)}</b><small>${disp <= 0 ? (en ? 'Ya no quedan' : 'Sin existencia') : (disp === 1 ? 'Queda 1' : 'Quedan ' + disp)}${en ? ' · ' + en + ' en venta' : ''}</small>`;
-        btn.onclick = ()=> preguntarCorona(nombre, tam);
+        btn.onclick = ()=> llevaCorona(nombre) ? preguntarCorona(nombre, tam) : agregarAVenta('pasteles', nombre, tam);
         wrap.appendChild(btn);
       });
       cont.appendChild(card);
@@ -396,7 +396,7 @@ function agregarPedidoAVenta(p){
     pagadoAntes: pagadoDe(p), lineasTicket: lineasTicketPedido(p), entregaTxt: entregaTxtPedido(p),
     tipoEntrega: p.entrega === 'domicilio' ? 'Domicilio' : p.entrega === 'casa' ? 'Recoger en casa' : '',
     fecha: p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-MX',{weekday:'short', day:'numeric', month:'short'}) : '' });
-  if(entregar && p.categoria === 'pastel' && !p.corona_tipo) colaCoronaPedidos.push(p);
+  if(entregar && p.categoria === 'pastel' && !p.corona_tipo && llevaCorona(p.sabor, p.tamano_o_sabor)) colaCoronaPedidos.push(p);
 }
 function agregarAVenta(cat, nombre, tam){
   if(posDisponible(cat, nombre, tam) <= 0) return;

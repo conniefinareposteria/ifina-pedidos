@@ -4,9 +4,9 @@
 // Qué pestañas ve cada perfil, a dónde entra y qué acciones especiales tiene.
 // Para un módulo nuevo (compras, calculadora, alertas…): agregar su pestaña aquí y su acción en "acciones".
 // Ojo: esto solo decide lo que se ve; lo que de verdad protege los datos son las políticas de Supabase (RLS).
-const TODAS_LAS_PESTANAS = ['nuevo','lista','productos','historial','resumen','clientes','pos','porhacer','catalogo'];
+const TODAS_LAS_PESTANAS = ['nuevo','lista','productos','historial','resumen','clientes','pos','porhacer','catalogo','finanzas'];
 const PERMISOS = {
-  director:    { nombre:'Directora',   pestanas:['nuevo','lista','historial','resumen','clientes','porhacer','catalogo'], entrar: ()=> switchView('lista'),
+  director:    { nombre:'Directora',   pestanas:['nuevo','lista','historial','resumen','clientes','porhacer','catalogo','finanzas'], entrar: ()=> switchView('lista'),
                  acciones:['pedidos_editar','pedidos_eliminados','pedidos_decorados','pedidos_imprimir','ver_dinero','metas_editar'] },
   colaborador: { nombre:'Colaborador', pestanas:['nuevo','productos','pos'],                                  entrar: ()=> irInicio(),
                  acciones:[] },
@@ -31,6 +31,7 @@ function switchView(view){
   document.getElementById('tab-pos').classList.remove('active');
   document.getElementById('tab-porhacer').classList.remove('active');
   document.getElementById('tab-catalogo').classList.remove('active');
+  document.getElementById('tab-finanzas').classList.remove('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-nuevo').classList.toggle('active', view==='nuevo');
   document.getElementById('view-lista').classList.toggle('active', view==='lista');

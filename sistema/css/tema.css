@@ -185,3 +185,15 @@ button.primary:disabled{background:#A8A296; color:#F3EDE2;}
 .cf-opc{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
 .cf-opc input{flex:1; margin:0;}
 .cf-opc button{flex:none; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:#fff; font-size:18px; color:var(--cocoa); cursor:pointer;}
+/* ----- Finanzas: insumos ----- */
+.tabla-scroll{overflow-x:auto; margin-bottom:12px;}
+.tabla-insumos{width:100%; border-collapse:collapse; background:var(--paper); border:1px solid var(--line); border-radius:14px; overflow:hidden; min-width:540px;}
+.tabla-insumos th{font:700 11.5px 'Arimo',Arial,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--cocoa); text-align:left; padding:10px 10px; border-bottom:1px solid var(--line); background:var(--cream-deep);}
+.tabla-insumos td{padding:6px 6px; border-bottom:1px solid var(--line); vertical-align:middle;}
+.tabla-insumos tr:last-child td{border-bottom:none;}
+.tabla-insumos input,.tabla-insumos select{margin:0; padding:9px 10px; font-size:15px;}
+.tabla-insumos .ins-nombre{min-width:130px;}
+.ins-cant{display:flex; gap:6px;} .ins-cant input{width:78px;} .ins-cant select{width:84px;}
+.ins-precio{display:flex; align-items:center; gap:4px;} .ins-precio input{width:80px;}
+.ins-estado{font-size:12.5px; color:var(--cocoa-soft); white-space:nowrap;}
+.ins-quitar{width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:#fff; font-size:17px; color:var(--rojo); cursor:pointer;}

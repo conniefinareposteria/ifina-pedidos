@@ -155,6 +155,9 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'por hacer', ()=> ev(()=> abrirPorHacer()));
     await paso(page, huella, 'metas pasteles', ()=> ev(()=> abrirMetas('pasteles')));
     await paso(page, huella, 'metas cupcakes', ()=> ev(()=> abrirMetas('cupcakes')));
+    await paso(page, huella, 'finanzas insumos', ()=> ev(()=> abrirFinanzas()));
+    await paso(page, huella, 'finanzas cambiar precio', async()=>{ await page.fill('#insumos-filas tr[data-id="1"] .ins-precio-in','48'); await page.press('#insumos-filas tr[data-id="1"] .ins-precio-in','Tab'); await page.waitForTimeout(200); });
+    await paso(page, huella, 'finanzas agregar insumo', async()=>{ await page.click('#view-finanzas .btn-secundario'); await page.fill('#insumos-filas tr[data-id="nuevo"] .ins-nombre','Mantequilla'); await page.press('#insumos-filas tr[data-id="nuevo"] .ins-nombre','Tab'); await page.waitForTimeout(200); });
     await paso(page, huella, 'catalogo fotos', ()=> ev(()=> abrirCatalogo()));
     await paso(page, huella, 'catalogo portada agregar foto', async()=>{
       await page.setInputFiles('#cf-pagina-portada input[type=file]', [{ name:'p.png', mimeType:'image/png', buffer:PNG }]);

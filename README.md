@@ -34,6 +34,7 @@ sistema/
     punto-venta.js    venta, pedidos de hoy, coronas, cortesía, merma, anticipo, pago diferido
     produccion.js     Por hacer y metas
     catalogo-fotos.js Catálogo (directora): fotos de cada producto para la página pública
+    finanzas.js       Finanzas (directora): insumos con historial de precios (después: tickets, recetas, estado de resultados)
     interfaz.js       bloqueo de scroll con ventanas abiertas, vibración al tocar
     inicio.js         arranque (siempre al final)
 ```

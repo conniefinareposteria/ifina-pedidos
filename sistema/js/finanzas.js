@@ -6,7 +6,7 @@
 let insumosData = [];
 let finCategoria = 'costeo';
 const FIN_CATEGORIAS = [ { id:'costeo', titulo:'Costeo' } ];
-const UNIDADES = { g:'g', ml:'ml', pza:'piezas' };
+const UNIDADES = { g:'g', kg:'kg', ml:'ml', pza:'piezas' };
 // Tablas dentro de Costeo
 const FIN_TABLAS = {
   insumo:   { titulo:'Insumos', nota:'Lo que usas en las recetas: cuánto trae la presentación y cuánto cuesta.', ph:'Ej. Harina', conUnidad:true },
@@ -42,7 +42,7 @@ function filaInsumo(r, tipo){
     <td><input type="text" class="ins-nombre" value="${escHtml(r.nombre || '')}" placeholder="${conf.ph}" onchange="guardarInsumo(this)"></td>
     <td class="ins-cant"><input type="number" inputmode="decimal" min="0" step="any" class="ins-cantidad" value="${r.cantidad ?? ''}" placeholder="${conf.conUnidad ? '1000' : '100'}" onchange="guardarInsumo(this)">
       ${conf.conUnidad ? `<select class="ins-unidad" onchange="guardarInsumo(this)" aria-label="Unidad">${Object.entries(UNIDADES).map(([k, t])=> `<option value="${k}"${(r.unidad || 'g') === k ? ' selected' : ''}>${t}</option>`).join('')}</select>` : '<input type="hidden" class="ins-unidad" value="pza">'}</td>
-    <td><div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" min="0" step="any" class="ins-precio-in" value="${r.precio ?? ''}" placeholder="0" onchange="guardarInsumo(this)"></div></td>
+    <td><div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" min="0" step="any" class="ins-precio-in" value="${r.precio == null ? '' : (r.precio % 1 ? Number(r.precio).toFixed(2) : r.precio)}" placeholder="0" onchange="guardarInsumo(this)"></div></td>
     ${conf.conUnidad ? '' : `<td class="ins-pieza">${porPieza(r)}</td>`}
     <td class="ins-estado">${fecha ? 'Act. ' + fecha : ''}</td>
     <td class="c">${r.id ? `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
@@ -89,6 +89,7 @@ async function guardarInsumo(el){
   if(i >= 0) insumosData[i] = data; else insumosData.push(data);
   tr.dataset.id = data.id;
   estado.textContent = 'Guardado';
+  const pin = tr.querySelector('.ins-precio-in'); if(data.precio != null && data.precio % 1 && document.activeElement !== pin) pin.value = Number(data.precio).toFixed(2);
   const pz = tr.querySelector('.ins-pieza'); if(pz) pz.textContent = porPieza(data);
   if(esNuevo) tr.querySelector('td.c').innerHTML = `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${Number(data.id)})">×</button>`;
 }

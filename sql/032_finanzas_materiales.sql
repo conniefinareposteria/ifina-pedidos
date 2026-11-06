@@ -1,10 +1,15 @@
 -- Connie Repostería Fina — Finanzas › Costeo: empaques y desechables (velas, capacillos, cajas…)
 -- Se puede correr varias veces sin riesgo.
 -- Se guardan en la misma tabla de insumos (con su historial de precios), separados por "tipo".
+-- También agrega la unidad kilos (kg).
 
 alter table insumos add column if not exists tipo text not null default 'insumo';
 alter table insumos drop constraint if exists insumos_tipo_check;
 alter table insumos add constraint insumos_tipo_check check (tipo in ('insumo','material'));
+
+-- Unidades: g, kg, ml, piezas
+alter table insumos drop constraint if exists insumos_unidad_check;
+alter table insumos add constraint insumos_unidad_check check (unidad in ('g','kg','ml','pza'));
 
 -- El historial solo guarda precios completos (cantidad y precio llenos), no los pasos a medias al escribir
 create or replace function insumos_guardar_historial() returns trigger language plpgsql security definer set search_path = public as $$

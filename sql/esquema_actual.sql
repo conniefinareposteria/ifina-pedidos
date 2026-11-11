@@ -922,3 +922,8 @@ create policy "fin_config directora" on fin_config for all to authenticated
   using (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'))
   with check (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'));
 
+
+
+-- ===== 034 Finanzas: precio de venta ligado al catálogo =====
+
+alter table fin_recetas add column if not exists precio_catalogo text;   -- ej. tamanos_pastel:chico, individuales:galletas_coco, panques:panque_platano

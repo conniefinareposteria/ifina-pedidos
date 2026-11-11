@@ -166,7 +166,9 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'finanzas crear decoracion', async()=>{ await page.click('.fe-agregar .chip:has-text("+ Decoración")'); await page.click('.fe-sel-pie .link-agregar'); await page.fill('#fe-crear-nombre','Perlas doradas'); await page.selectOption('#fe-crear-unidad','g'); await page.fill('#fe-crear-cant','100'); await page.fill('#fe-crear-precio','60'); await page.click('.fe-crear .primary'); await page.waitForTimeout(300); });
     await paso(page, huella, 'finanzas ver merengue', ()=> page.click('.fe-item a:has-text("Merengue tradicional")'));
     await paso(page, huella, 'finanzas regresar', ()=> page.click('#view-finanzas .link-accion'));
-    await paso(page, huella, 'finanzas precio de venta', async()=>{ await page.fill('[data-k="fe-precio"]','850'); await page.press('[data-k="fe-precio"]','Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas precio a mano', async()=>{ await page.selectOption('[data-k="fe-precio-cat"]',''); await page.waitForTimeout(200); await page.fill('[data-k="fe-precio"]','850'); await page.press('[data-k="fe-precio"]','Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas precio del catalogo', async()=>{ await page.selectOption('[data-k="fe-precio-cat"]','tamanos_pastel:grande'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas cambiar tamaño', async()=>{ await page.selectOption('[data-k="fe-tamano"]','mediano'); await page.waitForTimeout(250); });
     await paso(page, huella, 'finanzas subrecetas', ()=> page.click('.cf-chips .chip:has-text("Subrecetas")'));
     await paso(page, huella, 'finanzas insumos', ()=> page.click('.cf-chips .chip:has-text("Insumos")'));
     await paso(page, huella, 'finanzas cambiar precio huevo', async()=>{ const f = await page.evaluate(()=> '#insumos-filas-insumo tr[data-id="' + fin.insumos.find(i=> i.nombre === 'Huevo').id + '"] .ins-precio-in'); await page.fill(f,'1100'); await page.press(f,'Tab'); await page.waitForTimeout(250); });
@@ -179,7 +181,7 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'finanzas calculadora armar', async()=>{
       await page.click('.fe-agregar .chip:has-text("+ Pan")'); await page.click('.fe-op:has-text("Pan de vainilla chico")'); await page.fill('.fe-parte input','3'); await page.press('.fe-parte input','Tab'); await page.waitForTimeout(150);
       await page.click('.fe-agregar .chip:has-text("+ Caja")'); await page.click('.fe-op:has-text("Caja chica")'); await page.waitForTimeout(150);
-      await page.fill('[data-k="fe-precio"]','600'); await page.press('[data-k="fe-precio"]','Tab'); await page.waitForTimeout(150); });
+      await page.selectOption('[data-k="fe-tamano"]','grande'); await page.waitForTimeout(150); });
     await paso(page, huella, 'finanzas calculadora guardar', async()=>{ await page.click('.fe-acciones .primary'); await page.waitForTimeout(300); });
     await paso(page, huella, 'catalogo fotos', ()=> ev(()=> abrirCatalogo()));
     await paso(page, huella, 'catalogo portada agregar foto', async()=>{

@@ -1,6 +1,7 @@
 // Finanzas (solo directora). Es el Excel "Connie - Costeo" pasado al sistema, con la lógica corregida.
 // Secciones (chips de arriba):
-//  · Productos y márgenes: cada pastel por tamaño, de qué está armado (pan, relleno, cubierta, corona, caja, base…),
+//  · Productos y márgenes: el precio de venta sale del catálogo del sistema (tamanos_pastel, individuales, panques; sql/034).
+//    Cada pastel por tamaño, de qué está armado (pan, relleno, cubierta, corona, caja, base…),
 //    su costo, el costo fijo que le toca, la utilidad y el margen. Precio de venta sin IEPS.
 //  · Subrecetas: mezclas, panes por tamaño, rellenos, betunes, coronas… con lo que rinde cada lote y su costo por g o pieza.
 //  · Insumos: lo que se compra (presentación, precio, merma) y los premanejados (clara y yema salen del huevo).
@@ -18,7 +19,7 @@
 //    Costo fijo = precio sin impuesto × (costos fijos del mes / promedio de ventas del mes).
 //    Utilidad = precio sin impuesto − costo variable − costo fijo.
 
-let fin = { insumos: [], recetas: [], partes: [], fijos: [], config: {} };
+let fin = { insumos: [], recetas: [], partes: [], fijos: [], config: {}, catalogo: [] };
 let finCategoria = 'productos';
 let finPila = [];              // editores abiertos (para regresar): { id } o { borrador: true }
 let finSelector = null;        // { grupo, todo, crear } mientras se elige qué agregar
@@ -125,6 +126,19 @@ function finImpuesto(){ const c = finConfig('impuesto', { nombre:'IEPS', tasa:0.
 function totalFijos(){ return fin.fijos.reduce((s, f)=> s + (Number(f.costo_mensual) || 0) * (1 + (Number(f.prestacion) || 0)), 0); }
 function promedioVentas(){ const v = finConfig('ventas_mensuales', []).map(x=> Number(x.venta)).filter(x=> x > 0); return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : 0; }
 function pctFijo(){ const p = promedioVentas(); return p > 0 ? totalFijos() / p : 0; }
+// Precios del catálogo (los mismos que usa Nuevo pedido y el punto de venta)
+const FIN_CATALOGO_GRUPOS = { tamanos_pastel:'Pasteles y cheesecakes (por tamaño)', individuales:'Cuchareables, cupcake e individuales', panques:'Panqués' };
+function finCatalogoEtiqueta(c){ return c.tabla === 'tamanos_pastel' ? 'Tamaño ' + formatNombre(c.clave).toLowerCase() : formatNombre(c.clave); }
+function finCatalogo(ref){ return ref ? fin.catalogo.find(c=> c.ref === ref) : null; }
+function precioVenta(d){
+  if(d.precio_catalogo){ const c = finCatalogo(d.precio_catalogo); return c && c.precio != null ? Number(c.precio) : null; }
+  return d.precio_venta == null ? null : Number(d.precio_venta);
+}
+function finSugerirCatalogo(categoria, tamano){
+  if(categoria === 'Cheesecake'){ const c = fin.catalogo.find(x=> x.tabla === 'tamanos_pastel' && finQ(x.clave) === 'cheesecake'); return c ? c.ref : null; }
+  if(categoria === 'Pastel' && tamano){ const c = fin.catalogo.find(x=> x.tabla === 'tamanos_pastel' && finQ(x.clave) === finQ(tamano)); return c ? c.ref : null; }
+  return null;
+}
 function resumenProducto(r){
   const datos = r === 'borrador' ? finBorrador : r;
   const grupos = {}; let ingredientes = 0, empaque = 0; const faltan = [];
@@ -136,7 +150,7 @@ function resumenProducto(r){
     if((FIN_GRUPOS.find(x=> x.id === g) || {}).empaque) empaque += v; else ingredientes += v;
   });
   const variable = ingredientes + empaque;
-  const precio = datos.precio_venta == null ? null : Number(datos.precio_venta);
+  const precio = precioVenta(datos);
   const imp = finImpuesto();
   const neto = precio == null ? null : precio / (1 + imp.tasa);
   const fijo = neto == null ? null : neto * pctFijo();
@@ -155,18 +169,28 @@ function abrirFinanzas(){
 async function cargarFinanzas(){
   const cont = document.getElementById('insumos-contenido');
   if(!finCargado){ cont.className = 'loading'; cont.textContent = 'Cargando...'; }
-  const [a, b, c, d, e] = await Promise.all([
+  const [a, b, c, d, e, ct, ci, cp] = await Promise.all([
     sb.from('insumos').select('*').order('nombre'),
     sb.from('fin_recetas').select('*').order('orden'),
     sb.from('fin_receta_partes').select('*').order('orden'),
     sb.from('fin_costos_fijos').select('*').order('orden'),
-    sb.from('fin_config').select('*')
+    sb.from('fin_config').select('*'),
+    sb.from('tamanos_pastel').select('*'),
+    sb.from('individuales').select('*').order('nombre'),
+    sb.from('panques').select('*').order('nombre')
   ]);
   const err = [a, b, c, d, e].find(x=> x.error);
   if(err){ cont.className = 'empty'; cont.textContent = 'No se pudo cargar Finanzas: ' + err.error.message + ' (revisa que ya se haya corrido el SQL 033 de Finanzas).'; return; }
   fin.insumos = (a.data || []).map(r=> ({ ...r, tipo: r.tipo || 'insumo' }));
   fin.recetas = b.data || []; fin.partes = c.data || []; fin.fijos = d.data || [];
   fin.config = {}; (e.data || []).forEach(x=> fin.config[x.clave] = x.valor);
+  const ORDEN_T = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','plancha50','plancha60'];
+  const posT = t=>{ const i = ORDEN_T.indexOf(finQ(t).replace(/[^a-z0-9]/g, '')); return i < 0 ? 99 : i; };
+  fin.catalogo = [
+    ...[...(ct.data || [])].sort((x, y)=> posT(x.tamano) - posT(y.tamano)).map(x=> ({ tabla:'tamanos_pastel', clave:x.tamano, precio:x.precio })),
+    ...(ci.data || []).map(x=> ({ tabla:'individuales', clave:x.nombre, precio:x.precio })),
+    ...(cp.data || []).map(x=> ({ tabla:'panques', clave:x.nombre, precio:x.precio }))
+  ].map(x=> ({ ...x, ref: x.tabla + ':' + x.clave }));
   finCargado = true;
   pintarFinanzas();
 }
@@ -205,13 +229,13 @@ function vistaProductos(){
     if(r.utilidad != null){ sumas.n++; sumas.precio += r.precio; sumas.variable += r.variable; sumas.utilidad += r.utilidad; sumas.pct += r.pctUtil; }
     filas += `<tr class="fin-fila${nuevo ? ' fin-nuevo-grupo' : ''}" onclick="finAbrir(${p.id})">
       <td>${nuevo ? `<b>${escHtml(p.nombre)}</b>` : ''}</td><td>${escHtml(finTamano(p.tamano))}</td>
-      <td class="n">${fin2(r.precio)}</td><td class="n">${fin2(r.variable)}${r.faltan.length ? ' <span class="fin-falta">falta precio</span>' : ''}</td>
+      <td class="n">${fin2(r.precio)}${!p.precio_catalogo ? ' <span class="fin-falta fin-mano">a mano</span>' : !finCatalogo(p.precio_catalogo) ? ' <span class="fin-falta">no está en catálogo</span>' : ''}</td><td class="n">${fin2(r.variable)}${r.faltan.length ? ' <span class="fin-falta">falta precio</span>' : ''}</td>
       <td class="n">${fin2(r.fijo)}</td><td class="n"><b>${fin2(r.utilidad)}</b></td><td class="n">${finPct(r.pctUtil)}</td><td class="fin-ir">Ver ›</td></tr>`;
   });
   const prom = sumas.n ? `<tr class="fin-total"><td colspan="2">Promedio</td><td class="n">${fin2(sumas.precio / sumas.n)}</td><td class="n">${fin2(sumas.variable / sumas.n)}</td><td></td><td class="n">${fin2(sumas.utilidad / sumas.n)}</td><td class="n">${finPct(sumas.pct / sumas.n)}</td><td></td></tr>` : '';
   return `<div class="seccion-resumen fin-tabla">
     <div class="fin-titulo"><h3>Productos y márgenes</h3><button type="button" class="btn-secundario" onclick="finNuevaReceta('producto')">+ Nuevo producto</button></div>
-    <div class="hint fin-nota">Toca un producto para ver de qué está armado y cambiarlo. Utilidad = precio sin ${escHtml(imp.nombre)} ${finPct(imp.tasa)} − ingredientes y empaque − costo fijo (${finPct(pctFijo())} de la venta).</div>
+    <div class="hint fin-nota">Los precios salen del catálogo del sistema (los "a mano" no están en el catálogo). Toca un producto para ver de qué está armado y cambiarlo. Utilidad = precio sin ${escHtml(imp.nombre)} ${finPct(imp.tasa)} − ingredientes y empaque − costo fijo (${finPct(pctFijo())} de la venta).</div>
     <div class="chip-group fin-filtros">${cats.map(c=> `<div class="chip${c === finFiltroProd ? ' selected' : ''}" onclick="finFiltroProd='${escHtml(c)}'; pintarFinanzas()">${escHtml(c)}</div>`).join('')}</div>
     ${lista.length ? `<div class="tabla-scroll"><table class="tabla-insumos fin-lista">
       <thead><tr><th>Producto</th><th>Tamaño</th><th class="n">Precio</th><th class="n">Ingredientes y empaque</th><th class="n">Costo fijo</th><th class="n">Utilidad</th><th class="n">% utilidad</th><th></th></tr></thead>
@@ -291,7 +315,7 @@ function editorReceta(r){
     campo('Nombre', `<input type="text" data-k="fe-nombre" value="${escHtml(d.nombre || '')}" onchange="finCambiarReceta('nombre', this.value)">`, 'fe-nombre'),
     esProd ? campo('Tamaño', `<select data-k="fe-tamano" onchange="finCambiarReceta('tamano', this.value)">${FIN_TAMANOS.map(([v, t])=> `<option value="${v}"${(d.tamano || '') === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`) : '',
     campo('Categoría', `<select data-k="fe-cat" onchange="finCambiarReceta('categoria', this.value)">${(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).concat(d.categoria && !(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).includes(d.categoria) ? [d.categoria] : []).map(c=> `<option${d.categoria === c ? ' selected' : ''}>${escHtml(c)}</option>`).join('')}</select>`),
-    esProd ? campo('Precio de venta', `<div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" data-k="fe-precio" value="${finValIn(d.precio_venta)}" placeholder="0" onchange="finCambiarReceta('precio_venta', this.value)"></div>`) : '',
+    esProd ? campo('Precio de venta (sale del catálogo)', precioCampoHtml(d), 'fe-precio-campo') : '',
     !esProd ? campo('Rinde', `<div class="ins-cant"><input type="number" inputmode="decimal" data-k="fe-rinde" value="${finValIn(d.rendimiento)}" placeholder="0" onchange="finCambiarReceta('rendimiento', this.value)"><select data-k="fe-unidad" onchange="finCambiarReceta('unidad', this.value)"><option value="g"${d.unidad !== 'pza' ? ' selected' : ''}>g</option><option value="pza"${d.unidad === 'pza' ? ' selected' : ''}>piezas</option></select></div>`) : '',
     !esProd ? campo('Merma', `<div class="ins-precio"><input type="number" inputmode="decimal" data-k="fe-merma" value="${finValIn(Math.round((Number(d.merma) || 0) * 1000) / 10)}" placeholder="0" onchange="finCambiarReceta('merma', this.value)"><span>%</span></div>`) : ''
   ].join('');
@@ -354,6 +378,17 @@ function editorReceta(r){
 }
 function finAbrirDesdeEditor(id){ finPila.push({ id }); finSelector = null; pintarFinanzas(); window.scrollTo(0, 0); }
 
+function precioCampoHtml(d){
+  const c = finCatalogo(d.precio_catalogo);
+  const grupos = Object.entries(FIN_CATALOGO_GRUPOS).map(([t, tit])=>{
+    const ops = fin.catalogo.filter(x=> x.tabla === t);
+    return ops.length ? `<optgroup label="${tit}">${ops.map(x=> `<option value="${escHtml(x.ref)}"${x.ref === d.precio_catalogo ? ' selected' : ''}>${escHtml(finCatalogoEtiqueta(x))} — ${x.precio == null ? 'sin precio' : fin2(Number(x.precio))}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+  const perdido = d.precio_catalogo && !c ? `<option value="${escHtml(d.precio_catalogo)}" selected>${escHtml(d.precio_catalogo)} (ya no está en el catálogo)</option>` : '';
+  return `<select data-k="fe-precio-cat" onchange="finCambiarReceta('precio_catalogo', this.value)">${perdido}${grupos}<option value=""${!d.precio_catalogo ? ' selected' : ''}>No está en el catálogo (escribirlo a mano)</option></select>
+    ${d.precio_catalogo ? `<div class="hint">${c ? 'Si cambias el precio en el catálogo, aquí se actualiza solo.' : 'Elige otro precio: ese ya no existe en el catálogo.'}</div>`
+      : `<div class="ins-precio fe-precio-mano"><span>$</span><input type="number" inputmode="decimal" data-k="fe-precio" value="${finValIn(d.precio_venta)}" placeholder="0" onchange="finCambiarReceta('precio_venta', this.value)"></div>`}`;
+}
 // Selector: al elegir "Caja" solo salen cajas (con buscador y opción de ver todo)
 function finAbrirSelector(g){
   finSelector = finSelector && finSelector.grupo === g ? null : { grupo: g, todo: false, crear: false, q: '' };
@@ -463,10 +498,19 @@ async function finCambiarReceta(campo, valor){
   if(['precio_venta','rendimiento'].includes(campo)) v = finNum(valor);
   if(campo === 'merma') v = Math.min(0.99, Math.max(0, (finNum(valor) || 0) / 100));
   if(campo === 'nombre'){ v = String(valor).trim(); if(!v){ finMsg('Necesita nombre.', true); pintarFinanzas(); return; } }
-  if(a.borrador){ finBorrador[campo] = v; pintarFinanzas(); return; }
-  const { data, error } = await sb.from('fin_recetas').update({ [campo]: v, updated_at: new Date().toISOString() }).eq('id', a.id).select().single();
+  if(campo === 'precio_catalogo') v = valor || null;
+  const d = a.borrador ? finBorrador : recPorId(a.id);
+  const cambios = { [campo]: v };
+  // Si cambia el tamaño o la categoría y el precio venía del tamaño anterior, se pasa al nuevo
+  if(campo === 'tamano' || campo === 'categoria'){
+    const antes = finSugerirCatalogo(d.categoria, d.tamano);
+    const nueva = finSugerirCatalogo(campo === 'categoria' ? v : d.categoria, campo === 'tamano' ? v : d.tamano);
+    if(nueva && (!d.precio_catalogo || d.precio_catalogo === antes)) cambios.precio_catalogo = nueva;
+  }
+  if(a.borrador){ Object.assign(finBorrador, cambios); pintarFinanzas(); return; }
+  const { data, error } = await sb.from('fin_recetas').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', a.id).select().single();
   if(error){ finError(error, campo === 'nombre' || campo === 'tamano' ? 'mismo nombre y tamaño' : ''); pintarFinanzas(); return; }
-  const i = fin.recetas.findIndex(x=> x.id === a.id); if(i >= 0) fin.recetas[i] = data || { ...fin.recetas[i], [campo]: v };
+  const i = fin.recetas.findIndex(x=> x.id === a.id); if(i >= 0) fin.recetas[i] = data || { ...fin.recetas[i], ...cambios };
   finMsg('Guardado');
   pintarFinanzas();
 }
@@ -477,7 +521,8 @@ function nombreLibre(tipo, base, tamano){
 }
 async function finNuevaReceta(tipo){
   const datos = tipo === 'producto'
-    ? { tipo, nombre: nombreLibre(tipo, 'Producto nuevo', 'chico'), tamano:'chico', categoria: finFiltroProd !== 'Todos' ? finFiltroProd : 'Pastel', unidad:'pza', orden: fin.recetas.length }
+    ? { tipo, nombre: nombreLibre(tipo, 'Producto nuevo', 'chico'), tamano:'chico', categoria: finFiltroProd !== 'Todos' ? finFiltroProd : 'Pastel', unidad:'pza', orden: fin.recetas.length,
+        precio_catalogo: finSugerirCatalogo(finFiltroProd !== 'Todos' ? finFiltroProd : 'Pastel', 'chico') }
     : { tipo, nombre: nombreLibre(tipo, 'Subreceta nueva', ''), tamano:'', categoria:'Relleno', unidad:'g', merma:0, orden: fin.recetas.length };
   const { data, error } = await sb.from('fin_recetas').insert([datos]).select().single();
   if(error) return finError(error);
@@ -518,15 +563,16 @@ async function finBorrarReceta(id){
 }
 
 // ---------- Calculadora ----------
-function finNuevoBorrador(){ finBorrador = { nombre:'Pastel nuevo', tamano:'chico', categoria:'Pastel', precio_venta:null, partes:[] }; finSelector = null; pintarFinanzas(); }
+function borradorVacio(){ return { nombre:'Pastel nuevo', tamano:'chico', categoria:'Pastel', precio_venta:null, precio_catalogo: finSugerirCatalogo('Pastel', 'chico'), partes:[] }; }
+function finNuevoBorrador(){ finBorrador = borradorVacio(); finSelector = null; pintarFinanzas(); }
 function vistaCalculadora(){
-  if(!finBorrador) finBorrador = { nombre:'Pastel nuevo', tamano:'chico', categoria:'Pastel', precio_venta:null, partes:[] };
+  if(!finBorrador) finBorrador = borradorVacio();
   finPila = [{ borrador:true }];
   return editorReceta('borrador');
 }
 async function finGuardarBorrador(){
   const b = finBorrador;
-  const datos = { tipo:'producto', nombre: nombreLibre('producto', (b.nombre || 'Producto nuevo').trim(), b.tamano), tamano: b.tamano || '', categoria: b.categoria, unidad:'pza', precio_venta: b.precio_venta, orden: fin.recetas.length };
+  const datos = { tipo:'producto', nombre: nombreLibre('producto', (b.nombre || 'Producto nuevo').trim(), b.tamano), tamano: b.tamano || '', categoria: b.categoria, unidad:'pza', precio_venta: b.precio_catalogo ? null : b.precio_venta, precio_catalogo: b.precio_catalogo || null, orden: fin.recetas.length };
   const { data, error } = await sb.from('fin_recetas').insert([datos]).select().single();
   if(error) return finError(error);
   fin.recetas.push(data);

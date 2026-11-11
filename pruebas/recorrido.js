@@ -32,6 +32,7 @@ async function abrir(browser, rol){
     window.__impresiones = [];
     window.open = () => { const doc = { _h:'', open(){}, write(h){ this._h += h; }, close(){ window.__impresiones.push(this._h); } }; return { document: doc }; };
   }, rol);
+  await page.addInitScript({ path: path.join(__dirname, 'finanzas-datos.js') });
   await page.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ status:200, contentType:'application/javascript', path: STUB }));
   await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ status:200, contentType:'text/css', body:'' }));
   await page.route('https://fotos.prueba/**', r => r.fulfill({ status:200, contentType:'image/png', body: PNG }));
@@ -155,10 +156,31 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'por hacer', ()=> ev(()=> abrirPorHacer()));
     await paso(page, huella, 'metas pasteles', ()=> ev(()=> abrirMetas('pasteles')));
     await paso(page, huella, 'metas cupcakes', ()=> ev(()=> abrirMetas('cupcakes')));
-    await paso(page, huella, 'finanzas insumos', ()=> ev(()=> abrirFinanzas()));
-    await paso(page, huella, 'finanzas cambiar precio', async()=>{ await page.fill('#insumos-filas-insumo tr[data-id="1"] .ins-precio-in','48'); await page.press('#insumos-filas-insumo tr[data-id="1"] .ins-precio-in','Tab'); await page.waitForTimeout(200); });
-    await paso(page, huella, 'finanzas agregar insumo', async()=>{ await page.click('#view-finanzas .btn-secundario >> nth=0'); await page.fill('#insumos-filas-insumo tr[data-id="nuevo"] .ins-nombre','Mantequilla'); await page.press('#insumos-filas-insumo tr[data-id="nuevo"] .ins-nombre','Tab'); await page.waitForTimeout(200); });
-    await paso(page, huella, 'finanzas agregar capacillos', async()=>{ const f='#insumos-filas-material tr:last-child'; await page.fill(f+' .ins-nombre','Capacillos'); await page.fill(f+' .ins-cantidad','500'); await page.fill(f+' .ins-precio-in','250'); await page.press(f+' .ins-precio-in','Tab'); await page.waitForTimeout(300); });
+    await paso(page, huella, 'finanzas productos', ()=> ev(()=> abrirFinanzas()));
+    const idWV = await page.evaluate(()=> fin.recetas.find(r=> r.nombre === 'White Velvet' && r.tamano === 'mediano').id);
+    await paso(page, huella, 'finanzas abrir white velvet mediano', ()=> page.click(`.fin-fila[onclick="finAbrir(${idWV})"]`));
+    await paso(page, huella, 'finanzas cambiar merengue', async()=>{ const id = await page.evaluate(w=> fin.partes.find(p=> p.receta_id === w && recPorId(p.subreceta_id) && recPorId(p.subreceta_id).nombre === 'Merengue tradicional').id, idWV); await page.fill(`[data-k="parte-${id}"]`,'900'); await page.press(`[data-k="parte-${id}"]`,'Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas elegir caja', ()=> page.click('.fe-agregar .chip:has-text("+ Caja")'));
+    await paso(page, huella, 'finanzas agregar caja grande', async()=>{ await page.click('.fe-op:has-text("Caja grande")'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas quitar caja grande', async()=>{ const id = await page.evaluate(w=> fin.partes.filter(p=> p.receta_id === w && insPorId(p.insumo_id) && insPorId(p.insumo_id).nombre.startsWith('Caja grande')).pop().id, idWV); await page.click(`.fe-parte:has([data-k="parte-${id}"]) .ins-quitar`); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas crear decoracion', async()=>{ await page.click('.fe-agregar .chip:has-text("+ Decoración")'); await page.click('.fe-sel-pie .link-agregar'); await page.fill('#fe-crear-nombre','Perlas doradas'); await page.selectOption('#fe-crear-unidad','g'); await page.fill('#fe-crear-cant','100'); await page.fill('#fe-crear-precio','60'); await page.click('.fe-crear .primary'); await page.waitForTimeout(300); });
+    await paso(page, huella, 'finanzas ver merengue', ()=> page.click('.fe-item a:has-text("Merengue tradicional")'));
+    await paso(page, huella, 'finanzas regresar', ()=> page.click('#view-finanzas .link-accion'));
+    await paso(page, huella, 'finanzas precio de venta', async()=>{ await page.fill('[data-k="fe-precio"]','850'); await page.press('[data-k="fe-precio"]','Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas subrecetas', ()=> page.click('.cf-chips .chip:has-text("Subrecetas")'));
+    await paso(page, huella, 'finanzas insumos', ()=> page.click('.cf-chips .chip:has-text("Insumos")'));
+    await paso(page, huella, 'finanzas cambiar precio huevo', async()=>{ const f = await page.evaluate(()=> '#insumos-filas-insumo tr[data-id="' + fin.insumos.find(i=> i.nombre === 'Huevo').id + '"] .ins-precio-in'); await page.fill(f,'1100'); await page.press(f,'Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas agregar insumo', async()=>{ await page.click('#view-finanzas .btn-secundario >> nth=0'); await page.fill('#insumos-filas-insumo tr[data-id="nuevo"] .ins-nombre','Fresa congelada'); await page.press('#insumos-filas-insumo tr[data-id="nuevo"] .ins-nombre','Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas empaques', ()=> page.click('.cf-chips .chip:has-text("Empaques")'));
+    await paso(page, huella, 'finanzas agregar caja', async()=>{ await page.click('#view-finanzas .btn-secundario >> nth=0'); const f='#insumos-filas-material-Caja tr:last-child'; await page.fill(f+' .ins-nombre','Caja tres leches'); await page.press(f+' .ins-nombre','Tab'); await page.waitForTimeout(250); await page.fill(f+' .ins-precio-in','19.5'); await page.press(f+' .ins-precio-in','Tab'); await page.waitForTimeout(300); });
+    await paso(page, huella, 'finanzas costos fijos', ()=> page.click('.cf-chips .chip:has-text("Costos fijos")'));
+    await paso(page, huella, 'finanzas agregar renta', async()=>{ await page.click('#view-finanzas .btn-secundario >> nth=0'); await page.waitForTimeout(150); const k = await page.evaluate(()=> fin.fijos[fin.fijos.length - 1].id); await page.fill(`[data-k="fij-${k}-c"]`,'Renta'); await page.fill(`[data-k="fij-${k}-m"]`,'18000'); await page.press(`[data-k="fij-${k}-m"]`,'Tab'); await page.waitForTimeout(250); });
+    await paso(page, huella, 'finanzas calculadora', ()=> page.click('.cf-chips .chip:has-text("Calculadora")'));
+    await paso(page, huella, 'finanzas calculadora armar', async()=>{
+      await page.click('.fe-agregar .chip:has-text("+ Pan")'); await page.click('.fe-op:has-text("Pan de vainilla chico")'); await page.fill('.fe-parte input','3'); await page.press('.fe-parte input','Tab'); await page.waitForTimeout(150);
+      await page.click('.fe-agregar .chip:has-text("+ Caja")'); await page.click('.fe-op:has-text("Caja chica")'); await page.waitForTimeout(150);
+      await page.fill('[data-k="fe-precio"]','600'); await page.press('[data-k="fe-precio"]','Tab'); await page.waitForTimeout(150); });
+    await paso(page, huella, 'finanzas calculadora guardar', async()=>{ await page.click('.fe-acciones .primary'); await page.waitForTimeout(300); });
     await paso(page, huella, 'catalogo fotos', ()=> ev(()=> abrirCatalogo()));
     await paso(page, huella, 'catalogo portada agregar foto', async()=>{
       await page.setInputFiles('#cf-pagina-portada input[type=file]', [{ name:'p.png', mimeType:'image/png', buffer:PNG }]);

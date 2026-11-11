@@ -26,6 +26,7 @@ let finSelector = null;        // { grupo, todo, crear } mientras se elige qué 
 let finFiltroProd = 'Todos';
 let finBorrador = null;        // calculadora (no se guarda hasta que se pide)
 let finCargado = false;
+let finOtroTamano = null;      // panel "Crear en otro tamaño": { tamano, pct }
 
 const FIN_SECCIONES = [
   { id:'productos',  titulo:'Productos y márgenes' },
@@ -64,7 +65,12 @@ const fin2 = n => n == null || !isFinite(n) ? '—' : (n < 0 ? '−' : '') + '$'
 const finPct = n => n == null || !isFinite(n) ? '—' : (n * 100).toLocaleString('es-MX', { minimumFractionDigits:1, maximumFractionDigits:1 }) + '%';
 const finCant = n => n == null ? '' : Number(n).toLocaleString('es-MX', { maximumFractionDigits:3 });
 const finValIn = n => n == null ? '' : (Number(n) % 1 ? String(Math.round(Number(n) * 10000) / 10000) : String(n));
-const finTamano = t => (FIN_TAMANOS.find(x=> x[0] === (t || '')) || [, t])[1];
+const finTamano = t => (FIN_TAMANOS.find(x=> x[0] === (t || '')) || [, formatNombre(t || '')])[1];
+// Tamaños: los de siempre más los que tenga el catálogo (sin cheesecake ni tres leches, que son productos)
+function finTamanosOpciones(){
+  const extra = fin.catalogo.filter(c=> c.tabla === 'tamanos_pastel' && !['cheesecake','tresleches'].includes(finQ(c.clave).replace(/[^a-z0-9]/g, '')) && !FIN_TAMANOS.some(([v])=> v === c.clave)).map(c=> [c.clave, formatNombre(c.clave)]);
+  return [...FIN_TAMANOS, ...extra];
+}
 const insPorId = id => fin.insumos.find(x=> x.id === id);
 const recPorId = id => fin.recetas.find(x=> x.id === id);
 function finQ(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
@@ -114,17 +120,41 @@ function totalReceta(r, visit){              // { total, faltan[] }
   _memo.set(key, res);
   return res;
 }
+// Lo que entra en una subreceta (suma de lo que va en g o ml). Lo que rinde se CALCULA:
+// en gramos = lo que entra × (1 − merma); por piezas = las piezas que salen (eso sí es un dato).
+function pesoEntra(r){
+  return partesDe(r).reduce((t, p)=>{ const u = unidadItem(itemDe(p)); return (u === 'g' || u === 'ml') && p.cantidad != null ? t + Number(p.cantidad) : t; }, 0);
+}
+function rindeSub(s){
+  if(s.unidad === 'pza') return Number(s.rendimiento) > 0 ? Number(s.rendimiento) : null;
+  const g = pesoEntra(s);
+  return g > 0 ? g * (1 - (Number(s.merma) || 0)) : null;
+}
 function precioSub(s, visit){
   if(!s) return null;
   const { total, faltan } = totalReceta(s, visit);
-  if(faltan.length || !(Number(s.rendimiento) > 0)) return null;
-  return total / Number(s.rendimiento) / (1 - (Number(s.merma) || 0));
+  const rinde = rindeSub(s);
+  if(faltan.length || !rinde) return null;
+  return s.unidad === 'pza' ? total / rinde / (1 - (Number(s.merma) || 0)) : total / rinde;
 }
 function precioParte(p, visit){ return p.insumo_id ? precioInsumo(insPorId(p.insumo_id)) : precioSub(recPorId(p.subreceta_id), visit); }
 function finConfig(clave, def){ return fin.config[clave] != null ? fin.config[clave] : def; }
 function finImpuesto(){ const c = finConfig('impuesto', { nombre:'IEPS', tasa:0.08 }); return { nombre: c.nombre || 'Impuesto', tasa: Number(c.tasa) || 0 }; }
 function totalFijos(){ return fin.fijos.reduce((s, f)=> s + (Number(f.costo_mensual) || 0) * (1 + (Number(f.prestacion) || 0)), 0); }
-function promedioVentas(){ const v = finConfig('ventas_mensuales', []).map(x=> Number(x.venta)).filter(x=> x > 0); return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : 0; }
+// Venta del mes: sale del sistema (mostrador + pedidos con entrega en ese mes), igual que en Resumen.
+// El promedio usa los últimos 3 meses completos del sistema; si todavía no hay uno completo, usa los meses capturados a mano.
+function mesesSistema(){
+  const hoy = new Date(), actual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+  return Object.entries(fin.ventasMes || {}).sort((a, b)=> a[0] < b[0] ? 1 : -1).map(([mes, v])=> ({ mes, ...v, total: v.local + v.pedidos, completo: mes < actual }));
+}
+function mesesParaPromedio(){
+  const fuera = finConfig('meses_excluidos', []);
+  const comp = mesesSistema().filter(m=> m.completo && m.total > 0 && !fuera.includes(m.mes)).slice(0, 3);
+  if(comp.length) return { fuente:'sistema', meses: comp.map(m=> ({ mes: m.mes, venta: m.total })) };
+  return { fuente:'mano', meses: finConfig('ventas_mensuales', []).filter(x=> Number(x.venta) > 0) };
+}
+function promedioVentas(){ const v = mesesParaPromedio().meses.map(x=> Number(x.venta)); return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : 0; }
+function nombreMes(m){ const [a, n] = m.split('-'); return ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][Number(n) - 1] + ' ' + a; }
 function pctFijo(){ const p = promedioVentas(); return p > 0 ? totalFijos() / p : 0; }
 // Precios del catálogo (los mismos que usa Nuevo pedido y el punto de venta)
 const FIN_CATALOGO_GRUPOS = { tamanos_pastel:'Pasteles y cheesecakes (por tamaño)', individuales:'Cuchareables, cupcake e individuales', panques:'Panqués' };
@@ -161,6 +191,44 @@ function resumenProducto(r){
 }
 function porUnidad(pu, unidad){ return pu == null ? '—' : unidad === 'pza' ? fin2(pu) + ' /pza' : fin2(pu * 1000) + (unidad === 'ml' ? ' /l' : ' /kg'); }
 
+// ---------- Revisión: avisa lo que no cuadra antes de que cause un número equivocado ----------
+const FIN_PAL_TAM = { mini:['mini'], chico:['chico','chica'], mediano:['mediano','mediana'], grande:['grande'], plancha:['plancha'] };
+function tamanoEnNombre(nombre){
+  const q = ' ' + finQ(nombre).replace(/[^a-z0-9]+/g, ' ') + ' ';
+  return Object.keys(FIN_PAL_TAM).find(t=> FIN_PAL_TAM[t].some(w=> q.includes(' ' + w + ' '))) || null;
+}
+function finRevisar(r){
+  const d = r === 'borrador' ? finBorrador : r;
+  const esProd = r === 'borrador' || d.tipo === 'producto';
+  const av = [], partes = partesDe(r);
+  if(!partes.length) av.push('No tiene nada todavía.');
+  partes.forEach(p=>{
+    const it = itemDe(p);
+    if(!it){ av.push('Tiene algo que ya no existe: quítalo.'); return; }
+    if(p.cantidad == null || Number(p.cantidad) <= 0) av.push(`Falta la cantidad de ${it.nombre}.`);
+    else if(precioParte(p) == null) av.push(`${it.nombre} no tiene precio (revisa su presentación y precio, o sus ingredientes).`);
+    const t = tamanoEnNombre(it.nombre);
+    if(esProd && d.tamano && t && t !== d.tamano && FIN_PAL_TAM[d.tamano]) av.push(`Lleva "${it.nombre}" pero el producto es ${finTamano(d.tamano).toLowerCase()}.`);
+  });
+  if(esProd){
+    const grupos = new Set(partes.map(p=> grupoItem(itemDe(p))));
+    if(['Pastel','Cheesecake','Rollo'].includes(d.categoria)){
+      if(!grupos.has('Caja')) av.push('No tiene caja.');
+      if(!grupos.has('Base')) av.push('No tiene base.');
+    }
+    const pv = precioVenta(d);
+    if(d.precio_catalogo && !finCatalogo(d.precio_catalogo)) av.push('Su precio ya no está en el catálogo: elige otro.');
+    else if(pv == null) av.push('No tiene precio de venta.');
+    const res = resumenProducto(r);
+    if(res.utilidad != null && res.utilidad < 0) av.push('Con este precio se pierde dinero.');
+  } else {
+    if(d.unidad === 'pza' && !(Number(d.rendimiento) > 0)) av.push('Falta cuántas piezas salen.');
+    if(d.unidad !== 'pza' && partes.length && !(pesoEntra(r) > 0)) av.push('Se usa por gramos pero ningún ingrediente va en gramos: cámbiala a piezas o revisa las cantidades.');
+    if(Number(d.merma) > 0.4) av.push(`La merma es de ${finPct(Number(d.merma))}: ¿segura?`);
+  }
+  return [...new Set(av)];
+}
+
 // ---------- Carga ----------
 function abrirFinanzas(){
   activarVistaDirectora('tab-finanzas', 'view-finanzas');
@@ -180,6 +248,16 @@ async function cargarFinanzas(){
     sb.from('panques').select('*').order('nombre')
   ]);
   const err = [a, b, c, d, e].find(x=> x.error);
+  // Ventas de los últimos 6 meses (para la venta promedio del mes)
+  const ini = new Date(); ini.setMonth(ini.getMonth() - 6, 1); const desde = ini.toISOString().slice(0, 10);
+  const [rv, rp] = await Promise.all([
+    sb.from('ventas').select('fecha,monto_local').gte('fecha', desde),
+    sb.from('pedidos').select('fecha_entrega,precio').gte('fecha_entrega', new Date(desde + 'T00:00:00').toISOString())
+  ]);
+  fin.ventasMes = {};
+  const mesDe = f=> String(f || '').slice(0, 7);
+  if(!rv.error) (rv.data || []).forEach(v=>{ const m = mesDe(v.fecha); if(!m) return; (fin.ventasMes[m] = fin.ventasMes[m] || { local:0, pedidos:0 }).local += Number(v.monto_local) || 0; });
+  if(!rp.error) (rp.data || []).forEach(p=>{ if(!p.fecha_entrega) return; const d = new Date(p.fecha_entrega); const m = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); (fin.ventasMes[m] = fin.ventasMes[m] || { local:0, pedidos:0 }).pedidos += Number(p.precio) || 0; });
   if(err){ cont.className = 'empty'; cont.textContent = 'No se pudo cargar Finanzas: ' + err.error.message + ' (revisa que ya se haya corrido el SQL 033 de Finanzas).'; return; }
   fin.insumos = (a.data || []).map(r=> ({ ...r, tipo: r.tipo || 'insumo' }));
   fin.recetas = b.data || []; fin.partes = c.data || []; fin.fijos = d.data || [];
@@ -187,7 +265,7 @@ async function cargarFinanzas(){
   const ORDEN_T = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','plancha50','plancha60'];
   const posT = t=>{ const i = ORDEN_T.indexOf(finQ(t).replace(/[^a-z0-9]/g, '')); return i < 0 ? 99 : i; };
   fin.catalogo = [
-    ...[...(ct.data || [])].sort((x, y)=> posT(x.tamano) - posT(y.tamano)).map(x=> ({ tabla:'tamanos_pastel', clave:x.tamano, precio:x.precio })),
+    ...[...(ct.data || [])].sort((x, y)=> posT(x.tamano) - posT(y.tamano)).map(x=> ({ tabla:'tamanos_pastel', clave:x.tamano, precio:x.precio, personas:x.personas })),
     ...(ci.data || []).map(x=> ({ tabla:'individuales', clave:x.nombre, precio:x.precio })),
     ...(cp.data || []).map(x=> ({ tabla:'panques', clave:x.nombre, precio:x.precio }))
   ].map(x=> ({ ...x, ref: x.tabla + ':' + x.clave }));
@@ -229,7 +307,7 @@ function vistaProductos(){
     if(r.utilidad != null){ sumas.n++; sumas.precio += r.precio; sumas.variable += r.variable; sumas.utilidad += r.utilidad; sumas.pct += r.pctUtil; }
     filas += `<tr class="fin-fila${nuevo ? ' fin-nuevo-grupo' : ''}" onclick="finAbrir(${p.id})">
       <td>${nuevo ? `<b>${escHtml(p.nombre)}</b>` : ''}</td><td>${escHtml(finTamano(p.tamano))}</td>
-      <td class="n">${fin2(r.precio)}${!p.precio_catalogo ? ' <span class="fin-falta fin-mano">a mano</span>' : !finCatalogo(p.precio_catalogo) ? ' <span class="fin-falta">no está en catálogo</span>' : ''}</td><td class="n">${fin2(r.variable)}${r.faltan.length ? ' <span class="fin-falta">falta precio</span>' : ''}</td>
+      <td class="n">${fin2(r.precio)}${!p.precio_catalogo ? ' <span class="fin-falta fin-mano">a mano</span>' : !finCatalogo(p.precio_catalogo) ? ' <span class="fin-falta">no está en catálogo</span>' : ''}</td><td class="n">${fin2(r.variable)}${finRevisar(p).length ? ' <span class="fin-falta">revisar</span>' : ''}</td>
       <td class="n">${fin2(r.fijo)}</td><td class="n"><b>${fin2(r.utilidad)}</b></td><td class="n">${finPct(r.pctUtil)}</td><td class="fin-ir">Ver ›</td></tr>`;
   });
   const prom = sumas.n ? `<tr class="fin-total"><td colspan="2">Promedio</td><td class="n">${fin2(sumas.precio / sumas.n)}</td><td class="n">${fin2(sumas.variable / sumas.n)}</td><td></td><td class="n">${fin2(sumas.utilidad / sumas.n)}</td><td class="n">${finPct(sumas.pct / sumas.n)}</td><td></td></tr>` : '';
@@ -237,10 +315,50 @@ function vistaProductos(){
     <div class="fin-titulo"><h3>Productos y márgenes</h3><button type="button" class="btn-secundario" onclick="finNuevaReceta('producto')">+ Nuevo producto</button></div>
     <div class="hint fin-nota">Los precios salen del catálogo del sistema (los "a mano" no están en el catálogo). Toca un producto para ver de qué está armado y cambiarlo. Utilidad = precio sin ${escHtml(imp.nombre)} ${finPct(imp.tasa)} − ingredientes y empaque − costo fijo (${finPct(pctFijo())} de la venta).</div>
     <div class="chip-group fin-filtros">${cats.map(c=> `<div class="chip${c === finFiltroProd ? ' selected' : ''}" onclick="finFiltroProd='${escHtml(c)}'; pintarFinanzas()">${escHtml(c)}</div>`).join('')}</div>
+    ${finFiltroProd === 'Todos' ? vistaSinCostear() : ''}
     ${lista.length ? `<div class="tabla-scroll"><table class="tabla-insumos fin-lista">
       <thead><tr><th>Producto</th><th>Tamaño</th><th class="n">Precio</th><th class="n">Ingredientes y empaque</th><th class="n">Costo fijo</th><th class="n">Utilidad</th><th class="n">% utilidad</th><th></th></tr></thead>
       <tbody>${filas}${prom}</tbody></table></div>` : '<div class="empty">Todavía no hay productos.</div>'}
   </div>`;
+}
+
+// Lo que está en el catálogo y todavía no tiene receta en Finanzas
+function finSinCostear(){
+  const ligados = new Set(fin.recetas.filter(r=> r.tipo === 'producto' && r.precio_catalogo).map(r=> r.precio_catalogo));
+  const sueltos = fin.catalogo.filter(c=> c.tabla !== 'tamanos_pastel' && !ligados.has(c.ref));
+  const espec = fin.catalogo.filter(c=> c.tabla === 'tamanos_pastel' && ['cheesecake','tresleches'].includes(finQ(c.clave).replace(/[^a-z0-9]/g, '')) && !ligados.has(c.ref));
+  const tamanos = fin.catalogo.filter(c=> c.tabla === 'tamanos_pastel' && !espec.includes(c) && !['cheesecake','tresleches'].includes(finQ(c.clave).replace(/[^a-z0-9]/g, '')) && !ligados.has(c.ref));
+  return { productos: [...espec, ...sueltos], tamanos };
+}
+function categoriaDeCatalogo(c){
+  const q = finQ(c.clave);
+  if(c.tabla === 'panques') return 'Panqué';
+  if(c.tabla === 'tamanos_pastel') return /cheesecake/.test(q) ? 'Cheesecake' : 'Pastel';
+  if(q === 'cupcake') return 'Cupcake';
+  if(/cuchareable/.test(q)) return 'Cuchareable';
+  if(/^cc_|cheesecake/.test(q)) return 'Cheesecake';
+  return 'Individual';
+}
+async function finCostearCatalogo(ref){
+  const c = finCatalogo(ref); if(!c) return;
+  const nombre = c.tabla === 'tamanos_pastel' ? formatNombre(c.clave) : formatNombre(c.clave);
+  const datos = { tipo:'producto', nombre: nombreLibre('producto', nombre, ''), tamano:'', categoria: categoriaDeCatalogo(c), unidad:'pza', precio_catalogo: ref, orden: fin.recetas.length };
+  const { data, error } = await sb.from('fin_recetas').insert([datos]).select().single();
+  if(error) return finError(error);
+  fin.recetas.push(data);
+  finPila = [{ id: data.id }]; finSelector = null;
+  pintarFinanzas(); window.scrollTo(0, 0);
+  finMsg(`Creado ${data.nombre} con su precio del catálogo. Ahora agrégale de qué está armado.`);
+}
+function vistaSinCostear(){
+  const { productos, tamanos } = finSinCostear();
+  if(!productos.length && !tamanos.length) return '';
+  return `<details class="seccion-resumen fin-tabla fin-pend"${productos.length + tamanos.length ? ' open' : ''}>
+    <summary><h3>Sin costear todavía (${productos.length + tamanos.length})</h3></summary>
+    <div class="hint fin-nota">Está en el catálogo del sistema pero todavía no tiene receta aquí. Tócalo para crearlo ya con su precio.</div>
+    ${productos.length ? `<div class="fin-pend-lista">${productos.map(c=> `<button type="button" class="chip" onclick="finCostearCatalogo('${escHtml(c.ref).replace(/'/g, '&#39;')}')">+ ${escHtml(formatNombre(c.clave))} <small>${c.precio == null ? '' : fin2(Number(c.precio))}</small></button>`).join('')}</div>` : ''}
+    ${tamanos.length ? `<div class="hint" style="margin-top:10px;">Tamaños sin ningún pastel: <b>${tamanos.map(c=> escHtml(formatNombre(c.clave))).join(', ')}</b>. Para crearlos rápido: abre un pastel (ej. White Velvet chico) y usa <b>Crear en otro tamaño</b>.</div>` : ''}
+  </details>`;
 }
 
 // ---------- Subrecetas ----------
@@ -253,8 +371,8 @@ function vistaSubrecetas(){
     return `<tr class="fin-grupo-fila"><td colspan="6">${escHtml((FIN_GRUPOS.find(x=> x.id === g) || { titulo:g }).titulo)}</td></tr>` + ls.map(s=>{
       const t = totalReceta(s), pu = precioSub(s), usos = usosDe('s', s.id).length;
       return `<tr class="fin-fila" onclick="finAbrir(${s.id})"><td><b>${escHtml(s.nombre)}</b></td>
-        <td class="n">${s.rendimiento ? finCant(s.rendimiento) + ' ' + (s.unidad === 'pza' ? 'pza' : 'g') : '—'}</td>
-        <td class="n">${fin2(t.total)}${t.faltan.length ? ' <span class="fin-falta">falta precio</span>' : ''}</td>
+        <td class="n">${rindeSub(s) ? finCant(Math.round(rindeSub(s))) + ' ' + (s.unidad === 'pza' ? 'pza' : 'g') : '—'}</td>
+        <td class="n">${fin2(t.total)}${finRevisar(s).length ? ' <span class="fin-falta">revisar</span>' : ''}</td>
         <td class="n"><b>${porUnidad(pu, s.unidad)}</b></td><td class="n">${usos ? usos + (usos === 1 ? ' receta' : ' recetas') : '—'}</td><td class="fin-ir">Ver ›</td></tr>`;
     }).join('');
   }).join('');
@@ -274,8 +392,8 @@ function usosDe(clase, id){
 function nombreReceta(r){ return r.nombre + (r.tamano ? ' ' + finTamano(r.tamano).toLowerCase() : ''); }
 
 // ---------- Editor de receta (producto, subreceta o calculadora) ----------
-function finAbrir(id){ finPila.push({ id }); finSelector = null; pintarFinanzas(); window.scrollTo(0, 0); }
-function finRegresar(){ finPila.pop(); finSelector = null; pintarFinanzas(); window.scrollTo(0, 0); }
+function finAbrir(id){ finPila.push({ id }); finSelector = null; finOtroTamano = null; pintarFinanzas(); window.scrollTo(0, 0); }
+function finRegresar(){ finPila.pop(); finSelector = null; finOtroTamano = null; pintarFinanzas(); window.scrollTo(0, 0); }
 function editorReceta(r){
   if(!r){ finPila.pop(); return '<div class="empty">Esa receta ya no existe.</div>'; }
   const borrador = r === 'borrador';
@@ -313,11 +431,12 @@ function editorReceta(r){
   const campo = (lbl, html, cls)=> `<div class="field${cls ? ' ' + cls : ''}"><label>${lbl}</label>${html}</div>`;
   const cab = [
     campo('Nombre', `<input type="text" data-k="fe-nombre" value="${escHtml(d.nombre || '')}" onchange="finCambiarReceta('nombre', this.value)">`, 'fe-nombre'),
-    esProd ? campo('Tamaño', `<select data-k="fe-tamano" onchange="finCambiarReceta('tamano', this.value)">${FIN_TAMANOS.map(([v, t])=> `<option value="${v}"${(d.tamano || '') === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`) : '',
+    esProd ? campo('Tamaño', `<select data-k="fe-tamano" onchange="finCambiarReceta('tamano', this.value)">${finTamanosOpciones().map(([v, t])=> `<option value="${v}"${(d.tamano || '') === v ? ' selected' : ''}>${escHtml(t)}</option>`).join('')}</select>`) : '',
     campo('Categoría', `<select data-k="fe-cat" onchange="finCambiarReceta('categoria', this.value)">${(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).concat(d.categoria && !(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).includes(d.categoria) ? [d.categoria] : []).map(c=> `<option${d.categoria === c ? ' selected' : ''}>${escHtml(c)}</option>`).join('')}</select>`),
     esProd ? campo('Precio de venta (sale del catálogo)', precioCampoHtml(d), 'fe-precio-campo') : '',
-    !esProd ? campo('Rinde', `<div class="ins-cant"><input type="number" inputmode="decimal" data-k="fe-rinde" value="${finValIn(d.rendimiento)}" placeholder="0" onchange="finCambiarReceta('rendimiento', this.value)"><select data-k="fe-unidad" onchange="finCambiarReceta('unidad', this.value)"><option value="g"${d.unidad !== 'pza' ? ' selected' : ''}>g</option><option value="pza"${d.unidad === 'pza' ? ' selected' : ''}>piezas</option></select></div>`) : '',
-    !esProd ? campo('Merma', `<div class="ins-precio"><input type="number" inputmode="decimal" data-k="fe-merma" value="${finValIn(Math.round((Number(d.merma) || 0) * 1000) / 10)}" placeholder="0" onchange="finCambiarReceta('merma', this.value)"><span>%</span></div>`) : ''
+    !esProd ? campo('Se usa por', `<select data-k="fe-unidad" onchange="finCambiarReceta('unidad', this.value)"><option value="g"${d.unidad !== 'pza' ? ' selected' : ''}>Gramos (rellenos, betunes, masas)</option><option value="pza"${d.unidad === 'pza' ? ' selected' : ''}>Piezas (panes, coronas, porciones)</option></select>`) : '',
+    !esProd && d.unidad === 'pza' ? campo('¿Cuántas piezas salen?', `<input type="number" inputmode="decimal" data-k="fe-rinde" value="${finValIn(d.rendimiento)}" placeholder="Ej. 30" onchange="finCambiarReceta('rendimiento', this.value)" style="width:110px;"><div class="hint">Ej.: una plancha da 30 cuchareables → 30.</div>`) : '',
+    !esProd ? campo('Merma', `<div class="ins-precio"><input type="number" inputmode="decimal" data-k="fe-merma" value="${finValIn(Math.round((Number(d.merma) || 0) * 1000) / 10)}" placeholder="0" onchange="finCambiarReceta('merma', this.value)"><span>%</span></div><div class="hint">${d.unidad === 'pza' ? 'Piezas que se echan a perder.' : 'Lo que se pierde al cocinar o batir.'}</div>`) : ''
   ].join('');
   // Resultado
   let resultado;
@@ -349,8 +468,11 @@ function editorReceta(r){
       <h3>Costo</h3>
       ${t.faltan.length ? `<div class="msg err">Falta precio de: ${escHtml([...new Set(t.faltan)].join(', '))}.</div>` : ''}
       <div class="fe-res-fila"><span>Costo del lote</span><b>${fin2(t.total)}</b></div>
-      <div class="fe-res-fila"><span>Rinde</span><b>${d.rendimiento ? finCant(d.rendimiento) + ' ' + (d.unidad === 'pza' ? 'pza' : 'g') : 'falta'}</b></div>
-      <div class="fe-res-fila"><span>Merma</span><b>${finPct(Number(d.merma) || 0)}</b></div>
+      ${d.unidad === 'pza' ? `<div class="fe-res-fila"><span>Salen</span><b>${d.rendimiento ? finCant(d.rendimiento) + ' piezas' : 'falta'}</b></div>
+        <div class="fe-res-fila"><span>Merma</span><b>${finPct(Number(d.merma) || 0)}</b></div>`
+      : `<div class="fe-res-fila"><span>Entra (suma de ingredientes)</span><b>${finCant(Math.round(pesoEntra(r)))} g</b></div>
+        <div class="fe-res-fila"><span>Merma</span><b>${finPct(Number(d.merma) || 0)}</b></div>
+        <div class="fe-res-fila"><span>Rinde (calculado)</span><b>${rindeSub(d) ? finCant(Math.round(rindeSub(d))) + ' g' : 'falta'}</b></div>`}
       <div class="fe-res-fila fe-fuerte"><span>Costo por ${d.unidad === 'pza' ? 'pieza' : 'kilo'}</span><b>${pu == null ? '—' : d.unidad === 'pza' ? fin2(pu) : fin2(pu * 1000)}</b></div>
       ${d.unidad !== 'pza' && pu != null ? `<div class="fe-res-fila"><span>Costo por gramo</span><b>$${pu.toLocaleString('es-MX', { minimumFractionDigits:4, maximumFractionDigits:4 })}</b></div>` : ''}
       <div class="sub-titulo" style="margin-top:14px;">Se usa en</div>
@@ -359,11 +481,12 @@ function editorReceta(r){
   }
   const acciones = borrador
     ? `<div class="fe-acciones"><button type="button" class="primary" onclick="finGuardarBorrador()">Guardar como producto</button><button type="button" class="btn-secundario" onclick="finNuevoBorrador()">Empezar de nuevo</button></div>`
-    : `<div class="fe-acciones"><button type="button" class="btn-secundario" onclick="finDuplicar(${r.id})">Duplicar</button><button type="button" class="btn-borrar" onclick="finBorrarReceta(${r.id})">Eliminar ${esProd ? 'producto' : 'subreceta'}</button></div>`;
+    : `${esProd ? panelOtroTamano(r) : ''}<div class="fe-acciones">${esProd ? `<button type="button" class="btn-secundario" onclick="finOtroTamano=finOtroTamano ? null : {}; pintarFinanzas(); const e=document.getElementById('fe-otro'); if(e) e.scrollIntoView({block:'center'});">Crear en otro tamaño</button>` : ''}<button type="button" class="btn-secundario" onclick="finDuplicar(${r.id})">Duplicar</button><button type="button" class="btn-borrar" onclick="finBorrarReceta(${r.id})">Eliminar ${esProd ? 'producto' : 'subreceta'}</button></div>`;
   return `${volverTxt ? `<a href="#" class="link-accion" onclick="finRegresar(); return false;">← ${escHtml(volverTxt)}</a>` : ''}
     <div class="fin-editor">
       ${borrador ? '<div class="hint fin-nota">Arma un producto para ver cuánto cuesta y cuánto deja. No se guarda hasta que le das "Guardar como producto".</div>' : ''}
       <div class="fe-cab">${cab}</div>
+      ${(()=>{ const av = finRevisar(r); return av.length ? `<div class="fe-revisa"><b>Revisa:</b><ul>${av.map(a=> `<li>${escHtml(a)}</li>`).join('')}</ul></div>` : ''; })()}
       <div class="fe-cuerpo">
         <div class="fe-armado">
           <h3>De qué está armado</h3>
@@ -376,7 +499,99 @@ function editorReceta(r){
       ${acciones}
     </div>`;
 }
-function finAbrirDesdeEditor(id){ finPila.push({ id }); finSelector = null; pintarFinanzas(); window.scrollTo(0, 0); }
+// ---------- Crear un producto en otro tamaño (ej. los minis) ----------
+// Copia el producto: lo que tiene tamaño en el nombre (pan, caja, base) se cambia por el del tamaño nuevo;
+// si ese pan no existe, se crea escalando su receta. Lo que va en gramos se escala por el % (sale de las personas
+// de cada tamaño en el catálogo). Las piezas (corona) se quedan igual. Al final se revisa y se ajusta.
+function personasDe(t){ const c = fin.catalogo.find(x=> x.tabla === 'tamanos_pastel' && finQ(x.clave) === finQ(t)); return c && Number(c.personas) > 0 ? Number(c.personas) : null; }
+function pctSugerido(de, a){ const p1 = personasDe(de), p2 = personasDe(a); return p1 && p2 ? Math.round(p2 / p1 * 100) : 100; }
+function panelOtroTamano(r){
+  if(!finOtroTamano) return '';
+  const usados = new Set(fin.recetas.filter(x=> x.tipo === 'producto' && x.nombre === r.nombre).map(x=> x.tamano || ''));
+  const libres = finTamanosOpciones().filter(([v])=> v && !usados.has(v));
+  if(!libres.length) return '<div class="fe-otro" id="fe-otro"><div class="hint">Este producto ya existe en todos los tamaños.</div></div>';
+  const t = finOtroTamano.tamano && libres.some(([v])=> v === finOtroTamano.tamano) ? finOtroTamano.tamano : libres[0][0];
+  const pct = finOtroTamano.pct != null ? finOtroTamano.pct : pctSugerido(r.tamano, t);
+  const p1 = personasDe(r.tamano), p2 = personasDe(t);
+  return `<div class="fe-otro" id="fe-otro">
+    <div class="sub-titulo">Crear ${escHtml(r.nombre)} en otro tamaño</div>
+    <div class="fe-crear-campos">
+      <select data-k="otro-tam" onchange="finOtroTamano={tamano:this.value}; pintarFinanzas()">${libres.map(([v, tx])=> `<option value="${v}"${v === t ? ' selected' : ''}>${tx}</option>`).join('')}</select>
+      <div class="ins-precio"><input type="number" inputmode="decimal" data-k="otro-pct" value="${pct}" onchange="finOtroTamano={tamano:'${t}', pct:Number(this.value)||100}; pintarFinanzas()" style="width:70px;"><span>% de los gramos</span></div>
+      <button type="button" class="primary" onclick="finCrearOtroTamano(${r.id}, '${t}', ${pct})">Crear</button>
+    </div>
+    <div class="hint">${p1 && p2 ? `${finTamano(r.tamano)} es para ${p1} personas y ${finTamano(t).toLowerCase()} para ${p2}: por eso ${pct}%. ` : ''}El pan, la caja y la base se cambian a ${finTamano(t).toLowerCase()} (si el pan no existe, se crea). Los gramos de relleno y cubierta se calculan con el %, y luego los ajustas.</div>
+  </div>`;
+}
+function nombreEnTamano(nombre, de, a){
+  const fem = { mini:'mini', chico:'chica', mediano:'mediana', grande:'grande', plancha:'plancha' };
+  let hecho = false;
+  const out = nombre.replace(/[A-Za-zÁÉÍÓÚáéíóúñÑ]+/g, w=>{
+    const q = finQ(w); if(hecho) return w;
+    for(const [t, ws] of Object.entries(FIN_PAL_TAM)){
+      if(t !== de || !ws.includes(q)) continue;
+      hecho = true;
+      let n = q.endsWith('a') && q !== 'plancha' ? fem[a] : a;
+      if(w[0] === w[0].toUpperCase()) n = n[0].toUpperCase() + n.slice(1);
+      return n;
+    }
+    return w;
+  });
+  return hecho ? out : null;
+}
+const redondeoG = g=> g >= 50 ? Math.round(g / 5) * 5 : Math.round(g);
+async function finCrearOtroTamano(id, tamano, pct){
+  const r = recPorId(id); if(!r) return;
+  const f = (Number(pct) || 100) / 100, de = r.tamano, notas = [];
+  const partes = [];
+  for(const p of partesDe(r)){
+    const it = itemDe(p); if(!it) continue;
+    const nuevoNombre = de ? nombreEnTamano(it.nombre, de, tamano) : null;
+    if(nuevoNombre){
+      if(p.insumo_id){
+        const otro = fin.insumos.find(i=> i.nombre === nuevoNombre);
+        if(otro) partes.push({ insumo_id: otro.id, cantidad: p.cantidad });
+        else { partes.push({ insumo_id: p.insumo_id, cantidad: p.cantidad }); notas.push(`No hay "${nuevoNombre}" en Empaques: se dejó ${it.nombre}, cámbiala.`); }
+      } else {
+        let otro = fin.recetas.find(x=> x.tipo === 'subreceta' && x.nombre === nuevoNombre);
+        if(!otro){ otro = await finEscalarSubreceta(it, nuevoNombre, f); if(!otro) return; notas.push(`Se creó "${nuevoNombre}" con ${Math.round(f * 100)}% de la masa de ${it.nombre}.`); }
+        partes.push({ subreceta_id: otro.id, cantidad: p.cantidad });
+      }
+      continue;
+    }
+    const u = unidadItem(it);
+    partes.push({ insumo_id: p.insumo_id, subreceta_id: p.subreceta_id, cantidad: p.cantidad == null ? null : (u === 'g' || u === 'ml') ? redondeoG(Number(p.cantidad) * f) : p.cantidad });
+  }
+  const datos = { tipo:'producto', nombre: nombreLibre('producto', r.nombre, tamano), tamano, categoria: r.categoria, unidad:'pza', orden: r.orden,
+    precio_catalogo: finSugerirCatalogo(r.categoria, tamano), precio_venta: null };
+  const { data, error } = await sb.from('fin_recetas').insert([datos]).select().single();
+  if(error) return finError(error);
+  fin.recetas.push(data);
+  if(partes.length){
+    const res = await sb.from('fin_receta_partes').insert(partes.map((p, k)=> ({ receta_id: data.id, insumo_id: p.insumo_id || null, subreceta_id: p.subreceta_id || null, cantidad: p.cantidad, orden: k }))).select();
+    if(res.error) return finError(res.error);
+    fin.partes.push(...(res.data || []));
+  }
+  finOtroTamano = null;
+  finPila[finPila.length - 1] = { id: data.id }; finSelector = null;
+  pintarFinanzas(); window.scrollTo(0, 0);
+  finMsg(`Listo: ${nombreReceta(data)}. ` + (notas.length ? notas.join(' ') + ' ' : '') + 'Revisa los gramos.');
+}
+async function finEscalarSubreceta(s, nombre, f){
+  const { id: _i, created_at, updated_at, ...resto } = s;
+  const { data, error } = await sb.from('fin_recetas').insert([{ ...resto, nombre, orden: s.orden }]).select().single();
+  if(error){ finError(error); return null; }
+  fin.recetas.push(data);
+  const partes = partesDe(s).map((p, k)=>{ const u = unidadItem(itemDe(p)); return { receta_id: data.id, insumo_id: p.insumo_id, subreceta_id: p.subreceta_id, orden: k,
+    cantidad: p.cantidad == null ? null : (u === 'g' || u === 'ml') ? redondeoG(Number(p.cantidad) * f) : p.cantidad }; });
+  if(partes.length){
+    const res = await sb.from('fin_receta_partes').insert(partes).select();
+    if(res.error){ finError(res.error); return null; }
+    fin.partes.push(...(res.data || []));
+  }
+  return data;
+}
+function finAbrirDesdeEditor(id){ finPila.push({ id }); finSelector = null; finOtroTamano = null; pintarFinanzas(); window.scrollTo(0, 0); }
 
 function precioCampoHtml(d){
   const c = finCatalogo(d.precio_catalogo);
@@ -496,7 +711,8 @@ async function finCambiarReceta(campo, valor){
   const a = finPila[finPila.length - 1]; if(!a) return;
   let v = valor;
   if(['precio_venta','rendimiento'].includes(campo)) v = finNum(valor);
-  if(campo === 'merma') v = Math.min(0.99, Math.max(0, (finNum(valor) || 0) / 100));
+  if(campo === 'merma'){ v = Math.max(0, (finNum(valor) || 0) / 100); if(v >= 0.9){ finMsg('La merma no puede ser de 90% o más. Revisa el número.', true); pintarFinanzas(); return; } }
+  if(campo === 'rendimiento' && v != null && v <= 0){ finMsg('Las piezas que salen tienen que ser más de 0.', true); pintarFinanzas(); return; }
   if(campo === 'nombre'){ v = String(valor).trim(); if(!v){ finMsg('Necesita nombre.', true); pintarFinanzas(); return; } }
   if(campo === 'precio_catalogo') v = valor || null;
   const d = a.borrador ? finBorrador : recPorId(a.id);
@@ -725,6 +941,7 @@ function guardarMaterial(el){
 function vistaFijos(){
   const total = totalFijos(), prom = promedioVentas(), pct = pctFijo(), imp = finImpuesto();
   const ventas = finConfig('ventas_mensuales', []);
+  const sis = mesesSistema(), uso = mesesParaPromedio();
   const filas = fin.fijos.map(f=>{
     const k = 'fij-' + f.id + '-', tm = (Number(f.costo_mensual) || 0) * (1 + (Number(f.prestacion) || 0));
     return `<tr data-id="${f.id}">
@@ -756,10 +973,17 @@ function vistaFijos(){
   </div>
   <div class="fin-dos">
     <div class="seccion-resumen fin-tabla"><h3>Ventas de cada mes</h3>
-      <div class="hint fin-nota">Con estas se saca la venta promedio. Más adelante saldrán solas de las ventas y pedidos del sistema.</div>
-      <div class="tabla-scroll"><table class="tabla-insumos" style="min-width:0;"><thead><tr><th>Mes</th><th>Venta</th><th></th></tr></thead>
-        <tbody>${filasV}<tr class="fin-total"><td>Promedio</td><td class="ins-pieza">${fin2(prom)}</td><td></td></tr></tbody></table></div>
-      <button type="button" class="btn-secundario" onclick="finAgregarVenta()">+ Agregar mes</button>
+      <div class="hint fin-nota">Salen solas del sistema: mostrador + pedidos que se entregan en ese mes (igual que en Resumen). ${uso.fuente === 'sistema' ? `El promedio usa ${uso.meses.length === 1 ? 'el último mes completo' : 'los últimos ' + uso.meses.length + ' meses completos'}.` : 'Todavía no hay un mes completo en el sistema, así que el promedio usa los meses capturados a mano.'}</div>
+      ${sis.length ? `<div class="tabla-scroll"><table class="tabla-insumos" style="min-width:0;"><thead><tr><th>Mes</th><th class="n">Mostrador</th><th class="n">Pedidos</th><th class="n">Total</th><th></th></tr></thead>
+        <tbody>${sis.map(m=>{ const fuera = finConfig('meses_excluidos', []).includes(m.mes); return `<tr><td>${escHtml(nombreMes(m.mes))}${m.completo ? (uso.fuente === 'sistema' && uso.meses.some(x=> x.mes === m.mes) ? ' <span class="fin-falta fin-mano">en el promedio</span>' : fuera ? ' <span class="fin-falta fin-mano">no cuenta</span>' : '') : ' <span class="fin-falta fin-mano">en curso</span>'}</td><td class="n">${fin2(m.local)}</td><td class="n">${fin2(m.pedidos)}</td><td class="n"><b>${fin2(m.total)}</b></td>
+          <td>${m.completo ? `<label class="fe-todo"><input type="checkbox" ${fuera ? '' : 'checked'} onchange="finMesCuenta('${m.mes}', this.checked)"> Cuenta</label>` : ''}</td></tr>`; }).join('')}
+        <tr class="fin-total"><td colspan="3">Promedio que se usa</td><td class="n">${fin2(prom)}</td><td></td></tr></tbody></table></div>
+        <div class="hint">Quita la palomita a un mes que no esté completo en el sistema (por ejemplo, el primer mes que se usó el punto de venta).</div>` : '<div class="empty">Sin ventas en el sistema en los últimos meses.</div>'}
+      <details class="fin-mano-meses"${uso.fuente === 'mano' ? ' open' : ''}><summary>Meses de antes del sistema (a mano)</summary>
+        <div class="tabla-scroll"><table class="tabla-insumos" style="min-width:0;"><thead><tr><th>Mes</th><th>Venta</th><th></th></tr></thead>
+          <tbody>${filasV}</tbody></table></div>
+        <button type="button" class="btn-secundario" onclick="finAgregarVenta()">+ Agregar mes</button>
+      </details>
     </div>
     <div class="seccion-resumen fin-tabla"><h3>Resultado</h3>
       <div class="fe-resultado fe-sola">
@@ -767,6 +991,7 @@ function vistaFijos(){
         ${fila('Venta promedio del mes', fin2(prom))}
         ${fila('% de costo fijo', finPct(pct), 'fe-fuerte')}
         <div class="hint">${banda} A cada producto le toca este % de su precio sin impuesto.</div>
+        ${pct > 0.6 ? '<div class="fe-revisa" style="margin:10px 0 0;"><b>Revisa:</b> un costo fijo tan alto casi siempre es porque un mes de ventas está incompleto en el sistema. Quítale la palomita a ese mes.</div>' : ''}
         <div class="sub-titulo" style="margin-top:16px;">Impuesto que se le quita al precio</div>
         <div class="fin-imp"><input type="text" data-k="imp-n" value="${escHtml(imp.nombre)}" onchange="finGuardarImpuesto('nombre', this.value)" style="width:110px;">
           <div class="ins-precio"><input type="number" inputmode="decimal" data-k="imp-t" value="${finValIn(Math.round(imp.tasa * 1000) / 10)}" onchange="finGuardarImpuesto('tasa', this.value)" style="width:64px;"><span>%</span></div></div>
@@ -818,6 +1043,7 @@ function finGuardarVenta(i, campo, valor){
   v[i][campo] = campo === 'venta' ? finNum(valor) : valor;
   finGuardarConfig('ventas_mensuales', v);
 }
+function finMesCuenta(mes, cuenta){ const f = finConfig('meses_excluidos', []).filter(x=> x !== mes); if(!cuenta) f.push(mes); finGuardarConfig('meses_excluidos', f); }
 function finAgregarVenta(){ finGuardarConfig('ventas_mensuales', [...finConfig('ventas_mensuales', []), { mes:'', venta:null }]); }
 function finQuitarVenta(i){ const v = finConfig('ventas_mensuales', []).slice(); v.splice(i, 1); finGuardarConfig('ventas_mensuales', v); }
 function finGuardarImpuesto(campo, valor){

@@ -848,3 +848,77 @@ begin
   return new;
 end $$;
 
+
+
+-- ===== 033 Finanzas: costeo (merma, categoría y premanejados en insumos; recetas, partes, costos fijos y ajustes). Los datos iniciales del Excel están en sql/historial/033 =====
+
+-- ===== 1) Insumos: merma, categoría y "sale de" =====
+alter table insumos add column if not exists merma numeric not null default 0;
+alter table insumos drop constraint if exists insumos_merma_check;
+alter table insumos add constraint insumos_merma_check check (merma >= 0 and merma < 1);
+alter table insumos add column if not exists categoria text;
+alter table insumos add column if not exists base_id bigint references insumos(id) on delete restrict;
+update insumos set categoria = case when tipo = 'material' then 'Empaque' else 'Ingrediente' end where categoria is null;
+
+-- ===== 2) Tablas nuevas =====
+create table if not exists fin_recetas (
+  id bigint generated always as identity primary key,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  tipo text not null check (tipo in ('subreceta','producto')),
+  nombre text not null,
+  tamano text not null default '',          -- productos: mini / chico / mediano / grande / plancha
+  categoria text,                           -- subrecetas: Pan, Mezcla, Relleno, Cubierta, Decoración, Corona · productos: Pastel, Cheesecake, Rollo…
+  rendimiento numeric check (rendimiento is null or rendimiento > 0),   -- subrecetas: cuánto rinde el lote
+  unidad text not null default 'g' check (unidad in ('g','pza')),
+  merma numeric not null default 0 check (merma >= 0 and merma < 1),
+  precio_venta numeric check (precio_venta is null or precio_venta >= 0),
+  orden int not null default 0,
+  unique (tipo, nombre, tamano)
+);
+create table if not exists fin_receta_partes (
+  id bigint generated always as identity primary key,
+  receta_id bigint not null references fin_recetas(id) on delete cascade,
+  insumo_id bigint references insumos(id) on delete restrict,
+  subreceta_id bigint references fin_recetas(id) on delete restrict,
+  cantidad numeric check (cantidad is null or cantidad >= 0),
+  orden int not null default 0,
+  check (num_nonnulls(insumo_id, subreceta_id) = 1),
+  check (subreceta_id is distinct from receta_id)
+);
+create index if not exists fin_receta_partes_receta on fin_receta_partes (receta_id, orden);
+create table if not exists fin_costos_fijos (
+  id bigint generated always as identity primary key,
+  concepto text not null,
+  detalle text,
+  cantidad numeric,
+  costo_mensual numeric,
+  prestacion numeric not null default 0,     -- % extra (prestaciones de empleados), 0.25 = 25%
+  orden int not null default 0
+);
+create table if not exists fin_config (
+  clave text primary key,
+  valor jsonb not null
+);
+
+alter table fin_recetas enable row level security;
+alter table fin_receta_partes enable row level security;
+alter table fin_costos_fijos enable row level security;
+alter table fin_config enable row level security;
+drop policy if exists "fin_recetas directora" on fin_recetas;
+drop policy if exists "fin_receta_partes directora" on fin_receta_partes;
+drop policy if exists "fin_costos_fijos directora" on fin_costos_fijos;
+drop policy if exists "fin_config directora" on fin_config;
+create policy "fin_recetas directora" on fin_recetas for all to authenticated
+  using (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'))
+  with check (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'));
+create policy "fin_receta_partes directora" on fin_receta_partes for all to authenticated
+  using (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'))
+  with check (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'));
+create policy "fin_costos_fijos directora" on fin_costos_fijos for all to authenticated
+  using (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'))
+  with check (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'));
+create policy "fin_config directora" on fin_config for all to authenticated
+  using (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'))
+  with check (exists (select 1 from perfiles where user_id = auth.uid() and rol = 'director'));
+

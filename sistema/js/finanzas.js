@@ -40,7 +40,7 @@ const FIN_SECCIONES = [
 // al agregar una caja solo salen cajas, al agregar relleno solo rellenos, etc.
 const FIN_GRUPOS = [
   { id:'Pan',         titulo:'Pan',               boton:'Pan' },
-  { id:'Mezcla',      titulo:'Mezcla de pan',     boton:'Mezcla de pan' },
+  { id:'Mezcla',      titulo:'Masa (batida)',     boton:'Masa' },
   { id:'Relleno',     titulo:'Relleno',           boton:'Relleno' },
   { id:'Cubierta',    titulo:'Cubierta o betún',  boton:'Cubierta o betún' },
   { id:'Decoración',  titulo:'Decoración',        boton:'Decoración' },
@@ -272,7 +272,7 @@ async function cargarFinanzas(){
   finCargado = true;
   pintarFinanzas();
 }
-function elegirCategoriaFinanzas(id){ finCategoria = id; finPila = []; finSelector = null; pintarFinanzas(); window.scrollTo(0, 0); }
+function elegirCategoriaFinanzas(id){ finCategoria = id; finPila = []; finSelector = null; finTamPan = null; pintarFinanzas(); window.scrollTo(0, 0); }
 // Repinta y deja el cursor donde estaba (cada campo tiene data-k)
 function pintarFinanzas(cambioId){
   const cont = document.getElementById('insumos-contenido');
@@ -362,28 +362,103 @@ function vistaSinCostear(){
 }
 
 // ---------- Subrecetas ----------
+// Subrecetas en el orden en que se trabaja: 1) masas (la batida), 2) panes por tamaño (cuánta masa lleva cada uno),
+// 3) rellenos, 4) cubiertas, 5) decoración, 6) coronas. Los panes se agrupan por familia (Pan de vainilla: mini, chico…).
+const FIN_SECC_SUB = [
+  { id:'Mezcla',     titulo:'1. Masas (la batida)', nota:'Lo que lleva una batida completa. Lo que rinde se calcula solo: suma de lo que entra menos la merma.', nuevo:'masa' },
+  { id:'Pan',        titulo:'2. Panes por tamaño', nota:'Cada pan dice cuántos gramos de masa lleva; el costo y los ingredientes salen de la masa. Para un tamaño nuevo usa "+ Tamaño".', nuevo:'pan' },
+  { id:'Relleno',    titulo:'3. Rellenos', nuevo:'relleno' },
+  { id:'Cubierta',   titulo:'4. Cubiertas y betunes', nuevo:'cubierta o betún' },
+  { id:'Decoración', titulo:'5. Decoración', nuevo:'decoración' },
+  { id:'Corona',     titulo:'6. Coronas', nuevo:'corona' }
+];
+const FIN_ORDEN_TAM = ['mini','chico','mediano','grande','plancha'];
+function familiaPan(nombre){
+  const t = tamanoEnNombre(nombre);
+  if(!t) return { familia: nombre, tamano: '' };
+  const fam = nombre.replace(new RegExp('\\s*\\b(' + FIN_PAL_TAM[t].join('|') + ')\\b', 'i'), '').trim();
+  return { familia: fam || nombre, tamano: t };
+}
+let finTamPan = null;   // panel "+ Tamaño" abierto en una familia de panes: { familia, tamano, valor }
+function masaDe(pan){ const ps = partesDe(pan).filter(p=> p.subreceta_id && (recPorId(p.subreceta_id) || {}).categoria === 'Mezcla'); return ps.length === 1 ? ps[0] : null; }
+function filaSub(sub){
+  const t = totalReceta(sub), pu = precioSub(sub), usos = usosDe('s', sub.id).length;
+  return `<tr class="fin-fila" onclick="finAbrir(${sub.id})"><td><b>${escHtml(sub.nombre)}</b></td>
+    <td class="n">${rindeSub(sub) ? finCant(Math.round(rindeSub(sub))) + ' ' + (sub.unidad === 'pza' ? 'pza' : 'g') : '—'}</td>
+    <td class="n">${fin2(t.total)}${finRevisar(sub).length ? ' <span class="fin-falta">revisar</span>' : ''}</td>
+    <td class="n"><b>${porUnidad(pu, sub.unidad)}</b></td><td class="n">${usos ? usos + (usos === 1 ? ' receta' : ' recetas') : '—'}</td><td class="fin-ir">Ver ›</td></tr>`;
+}
+function tablaSubs(lista){
+  return `<div class="tabla-scroll"><table class="tabla-insumos fin-lista">
+    <thead><tr><th>Nombre</th><th class="n">Rinde</th><th class="n">Costo del lote</th><th class="n">Costo</th><th class="n">Se usa en</th><th></th></tr></thead>
+    <tbody>${lista.map(filaSub).join('')}</tbody></table></div>`;
+}
+function vistaPanes(panes){
+  const fams = {};
+  panes.forEach(p=>{ const f = familiaPan(p.nombre); (fams[f.familia] = fams[f.familia] || []).push({ pan: p, tamano: f.tamano }); });
+  return Object.entries(fams).sort((a, b)=> a[0].localeCompare(b[0], 'es')).map(([fam, ls])=>{
+    ls.sort((a, b)=> (FIN_ORDEN_TAM.indexOf(a.tamano) + 1 || 99) - (FIN_ORDEN_TAM.indexOf(b.tamano) + 1 || 99));
+    const filas = ls.map(({ pan, tamano })=>{
+      const m = masaDe(pan), pu = precioSub(pan), masa = m ? recPorId(m.subreceta_id) : null;
+      return `<tr>
+        <td><a href="#" onclick="finAbrir(${pan.id}); return false;"><b>${escHtml(tamano ? finTamano(tamano) : pan.nombre)}</b></a></td>
+        <td>${m ? `<div class="fe-cant"><input type="number" inputmode="decimal" data-k="pan-${m.id}" data-sel="1" value="${finValIn(m.cantidad)}" onchange="finCambiarParte(${m.id}, this.value)"><span>g de ${escHtml(masa.nombre.replace(/^Mezcla de /i, 'masa de '))}</span></div>` : '<span class="hint">receta propia</span>'}</td>
+        <td class="n">${pan.unidad === 'pza' && Number(pan.rendimiento) !== 1 ? finCant(pan.rendimiento) + ' pza' : ''}</td>
+        <td class="n"><b>${porUnidad(pu, pan.unidad)}</b>${finRevisar(pan).length ? ' <span class="fin-falta">revisar</span>' : ''}</td>
+        <td class="fin-ir"><a href="#" onclick="finAbrir(${pan.id}); return false;">Ver ›</a></td></tr>`;
+    }).join('');
+    const abierto = finTamPan && finTamPan.familia === fam;
+    const base = ls.find(x=> x.tamano === 'chico') || ls[0];
+    const libres = FIN_ORDEN_TAM.filter(t=> !ls.some(x=> x.tamano === t));
+    let panel = '';
+    if(abierto){
+      const t = finTamPan.tamano && libres.includes(finTamPan.tamano) ? finTamPan.tamano : libres[0];
+      const m = masaDe(base.pan);
+      const sug = m ? redondeoG(Number(m.cantidad) * pctSugerido(base.tamano || 'chico', t) / 100) : pctSugerido(base.tamano || 'chico', t);
+      const valor = finTamPan.valor != null && finTamPan.tamano === t ? finTamPan.valor : sug;
+      panel = libres.length ? `<div class="fe-otro">
+        <div class="fe-crear-campos">
+          <select data-k="tp-tam" onchange="finTamPan={familia:${JSON.stringify(fam).replace(/"/g, '&quot;')}, tamano:this.value}; pintarFinanzas()">${libres.map(x=> `<option value="${x}"${x === t ? ' selected' : ''}>${finTamano(x)}</option>`).join('')}</select>
+          <div class="ins-precio"><input type="number" inputmode="decimal" data-k="tp-val" value="${valor}" onchange="finTamPan.valor=Number(this.value)||null; finTamPan.tamano='${t}'" style="width:90px;"><span>${m ? 'g de masa' : '% del ' + escHtml(finTamano(base.tamano || '').toLowerCase() || 'base')}</span></div>
+          <button type="button" class="primary" onclick="finCrearTamanoPan(${base.pan.id}, '${t}')">Crear ${finTamano(t).toLowerCase()}</button>
+        </div>
+        <div class="hint">${m ? `Sugerido con las personas de cada tamaño del catálogo. Cámbialo a los gramos que de verdad lleva.` : 'Esta receta no sale de una masa: se copian sus ingredientes con ese %.'}</div></div>` : '<div class="hint">Ya tiene todos los tamaños.</div>';
+    }
+    return `<div class="fin-familia"><div class="fin-familia-cab"><b>${escHtml(fam)}</b>
+        <button type="button" class="link-agregar" onclick="finTamPan=${abierto ? 'null' : `{familia:${JSON.stringify(fam).replace(/"/g, '&quot;')}}`}; pintarFinanzas()">${abierto ? 'Cerrar' : '+ Tamaño'}</button></div>
+      <table class="tabla-insumos fin-lista fin-panes"><tbody>${filas}</tbody></table>${panel}</div>`;
+  }).join('');
+}
+async function finCrearTamanoPan(baseId, tamano){
+  const base = recPorId(baseId); if(!base) return;
+  const f0 = familiaPan(base.nombre);
+  const nombre = f0.tamano ? nombreEnTamano(base.nombre, f0.tamano, tamano) : base.nombre + ' ' + tamano;
+  if(fin.recetas.some(x=> x.tipo === 'subreceta' && x.nombre === nombre)){ finMsg(`Ya existe "${nombre}".`, true); return; }
+  const m = masaDe(base);
+  const valor = Number(document.querySelector('[data-k="tp-val"]').value) || 0;
+  if(valor <= 0){ finMsg('Pon cuánto lleva.', true); return; }
+  const f = m ? valor / Number(m.cantidad || 1) : valor / 100;
+  const nuevo = await finEscalarSubreceta(base, nombre, f);
+  if(!nuevo) return;
+  if(m){ const pm = fin.partes.find(p=> p.receta_id === nuevo.id && p.subreceta_id === m.subreceta_id); if(pm && Number(pm.cantidad) !== valor){ const { data } = await sb.from('fin_receta_partes').update({ cantidad: valor }).eq('id', pm.id).select().single(); Object.assign(pm, data || { cantidad: valor }); } }
+  finTamPan = null;
+  pintarFinanzas();
+  finMsg(`Creado ${nombre}. Ya lo puedes usar en los productos.`);
+}
 function vistaSubrecetas(){
   const subs = fin.recetas.filter(r=> r.tipo === 'subreceta');
-  const grupos = [...FIN_CATS_SUBRECETA, ...new Set(subs.map(s=> s.categoria).filter(c=> !FIN_CATS_SUBRECETA.includes(c)))];
-  const bloques = grupos.map(g=>{
-    const ls = subs.filter(s=> s.categoria === g);
-    if(!ls.length) return '';
-    return `<tr class="fin-grupo-fila"><td colspan="6">${escHtml((FIN_GRUPOS.find(x=> x.id === g) || { titulo:g }).titulo)}</td></tr>` + ls.map(s=>{
-      const t = totalReceta(s), pu = precioSub(s), usos = usosDe('s', s.id).length;
-      return `<tr class="fin-fila" onclick="finAbrir(${s.id})"><td><b>${escHtml(s.nombre)}</b></td>
-        <td class="n">${rindeSub(s) ? finCant(Math.round(rindeSub(s))) + ' ' + (s.unidad === 'pza' ? 'pza' : 'g') : '—'}</td>
-        <td class="n">${fin2(t.total)}${finRevisar(s).length ? ' <span class="fin-falta">revisar</span>' : ''}</td>
-        <td class="n"><b>${porUnidad(pu, s.unidad)}</b></td><td class="n">${usos ? usos + (usos === 1 ? ' receta' : ' recetas') : '—'}</td><td class="fin-ir">Ver ›</td></tr>`;
-    }).join('');
-  }).join('');
-  const sinCat = subs.filter(s=> !s.categoria);
-  return `<div class="seccion-resumen fin-tabla">
-    <div class="fin-titulo"><h3>Subrecetas</h3><button type="button" class="btn-secundario" onclick="finNuevaReceta('subreceta')">+ Nueva subreceta</button></div>
-    <div class="hint fin-nota">Lo que se prepara para armar los productos: mezclas, panes por tamaño, rellenos, betunes, coronas. Costo = ingredientes / lo que rinde, más merma.</div>
-    <div class="tabla-scroll"><table class="tabla-insumos fin-lista">
-      <thead><tr><th>Subreceta</th><th class="n">Rinde</th><th class="n">Costo del lote</th><th class="n">Costo</th><th class="n">Se usa en</th><th></th></tr></thead>
-      <tbody>${bloques}${sinCat.map(s=> `<tr class="fin-fila" onclick="finAbrir(${s.id})"><td><b>${escHtml(s.nombre)}</b></td><td colspan="4">Sin categoría</td><td class="fin-ir">Ver ›</td></tr>`).join('')}</tbody></table></div>
-  </div>`;
+  const conocidas = FIN_SECC_SUB.map(x=> x.id);
+  const otras = subs.filter(x=> !conocidas.includes(x.categoria));
+  return `<div class="hint fin-nota fin-pasos">Así se arma el costo: <b>Insumos</b> (precio por gramo) → <b>Masas</b> (la batida) → <b>Panes</b> (gramos de masa por tamaño) → <b>Rellenos y cubiertas</b> → <b>Productos</b> (cuántos panes, cuánto relleno, caja…). Si cambias algo abajo, todo lo de arriba se recalcula.</div>`
+    + FIN_SECC_SUB.map(sec=>{
+      const ls = subs.filter(x=> x.categoria === sec.id);
+      return `<div class="seccion-resumen fin-tabla">
+        <div class="fin-titulo"><h3>${sec.titulo}</h3><button type="button" class="btn-secundario" onclick="finNuevaReceta('subreceta', '${sec.id}')">+ ${sec.id === 'Pan' ? 'Nuevo pan' : 'Nueva ' + sec.nuevo}</button></div>
+        ${sec.nota ? `<div class="hint fin-nota">${sec.nota}</div>` : ''}
+        ${ls.length ? (sec.id === 'Pan' ? vistaPanes(ls) : tablaSubs(ls)) : '<div class="empty">Todavía no hay.</div>'}
+      </div>`;
+    }).join('')
+    + (otras.length ? `<div class="seccion-resumen fin-tabla"><h3>Otras</h3>${tablaSubs(otras)}</div>` : '');
 }
 function usosDe(clase, id){
   return fin.partes.filter(p=> clase === 's' ? p.subreceta_id === id : p.insumo_id === id).map(p=> recPorId(p.receta_id)).filter(Boolean)
@@ -432,7 +507,7 @@ function editorReceta(r){
   const cab = [
     campo('Nombre', `<input type="text" data-k="fe-nombre" value="${escHtml(d.nombre || '')}" onchange="finCambiarReceta('nombre', this.value)">`, 'fe-nombre'),
     esProd ? campo('Tamaño', `<select data-k="fe-tamano" onchange="finCambiarReceta('tamano', this.value)">${finTamanosOpciones().map(([v, t])=> `<option value="${v}"${(d.tamano || '') === v ? ' selected' : ''}>${escHtml(t)}</option>`).join('')}</select>`) : '',
-    campo('Categoría', `<select data-k="fe-cat" onchange="finCambiarReceta('categoria', this.value)">${(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).concat(d.categoria && !(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).includes(d.categoria) ? [d.categoria] : []).map(c=> `<option${d.categoria === c ? ' selected' : ''}>${escHtml(c)}</option>`).join('')}</select>`),
+    campo('Categoría', `<select data-k="fe-cat" onchange="finCambiarReceta('categoria', this.value)">${(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).concat(d.categoria && !(esProd ? FIN_CATS_PRODUCTO : FIN_CATS_SUBRECETA).includes(d.categoria) ? [d.categoria] : []).map(c=> `<option value="${escHtml(c)}"${d.categoria === c ? ' selected' : ''}>${escHtml(esProd ? c : (FIN_GRUPOS.find(g=> g.id === c) || { titulo:c }).titulo)}</option>`).join('')}</select>`),
     esProd ? campo('Precio de venta (sale del catálogo)', precioCampoHtml(d), 'fe-precio-campo') : '',
     !esProd ? campo('Se usa por', `<select data-k="fe-unidad" onchange="finCambiarReceta('unidad', this.value)"><option value="g"${d.unidad !== 'pza' ? ' selected' : ''}>Gramos (rellenos, betunes, masas)</option><option value="pza"${d.unidad === 'pza' ? ' selected' : ''}>Piezas (panes, coronas, porciones)</option></select>`) : '',
     !esProd && d.unidad === 'pza' ? campo('¿Cuántas piezas salen?', `<input type="number" inputmode="decimal" data-k="fe-rinde" value="${finValIn(d.rendimiento)}" placeholder="Ej. 30" onchange="finCambiarReceta('rendimiento', this.value)" style="width:110px;"><div class="hint">Ej.: una plancha da 30 cuchareables → 30.</div>`) : '',
@@ -468,7 +543,7 @@ function editorReceta(r){
       <h3>Costo</h3>
       ${t.faltan.length ? `<div class="msg err">Falta precio de: ${escHtml([...new Set(t.faltan)].join(', '))}.</div>` : ''}
       <div class="fe-res-fila"><span>Costo del lote</span><b>${fin2(t.total)}</b></div>
-      ${d.unidad === 'pza' ? `<div class="fe-res-fila"><span>Salen</span><b>${d.rendimiento ? finCant(d.rendimiento) + ' piezas' : 'falta'}</b></div>
+      ${d.unidad === 'pza' ? `<div class="fe-res-fila"><span>Salen</span><b>${d.rendimiento ? finCant(d.rendimiento) + (Number(d.rendimiento) === 1 ? ' pieza' : ' piezas') : 'falta'}</b></div>
         <div class="fe-res-fila"><span>Merma</span><b>${finPct(Number(d.merma) || 0)}</b></div>`
       : `<div class="fe-res-fila"><span>Entra (suma de ingredientes)</span><b>${finCant(Math.round(pesoEntra(r)))} g</b></div>
         <div class="fe-res-fila"><span>Merma</span><b>${finPct(Number(d.merma) || 0)}</b></div>
@@ -493,6 +568,7 @@ function editorReceta(r){
           ${grupos || '<div class="hint">Todavía no tiene nada. Empieza con los botones de abajo.</div>'}
           ${agregar}
           ${finSelector ? selectorHtml(r) : ''}
+          ${desgloseHtml(r)}
         </div>
         ${resultado}
       </div>
@@ -590,6 +666,37 @@ async function finEscalarSubreceta(s, nombre, f){
     fin.partes.push(...(res.data || []));
   }
   return data;
+}
+// Todos los ingredientes de una receta, bajando por sus subrecetas (ej. el pan chico lleva 450 g de masa →
+// cuánto huevo, harina, aceite… le tocan). Sale de lo que lleva cada receta y lo que rinde: nada se captura dos veces.
+function desglose(r, factor, acc, visit){
+  acc = acc || new Map(); visit = visit || new Set();
+  partesDe(r).forEach(p=>{
+    if(p.cantidad == null) return;
+    const q = Number(p.cantidad) * factor;
+    if(p.insumo_id){ const it = insPorId(p.insumo_id); if(!it) return; const e = acc.get(it.id) || { it, q:0 }; e.q += q; acc.set(it.id, e); return; }
+    const sub = recPorId(p.subreceta_id); if(!sub || visit.has(sub.id)) return;
+    const rinde = rindeSub(sub); if(!rinde) return;
+    visit.add(sub.id);
+    desglose(sub, q / rinde / (sub.unidad === 'pza' ? 1 - (Number(sub.merma) || 0) : 1), acc, visit);
+    visit.delete(sub.id);
+  });
+  return acc;
+}
+function desgloseHtml(r){
+  if(!partesDe(r).some(p=> p.subreceta_id)) return '';
+  const filas = [...desglose(r, 1).values()].sort((a, b)=> grupoItem(a.it).localeCompare(grupoItem(b.it)) || b.q - a.q);
+  if(!filas.length) return '';
+  let total = 0;
+  const html = filas.map(({ it, q })=>{
+    const pu = precioInsumo(it), u = unidadReceta(it), v = pu == null ? null : q * pu;
+    if(v != null) total += v;
+    return `<tr><td>${escHtml(it.nombre)}</td><td class="n">${finCant(u === 'pza' ? Math.round(q * 100) / 100 : Math.round(q * 10) / 10)} ${u === 'pza' ? 'pza' : escHtml(u)}</td><td class="n">${fin2(v)}</td></tr>`;
+  }).join('');
+  return `<details class="fe-desglose"><summary>Ver todos los ingredientes (desglosado)</summary>
+    <div class="hint">Lo que lleva en total, bajando por cada masa, relleno y betún. Sirve para saber cuánto de cada cosa se usa.</div>
+    <div class="tabla-scroll"><table class="tabla-insumos" style="min-width:0;"><thead><tr><th>Insumo</th><th class="n">Cantidad</th><th class="n">Costo</th></tr></thead>
+    <tbody>${html}<tr class="fin-total"><td colspan="2">Total</td><td class="n">${fin2(total)}</td></tr></tbody></table></div></details>`;
 }
 function finAbrirDesdeEditor(id){ finPila.push({ id }); finSelector = null; finOtroTamano = null; pintarFinanzas(); window.scrollTo(0, 0); }
 
@@ -735,11 +842,12 @@ function nombreLibre(tipo, base, tamano){
   while(fin.recetas.some(r=> r.tipo === tipo && r.nombre === n && (r.tamano || '') === (tamano || ''))) n = base + ' ' + k++;
   return n;
 }
-async function finNuevaReceta(tipo){
+async function finNuevaReceta(tipo, cat){
   const datos = tipo === 'producto'
     ? { tipo, nombre: nombreLibre(tipo, 'Producto nuevo', 'chico'), tamano:'chico', categoria: finFiltroProd !== 'Todos' ? finFiltroProd : 'Pastel', unidad:'pza', orden: fin.recetas.length,
         precio_catalogo: finSugerirCatalogo(finFiltroProd !== 'Todos' ? finFiltroProd : 'Pastel', 'chico') }
-    : { tipo, nombre: nombreLibre(tipo, 'Subreceta nueva', ''), tamano:'', categoria:'Relleno', unidad:'g', merma:0, orden: fin.recetas.length };
+    : { tipo, nombre: nombreLibre(tipo, cat === 'Pan' ? 'Pan nuevo chico' : cat === 'Mezcla' ? 'Masa nueva' : 'Subreceta nueva', ''), tamano:'', categoria: cat || 'Relleno',
+        unidad: cat === 'Pan' || cat === 'Corona' ? 'pza' : 'g', rendimiento: cat === 'Pan' || cat === 'Corona' ? 1 : null, merma:0, orden: fin.recetas.length };
   const { data, error } = await sb.from('fin_recetas').insert([datos]).select().single();
   if(error) return finError(error);
   fin.recetas.push(data);

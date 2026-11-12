@@ -225,6 +225,15 @@ button.primary:disabled{background:#A8A296; color:#F3EDE2;}
 .fin-pend{background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:14px 16px;}
 .fin-pend-lista{display:flex; flex-wrap:wrap; gap:8px;} .fin-pend-lista .chip{cursor:pointer;} .fin-pend-lista small{color:var(--cocoa-soft); margin-left:4px;}
 .fin-mano-meses{margin-top:14px;} .fin-mano-meses summary{cursor:pointer; font-weight:700; margin-bottom:8px;}
+.fin-pasos{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:18px !important;}
+.fin-familia{background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:10px 12px; margin-bottom:12px;}
+.fin-familia-cab{display:flex; justify-content:space-between; align-items:center; padding:2px 2px 8px;} .fin-familia-cab b{font-size:16px;}
+.fin-familia-cab .link-agregar{background:none; border:none; cursor:pointer; font-size:14px; font-weight:700;}
+.fin-panes{border:none; min-width:0;} .fin-panes td{padding:6px 8px;} .fin-panes a{color:var(--cocoa);}
+.fin-panes .fe-cant span{min-width:0; white-space:nowrap;}
+.fe-desglose{margin:4px 0 14px; background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:10px 12px;}
+.fe-desglose td.n,.fe-desglose th.n{text-align:right;}
+.fe-desglose summary{cursor:pointer; font-weight:700;} .fe-desglose .hint{margin:6px 0 8px;}
 .fin-dos{display:grid; grid-template-columns:1fr 1fr; gap:0 22px;}
 @media (max-width:820px){ .fin-dos{grid-template-columns:1fr;} }
 .fin-imp{display:flex; gap:8px; align-items:center;} .fin-imp input{margin:0;}

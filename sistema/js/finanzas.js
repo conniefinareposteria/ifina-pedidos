@@ -302,6 +302,9 @@ function pintarFinanzas(cambioId){
   const cont = document.getElementById('insumos-contenido');
   let k = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.k : null;
   if(k && cambioId) k = k.replace('-nuevo-', '-' + cambioId + '-');   // fila recién creada: el cursor sigue en el mismo campo
+  // Si estabas escribiendo en otro campo mientras se guardaba el anterior, lo que llevas escrito no se pierde
+  const act = document.activeElement;
+  const escrito = act && act.dataset && act.dataset.k && act.matches('input') ? act.value : null;
   const msg = document.getElementById('fin-msg');
   const msgPrev = msg ? [msg.className, msg.textContent] : null;
   _memo.clear();
@@ -320,7 +323,7 @@ function pintarFinanzas(cambioId){
     cont.addEventListener('change', ()=>{ const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); });
   }
   if(msgPrev){ const m = document.getElementById('fin-msg'); m.className = msgPrev[0]; m.textContent = msgPrev[1]; }
-  if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(el.select && el.dataset.sel) el.select(); } }
+  if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(escrito != null && el.value !== escrito){ el.value = escrito; const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } else if(el.select && el.dataset.sel) el.select(); } }
   const bus = document.getElementById('fin-sel-buscar'); if(bus && !k) bus.focus();
 }
 

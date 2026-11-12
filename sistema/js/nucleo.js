@@ -85,6 +85,15 @@ function numConComas(el){
     set(v){ _valorInput.set.call(el, document.activeElement === el ? String(v ?? '') : _formatoNum(v)); }
   });
   el.value = crudo;
+  // En iPad (Safari) el "change" no se dispara si el valor final lo acomodó el código (al poner las comas, ej. 40,000),
+  // y entonces no se guardaba. Al salir del campo, si el número cambió y no hubo "change", se dispara aquí (una sola vez).
+  let alEntrar = null, huboChange = false;
+  el.addEventListener('focus', ()=>{ alEntrar = el.value; huboChange = false; });
+  el.addEventListener('change', ()=>{ huboChange = true; });
+  el.addEventListener('blur', ()=>{
+    if(!huboChange && alEntrar !== null && el.value !== alEntrar){ huboChange = true; el.dispatchEvent(new Event('change', { bubbles:true })); }
+    alEntrar = null;
+  });
   // Mientras escribe: solo números y un punto, y las comas se van acomodando
   el.addEventListener('input', ()=>{
     const antes = _valorInput.get.call(el), pos = el.selectionStart || 0;

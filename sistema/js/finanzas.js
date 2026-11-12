@@ -229,6 +229,30 @@ function finRevisar(r){
   return [...new Set(av)];
 }
 
+// ---------- Orden (flechas para acomodar) ----------
+function finOrden(a, b){ return (Number(a.orden) || 0) - (Number(b.orden) || 0) || String(a.nombre || a.concepto || '').localeCompare(String(b.nombre || b.concepto || ''), 'es'); }
+function listaDe(tabla, id){
+  if(tabla === 'fin_costos_fijos') return fin.fijos.slice().sort(finOrden);
+  if(tabla === 'fin_recetas'){ const r = recPorId(id); return fin.recetas.filter(x=> x.tipo === r.tipo && x.categoria === r.categoria).sort(finOrden); }
+  const i = insPorId(id);
+  return fin.insumos.filter(x=> x.tipo === i.tipo && !x.base_id === !i.base_id && (i.tipo !== 'material' || (x.categoria || 'Empaque') === (i.categoria || 'Empaque'))).sort(finOrden);
+}
+function moverHtml(tabla, id){
+  return `<span class="fin-mover"><button type="button" aria-label="Subir" title="Subir" onclick="event.stopPropagation(); finMover('${tabla}', ${id}, -1)">↑</button><button type="button" aria-label="Bajar" title="Bajar" onclick="event.stopPropagation(); finMover('${tabla}', ${id}, 1)">↓</button></span>`;
+}
+async function finMover(tabla, id, dir){
+  const lista = listaDe(tabla, id), k = lista.findIndex(x=> x.id === id), j = k + dir;
+  if(k < 0 || j < 0 || j >= lista.length) return;
+  [lista[k], lista[j]] = [lista[j], lista[k]];
+  const cambios = lista.map((x, n)=> ({ x, n: n + 1 })).filter(({ x, n })=> Number(x.orden) !== n);
+  cambios.forEach(({ x, n })=> x.orden = n);
+  pintarFinanzas();
+  const res = await Promise.all(cambios.map(({ x, n })=> sb.from(tabla).update({ orden: n }).eq('id', x.id)));
+  const e = res.find(r=> r.error);
+  if(e) return finError(e.error);
+  finMsg('Orden guardado');
+}
+
 // ---------- Carga ----------
 function abrirFinanzas(){
   activarVistaDirectora('tab-finanzas', 'view-finanzas');
@@ -287,11 +311,20 @@ function pintarFinanzas(cambioId){
   let cuerpo;
   if(actual) cuerpo = editorReceta(actual.borrador ? 'borrador' : recPorId(actual.id));
   else cuerpo = ({ productos: vistaProductos, subrecetas: vistaSubrecetas, insumos: vistaInsumos, empaques: vistaEmpaques, fijos: vistaFijos, calculadora: vistaCalculadora })[finCategoria]();
-  cont.innerHTML = chips + '<div class="msg" id="fin-msg"></div>' + cuerpo;
+  cont.innerHTML = chips + '<div class="msg fin-msg" id="fin-msg"></div>' + cuerpo + '<button type="button" id="fin-guardar" class="fin-guardar" onmousedown="event.preventDefault()" onclick="finGuardarYa()">Guardar cambio</button>';
+  if(!cont.dataset.eventos){
+    cont.dataset.eventos = '1';
+    // Enter guarda (sale del campo y se dispara el guardado); mientras escribes aparece el botón "Guardar cambio"
+    cont.addEventListener('keydown', e=>{ if(e.key === 'Enter' && e.target.matches('input:not([type=checkbox])')){ e.preventDefault(); e.target.blur(); } });
+    cont.addEventListener('input', e=>{ if(e.target.matches('input[data-k], select[data-k]') && e.target.id !== 'fin-sel-buscar'){ const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } });
+    cont.addEventListener('change', ()=>{ const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); });
+  }
   if(msgPrev){ const m = document.getElementById('fin-msg'); m.className = msgPrev[0]; m.textContent = msgPrev[1]; }
   if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(el.select && el.dataset.sel) el.select(); } }
   const bus = document.getElementById('fin-sel-buscar'); if(bus && !k) bus.focus();
 }
+
+function finGuardarYa(){ const el = document.activeElement; if(el && el.blur) el.blur(); const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); }
 
 // ---------- Productos ----------
 function vistaProductos(){
@@ -386,7 +419,7 @@ function filaSub(sub){
   return `<tr class="fin-fila" onclick="finAbrir(${sub.id})"><td><b>${escHtml(sub.nombre)}</b></td>
     <td class="n">${rindeSub(sub) ? finCant(Math.round(rindeSub(sub))) + ' ' + (sub.unidad === 'pza' ? 'pza' : 'g') : '—'}</td>
     <td class="n">${fin2(t.total)}${finRevisar(sub).length ? ' <span class="fin-falta">revisar</span>' : ''}</td>
-    <td class="n"><b>${porUnidad(pu, sub.unidad)}</b></td><td class="n">${usos ? usos + (usos === 1 ? ' receta' : ' recetas') : '—'}</td><td class="fin-ir">Ver ›</td></tr>`;
+    <td class="n"><b>${porUnidad(pu, sub.unidad)}</b></td><td class="n">${usos ? usos + (usos === 1 ? ' receta' : ' recetas') : '—'}</td><td class="fin-ir">${moverHtml('fin_recetas', sub.id)} Ver ›</td></tr>`;
 }
 function tablaSubs(lista){
   return `<div class="tabla-scroll"><table class="tabla-insumos fin-lista">
@@ -451,7 +484,7 @@ function vistaSubrecetas(){
   const otras = subs.filter(x=> !conocidas.includes(x.categoria));
   return `<div class="hint fin-nota fin-pasos">Así se arma el costo: <b>Insumos</b> (precio por gramo) → <b>Masas</b> (la batida) → <b>Panes</b> (gramos de masa por tamaño) → <b>Rellenos y cubiertas</b> → <b>Productos</b> (cuántos panes, cuánto relleno, caja…). Si cambias algo abajo, todo lo de arriba se recalcula.</div>`
     + FIN_SECC_SUB.map(sec=>{
-      const ls = subs.filter(x=> x.categoria === sec.id);
+      const ls = subs.filter(x=> x.categoria === sec.id).sort(finOrden);
       return `<div class="seccion-resumen fin-tabla">
         <div class="fin-titulo"><h3>${sec.titulo}</h3><button type="button" class="btn-secundario" onclick="finNuevaReceta('subreceta', '${sec.id}')">+ ${sec.id === 'Pan' ? 'Nuevo pan' : 'Nueva ' + sec.nuevo}</button></div>
         ${sec.nota ? `<div class="hint fin-nota">${sec.nota}</div>` : ''}
@@ -774,6 +807,7 @@ async function finCrearDesdeSelector(){
   const datos = info.empaque
     ? { nombre, tipo:'material', categoria: finSelector.grupo, unidad:'pza', cantidad:1, precio, merma:0, updated_at: new Date().toISOString() }
     : { nombre, tipo:'insumo', categoria: ['Decoración','Relleno','Cubierta'].includes(finSelector.grupo) ? finSelector.grupo : 'Ingrediente', unidad: document.getElementById('fe-crear-unidad').value, cantidad: finNum(document.getElementById('fe-crear-cant').value), precio, merma:0, updated_at: new Date().toISOString() };
+  datos.orden = 1 + Math.max(0, ...fin.insumos.filter(x=> x.tipo === datos.tipo && (datos.tipo !== 'material' || x.categoria === datos.categoria)).map(x=> Number(x.orden) || 0));
   const { data, error } = await sb.from('insumos').insert([datos]).select().single();
   if(error) return finError(error, nombre);
   fin.insumos.push(data);
@@ -925,7 +959,7 @@ function filaInsumo(r){
     <td class="ins-pieza">${r.id ? porUnidad(precioInsumo(r), unidadReceta(r)) : ''}</td>
     <td><select class="ins-cat" data-k="${k}g" onchange="guardarInsumo(this)" aria-label="Categoría">${FIN_CATS_INSUMO.concat(r.categoria && !FIN_CATS_INSUMO.includes(r.categoria) ? [r.categoria] : []).map(c=> `<option${(r.categoria || 'Ingrediente') === c ? ' selected' : ''}>${escHtml(c)}</option>`).join('')}</select></td>
     <td class="ins-estado">${fecha ? 'Act. ' + fecha : ''}</td>
-    <td class="c">${r.id ? `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
+    <td class="c fin-acc">${r.id ? moverHtml('insumos', id) + `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
   </tr>`;
 }
 function filaPremanejado(r){
@@ -936,12 +970,12 @@ function filaPremanejado(r){
     <td><select class="pre-base" data-k="${k}b" onchange="guardarPremanejado(this)"><option value="">Elige…</option>${bases.map(b=> `<option value="${b.id}"${r.base_id === b.id ? ' selected' : ''}>${escHtml(b.nombre)}</option>`).join('')}</select></td>
     <td><div class="ins-precio"><input type="number" inputmode="decimal" class="ins-merma" data-k="${k}m" value="${finValIn(Math.round((Number(r.merma) || 0) * 1000) / 10)}" placeholder="0" onchange="guardarPremanejado(this)" style="width:56px;"><span>%</span></div></td>
     <td class="ins-pieza">${r.id ? porUnidad(precioInsumo(r), 'g') : ''}</td>
-    <td class="c">${r.id ? `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
+    <td class="c fin-acc">${r.id ? moverHtml('insumos', id) + `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
   </tr>`;
 }
 function vistaInsumos(){
-  const ins = fin.insumos.filter(i=> i.tipo === 'insumo' && !i.base_id);
-  const pre = fin.insumos.filter(i=> i.tipo === 'insumo' && i.base_id);
+  const ins = fin.insumos.filter(i=> i.tipo === 'insumo' && !i.base_id).sort(finOrden);
+  const pre = fin.insumos.filter(i=> i.tipo === 'insumo' && i.base_id).sort(finOrden);
   return `<div class="seccion-resumen fin-tabla"><h3>Insumos</h3>
     <div class="hint fin-nota">Lo que compras: cuánto trae la presentación, cuánto cuesta y cuánto se pierde (merma: cáscaras, lo que queda en el bote…). El costo real ya incluye la merma. Se guarda solo al cambiar un dato; cada cambio de precio queda en el historial.</div>
     <input type="text" class="fin-buscar" placeholder="Buscar insumo" oninput="finFiltrarFilas('insumos-filas-insumo', this.value)">
@@ -976,6 +1010,7 @@ async function finGuardarInsumoFila(tr, datos){
   const est = tr.querySelector('.ins-estado'); if(est) est.textContent = 'Guardando...';
   const esNuevo = tr.dataset.id === 'nuevo';
   datos.updated_at = new Date().toISOString();
+  if(esNuevo) datos.orden = 1 + Math.max(0, ...fin.insumos.filter(x=> x.tipo === datos.tipo && !x.base_id === !datos.base_id && (datos.tipo !== 'material' || x.categoria === datos.categoria)).map(x=> Number(x.orden) || 0));
   const q = esNuevo ? sb.from('insumos').insert([datos]).select().single() : sb.from('insumos').update(datos).eq('id', Number(tr.dataset.id)).select().single();
   const { data, error } = await q;
   if(error){ if(est) est.textContent = ''; return finError(error, datos.nombre); }
@@ -1023,7 +1058,7 @@ function filaMaterial(r){
     <td class="ins-pieza">${r.id ? porUnidad(precioInsumo(r), 'pza') : ''}</td>
     <td><select class="ins-cat" data-k="${k}g" onchange="guardarMaterial(this)" aria-label="Tipo">${FIN_CATS_EMPAQUE.map(c=> `<option value="${c.id}"${(r.categoria || 'Empaque') === c.id ? ' selected' : ''}>${c.titulo}</option>`).join('')}</select></td>
     <td class="ins-estado">${fecha ? 'Act. ' + fecha : ''}</td>
-    <td class="c">${r.id ? `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
+    <td class="c fin-acc">${r.id ? moverHtml('insumos', id) + `<button type="button" class="ins-quitar" aria-label="Quitar" onclick="quitarInsumo(${id})">×</button>` : ''}</td>
   </tr>`;
 }
 function vistaEmpaques(){
@@ -1032,7 +1067,7 @@ function vistaEmpaques(){
     ${c.id === 'Caja' ? '<div class="hint fin-nota">Cajas, bases y otros empaques por pieza (si compras un paquete, pon cuántas piezas trae y el precio del paquete). Lo que agregues aquí sale en los productos al tocar "+ Caja", "+ Base" u "+ Otro empaque".</div>' : ''}
     <div class="tabla-scroll"><table class="tabla-insumos">
       <thead><tr><th>${c.id === 'Empaque' ? 'Empaque' : c.titulo.slice(0, -1)}</th><th>Piezas</th><th>Precio</th><th>Por pieza</th><th>Tipo</th><th></th><th></th></tr></thead>
-      <tbody id="insumos-filas-material-${c.id}">${mats.filter(m=> (m.categoria || 'Empaque') === c.id).map(filaMaterial).join('')}</tbody>
+      <tbody id="insumos-filas-material-${c.id}">${mats.filter(m=> (m.categoria || 'Empaque') === c.id).sort(finOrden).map(filaMaterial).join('')}</tbody>
     </table></div>
     <button type="button" class="btn-secundario" onclick="agregarFilaInsumo('material', '${c.id}')">+ Agregar ${c.uno}</button>
   </div>`).join('');
@@ -1050,7 +1085,7 @@ function vistaFijos(){
   const total = totalFijos(), prom = promedioVentas(), pct = pctFijo(), imp = finImpuesto();
   const ventas = finConfig('ventas_mensuales', []);
   const sis = mesesSistema(), uso = mesesParaPromedio();
-  const filas = fin.fijos.map(f=>{
+  const filas = fin.fijos.slice().sort(finOrden).map(f=>{
     const k = 'fij-' + f.id + '-', tm = (Number(f.costo_mensual) || 0) * (1 + (Number(f.prestacion) || 0));
     return `<tr data-id="${f.id}">
       <td><input type="text" data-k="${k}c" value="${escHtml(f.concepto || '')}" onchange="finGuardarFijo(${f.id}, 'concepto', this.value)" placeholder="Ej. Renta"></td>
@@ -1058,7 +1093,7 @@ function vistaFijos(){
       <td><div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" data-k="${k}m" value="${finValIn(f.costo_mensual)}" onchange="finGuardarFijo(${f.id}, 'costo_mensual', this.value)" placeholder="0"></div></td>
       <td><div class="ins-precio"><input type="number" inputmode="decimal" data-k="${k}p" value="${finValIn(Math.round((Number(f.prestacion) || 0) * 1000) / 10)}" onchange="finGuardarFijo(${f.id}, 'prestacion', this.value)" placeholder="0" style="width:56px;"><span>%</span></div></td>
       <td class="ins-pieza">${fin2(tm)}</td><td class="ins-pieza">${fin2(tm / 30.4)}</td>
-      <td class="c"><button type="button" class="ins-quitar" aria-label="Quitar" onclick="finQuitarFijo(${f.id})">×</button></td></tr>`;
+      <td class="c fin-acc">${moverHtml('fin_costos_fijos', f.id)}<button type="button" class="ins-quitar" aria-label="Quitar" onclick="finQuitarFijo(${f.id})">×</button></td></tr>`;
   }).join('');
   const filasV = ventas.map((v, i)=> `<tr><td><input type="text" data-k="ven-${i}-m" value="${escHtml(v.mes || '')}" onchange="finGuardarVenta(${i}, 'mes', this.value)" placeholder="Ej. Junio 2026"></td>
     <td><div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" data-k="ven-${i}-v" value="${finValIn(v.venta)}" onchange="finGuardarVenta(${i}, 'venta', this.value)" placeholder="0" style="width:110px;"></div></td>
@@ -1129,7 +1164,7 @@ async function finGuardarFijo(id, campo, valor){
   finMsg('Guardado'); pintarFinanzas();
 }
 async function finAgregarFijo(){
-  const { data, error } = await sb.from('fin_costos_fijos').insert([{ concepto:'Nuevo gasto', orden: fin.fijos.length }]).select().single();
+  const { data, error } = await sb.from('fin_costos_fijos').insert([{ concepto:'Nuevo gasto', orden: 1 + Math.max(0, ...fin.fijos.map(f=> Number(f.orden) || 0)) }]).select().single();
   if(error) return finError(error);
   fin.fijos.push(data); pintarFinanzas();
   const e = document.querySelector(`[data-k="fij-${data.id}-c"]`); if(e){ e.focus(); e.select(); }

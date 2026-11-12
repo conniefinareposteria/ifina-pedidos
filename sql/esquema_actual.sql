@@ -927,3 +927,11 @@ create policy "fin_config directora" on fin_config for all to authenticated
 -- ===== 034 Finanzas: precio de venta ligado al catálogo =====
 
 alter table fin_recetas add column if not exists precio_catalogo text;   -- ej. tamanos_pastel:chico, individuales:galletas_coco, panques:panque_platano
+
+
+-- ===== 035 Finanzas: lo que rinde una subreceta en gramos se calcula (suma de lo que entra × (1 − merma)); rendimiento solo para piezas =====
+-- (solo ajustó datos: merma de cada subreceta y rendimiento = null en las de gramos)
+
+-- ===== 036 Finanzas: orden manual de insumos y empaques =====
+
+alter table insumos add column if not exists orden int not null default 0;

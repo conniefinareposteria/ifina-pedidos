@@ -86,13 +86,16 @@ function numConComas(el){
   });
   el.value = crudo;
   // En iPad (Safari) el "change" no se dispara si el valor final lo acomodó el código (al poner las comas, ej. 40,000),
-  // y entonces no se guardaba. Al salir del campo, si el número cambió y no hubo "change", se dispara aquí (una sola vez).
-  let alEntrar = null, huboChange = false;
-  el.addEventListener('focus', ()=>{ alEntrar = el.value; huboChange = false; });
-  el.addEventListener('change', ()=>{ huboChange = true; });
+  // y entonces no se guardaba. Regla: si la persona tecleó y el número quedó distinto al último guardado,
+  // al salir del campo se dispara el "change" (una sola vez; en Chrome el change normal ya llega antes y no se repite).
+  // El punto de partida es el valor con el que se pintó el campo (no el del momento del foco: a veces el foco llega antes que esto).
+  let base = String(el.getAttribute('value') ?? '').replace(/,/g, '');
+  let tecleo = el.dataset.tecleo === '1';
+  el.addEventListener('input', ()=>{ tecleo = true; });
+  el.addEventListener('change', ()=>{ base = el.value; tecleo = false; });
   el.addEventListener('blur', ()=>{
-    if(!huboChange && alEntrar !== null && el.value !== alEntrar){ huboChange = true; el.dispatchEvent(new Event('change', { bubbles:true })); }
-    alEntrar = null;
+    if(tecleo && el.value !== base) el.dispatchEvent(new Event('change', { bubbles:true }));
+    tecleo = false;
   });
   // Mientras escribe: solo números y un punto, y las comas se van acomodando
   el.addEventListener('input', ()=>{

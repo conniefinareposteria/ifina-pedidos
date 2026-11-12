@@ -323,10 +323,13 @@ function pintarFinanzas(cambioId){
     cont.addEventListener('change', ()=>{ const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); });
   }
   if(msgPrev){ const m = document.getElementById('fin-msg'); m.className = msgPrev[0]; m.textContent = msgPrev[1]; }
-  if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(escrito != null && el.value !== escrito){ el.value = escrito; const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } else if(el.select && el.dataset.sel) el.select(); } }
+  if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(escrito != null && el.value !== escrito){ el.dataset.tecleo = '1'; el.value = escrito; const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } else if(el.select && el.dataset.sel) el.select(); } }
   const bus = document.getElementById('fin-sel-buscar'); if(bus && !k) bus.focus();
 }
 
+// Después de guardar se repinta en la siguiente vuelta, cuando el cursor ya llegó al campo siguiente
+// (si no, el repintado se lo "roba" y lo que escribes cae en otro campo).
+function finRepintar(cambioId){ setTimeout(()=> pintarFinanzas(cambioId), 0); }
 function finGuardarYa(){ const el = document.activeElement; if(el && el.blur) el.blur(); const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); }
 
 // ---------- Productos ----------
@@ -841,7 +844,7 @@ async function finCambiarParte(id, valor){
   if(error) return finError(error);
   const i = fin.partes.findIndex(x=> x.id === id); if(i >= 0) fin.partes[i] = data || { ...fin.partes[i], cantidad };
   finMsg('Guardado');
-  pintarFinanzas();
+  finRepintar();
 }
 async function finQuitarParte(id){
   if(id < 0){ finBorrador.partes = finBorrador.partes.filter(x=> x.id !== id); pintarFinanzas(); return; }
@@ -872,7 +875,7 @@ async function finCambiarReceta(campo, valor){
   if(error){ finError(error, campo === 'nombre' || campo === 'tamano' ? 'mismo nombre y tamaño' : ''); pintarFinanzas(); return; }
   const i = fin.recetas.findIndex(x=> x.id === a.id); if(i >= 0) fin.recetas[i] = data || { ...fin.recetas[i], ...cambios };
   finMsg('Guardado');
-  pintarFinanzas();
+  finRepintar();
 }
 function nombreLibre(tipo, base, tamano){
   let n = base, k = 2;
@@ -1020,7 +1023,7 @@ async function finGuardarInsumoFila(tr, datos){
   const i = fin.insumos.findIndex(x=> x.id === data.id);
   if(i >= 0) fin.insumos[i] = data; else fin.insumos.push(data);
   finMsg('Guardado: ' + data.nombre);
-  pintarFinanzas(esNuevo ? data.id : null);
+  finRepintar(esNuevo ? data.id : null);
 }
 function guardarInsumo(el){
   const tr = el.closest('tr');
@@ -1080,7 +1083,7 @@ function guardarMaterial(el){
   const v = s=> tr.querySelector(s).value;
   const cantidad = finNum(v('.ins-cantidad')), precio = finNum(v('.ins-precio-in'));
   finGuardarInsumoFila(tr, { nombre: v('.ins-nombre').trim(), tipo:'material', unidad:'pza', categoria: v('.ins-cat'),
-    cantidad: cantidad > 0 ? cantidad : (tr.dataset.id === 'nuevo' ? 1 : null), precio: precio >= 0 ? precio : null, merma: 0 });
+    cantidad: cantidad > 0 ? cantidad : 1, precio: precio >= 0 ? precio : null, merma: 0 });   // sin piezas = 1 pieza
 }
 
 // ---------- Costos fijos ----------
@@ -1164,7 +1167,7 @@ async function finGuardarFijo(id, campo, valor){
   const { data, error } = await sb.from('fin_costos_fijos').update({ [campo]: v }).eq('id', id).select().single();
   if(error) return finError(error);
   const i = fin.fijos.findIndex(x=> x.id === id); if(i >= 0) fin.fijos[i] = data || { ...fin.fijos[i], [campo]: v };
-  finMsg('Guardado'); pintarFinanzas();
+  finMsg('Guardado'); finRepintar();
 }
 async function finAgregarFijo(){
   const { data, error } = await sb.from('fin_costos_fijos').insert([{ concepto:'Nuevo gasto', orden: 1 + Math.max(0, ...fin.fijos.map(f=> Number(f.orden) || 0)) }]).select().single();
@@ -1182,7 +1185,7 @@ async function finQuitarFijo(id){
 async function finGuardarConfig(clave, valor){
   const { error } = await sb.from('fin_config').upsert({ clave, valor });
   if(error) return finError(error);
-  fin.config[clave] = valor; finMsg('Guardado'); pintarFinanzas();
+  fin.config[clave] = valor; finMsg('Guardado'); finRepintar();
 }
 function finGuardarVenta(i, campo, valor){
   const v = finConfig('ventas_mensuales', []).map(x=> ({ ...x }));

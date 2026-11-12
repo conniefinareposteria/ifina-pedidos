@@ -304,7 +304,7 @@ function pintarFinanzas(cambioId){
   if(k && cambioId) k = k.replace('-nuevo-', '-' + cambioId + '-');   // fila recién creada: el cursor sigue en el mismo campo
   // Si estabas escribiendo en otro campo mientras se guardaba el anterior, lo que llevas escrito no se pierde
   const act = document.activeElement;
-  const escrito = act && act.dataset && act.dataset.k && act.matches('input') ? act.value : null;
+  const escrito = act && act.dataset && act.dataset.k && act.dataset.tecleado === '1' && act.matches('input') ? act.value : null;   // solo si de verdad tecleaste ahí
   const msg = document.getElementById('fin-msg');
   const msgPrev = msg ? [msg.className, msg.textContent] : null;
   _memo.clear();
@@ -319,11 +319,11 @@ function pintarFinanzas(cambioId){
     cont.dataset.eventos = '1';
     // Enter guarda (sale del campo y se dispara el guardado); mientras escribes aparece el botón "Guardar cambio"
     cont.addEventListener('keydown', e=>{ if(e.key === 'Enter' && e.target.matches('input:not([type=checkbox])')){ e.preventDefault(); e.target.blur(); } });
-    cont.addEventListener('input', e=>{ if(e.target.matches('input[data-k], select[data-k]') && e.target.id !== 'fin-sel-buscar'){ const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } });
-    cont.addEventListener('change', ()=>{ const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); });
+    cont.addEventListener('input', e=>{ if(e.target.matches('input[data-k], select[data-k]') && e.target.id !== 'fin-sel-buscar'){ e.target.dataset.tecleado = '1'; const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } });
+    cont.addEventListener('change', e=>{ if(e.target.dataset) delete e.target.dataset.tecleado; const b = document.getElementById('fin-guardar'); if(b) b.classList.remove('on'); });
   }
   if(msgPrev){ const m = document.getElementById('fin-msg'); m.className = msgPrev[0]; m.textContent = msgPrev[1]; }
-  if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(escrito != null && el.value !== escrito){ el.dataset.tecleo = '1'; el.value = escrito; const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } else if(el.select && el.dataset.sel) el.select(); } }
+  if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(escrito != null && el.value !== escrito){ el.dataset.tecleo = '1'; el.dataset.tecleado = '1'; el.value = escrito; const b = document.getElementById('fin-guardar'); if(b) b.classList.add('on'); } else if(el.select && el.dataset.sel) el.select(); } }
   const bus = document.getElementById('fin-sel-buscar'); if(bus && !k) bus.focus();
 }
 

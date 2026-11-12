@@ -97,7 +97,9 @@
         let data = uno ? (r[0] || null) : r;
         if(tabla === 'perfiles') data = soloUno ? { rol: window.__ROL || 'director' } : data;
         if(accion !== 'select' && !conSelect) data = null;
-        return Promise.resolve({ data: JSON.parse(JSON.stringify(data)), error: null }).then(ok, fail);
+        const resp = { data: JSON.parse(JSON.stringify(data)), error: null };
+        // LATENCIA=ms simula la red real (las respuestas llegan después, como en Supabase)
+        return (window.__LATENCIA ? new Promise(r=> setTimeout(r, window.__LATENCIA)) : Promise.resolve()).then(()=> resp).then(ok, fail);
       }
     };
     return q;

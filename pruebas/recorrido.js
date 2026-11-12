@@ -23,15 +23,16 @@ async function abrir(browser, rol){
   Object.defineProperty(huella, 'rol', { value: rol, enumerable: false });
   page.on('pageerror', e => huella.errores.push(e.message));
   page.on('console', m => { if(m.type() === 'error') huella.errores.push('console: ' + m.text()); });
-  await page.addInitScript(rol => {
+  await page.addInitScript(([rol, lat]) => {
     window.__ROL = rol;
+    window.__LATENCIA = lat;
     window.__dialogos = [];
     window.confirm = (t) => { window.__dialogos.push(['confirm', t]); return true; };
     window.alert = (t) => { window.__dialogos.push(['alert', t]); };
     window.prompt = (t) => { window.__dialogos.push(['prompt', t]); return window.__respuestaPrompt || '100'; };
     window.__impresiones = [];
     window.open = () => { const doc = { _h:'', open(){}, write(h){ this._h += h; }, close(){ window.__impresiones.push(this._h); } }; return { document: doc }; };
-  }, rol);
+  }, [rol, Number(process.env.LATENCIA) || 0]);
   await page.addInitScript({ path: path.join(__dirname, 'finanzas-datos.js') });
   // Simula el iPad (Safari): no dispara "change" cuando el valor final lo acomodó el código (números con comas)
   await page.addInitScript(() => {

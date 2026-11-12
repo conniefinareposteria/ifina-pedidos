@@ -196,6 +196,7 @@ async function paso(page, huella, nombre, fn){
       await page.keyboard.type('Nomina'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); await page.keyboard.type('Pablo'); await page.keyboard.press('Tab'); await page.waitForTimeout(200);
       await page.keyboard.type('30000'); await page.keyboard.press('Enter'); await page.waitForTimeout(300); });
     await paso(page, huella, 'finanzas boton guardar', async()=>{ const k = await page.evaluate(()=> fin.fijos.find(f=> f.concepto === 'Luz').id); const f = `[data-k="fij-${k}-m"]`; await page.click(f); await page.fill(f,'1800'); await page.waitForTimeout(100); await page.click('#fin-guardar'); await page.waitForTimeout(300); });
+    await paso(page, huella, 'finanzas venta promedio a mano', async()=>{ await page.fill('[data-k="venta-manual"]','350000'); await page.press('[data-k="venta-manual"]','Enter'); await page.waitForTimeout(300); });
     await paso(page, huella, 'finanzas mover gasto', async()=>{ await page.click('#fin-fijos tr:nth-child(2) .fin-mover button[aria-label="Subir"]'); await page.waitForTimeout(300); });
     await paso(page, huella, 'finanzas mover caja', async()=>{ await page.click('.cf-chips .chip:has-text("Empaques")'); await page.click('#insumos-filas-material-Caja tr:nth-child(3) .fin-mover button[aria-label="Subir"]'); await page.waitForTimeout(300); await page.click('.cf-chips .chip:has-text("Costos fijos")'); });
     await paso(page, huella, 'finanzas calculadora', ()=> page.click('.cf-chips .chip:has-text("Calculadora")'));

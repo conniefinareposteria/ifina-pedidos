@@ -147,15 +147,19 @@ function mesesSistema(){
   const hoy = new Date(), actual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
   return Object.entries(fin.ventasMes || {}).sort((a, b)=> a[0] < b[0] ? 1 : -1).map(([mes, v])=> ({ mes, ...v, total: v.local + v.pedidos, completo: mes < actual }));
 }
+// Venta promedio del mes: si pusiste una a mano (mientras el sistema junta meses completos), se usa esa.
+// Si está vacía, se usa el promedio de los últimos 3 meses completos del sistema (los que tengan palomita).
 function mesesParaPromedio(){
   const fuera = finConfig('meses_excluidos', []);
-  const comp = mesesSistema().filter(m=> m.completo && m.total > 0 && !fuera.includes(m.mes)).slice(0, 3);
-  if(comp.length) return { fuente:'sistema', meses: comp.map(m=> ({ mes: m.mes, venta: m.total })) };
-  return { fuente:'mano', meses: finConfig('ventas_mensuales', []).filter(x=> Number(x.venta) > 0) };
+  return mesesSistema().filter(m=> m.completo && m.total > 0 && !fuera.includes(m.mes)).slice(0, 3);
 }
-function promedioVentas(){ const v = mesesParaPromedio().meses.map(x=> Number(x.venta)); return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : 0; }
+function ventaManual(){ const v = Number(finConfig('venta_promedio_manual', null)); return v > 0 ? v : null; }
+function promedioSistema(){ const v = mesesParaPromedio().map(m=> m.total); return v.length ? v.reduce((a, b)=> a + b, 0) / v.length : 0; }
+function promedioVentas(){ return ventaManual() || promedioSistema(); }
 function nombreMes(m){ const [a, n] = m.split('-'); return ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][Number(n) - 1] + ' ' + a; }
-function pctFijo(){ const p = promedioVentas(); return p > 0 ? totalFijos() / p : 0; }
+// % de costo fijo = costos fijos del mes ÷ venta del mes SIN impuesto (porque se aplica al precio sin impuesto).
+function ventaNetaMes(){ return promedioVentas() / (1 + finImpuesto().tasa); }
+function pctFijo(){ const n = ventaNetaMes(); return n > 0 ? totalFijos() / n : 0; }
 // Precios del catálogo (los mismos que usa Nuevo pedido y el punto de venta)
 const FIN_CATALOGO_GRUPOS = { tamanos_pastel:'Pasteles y cheesecakes (por tamaño)', individuales:'Cuchareables, cupcake e individuales', panques:'Panqués' };
 function finCatalogoEtiqueta(c){ return c.tabla === 'tamanos_pastel' ? 'Tamaño ' + formatNombre(c.clave).toLowerCase() : formatNombre(c.clave); }
@@ -1089,8 +1093,7 @@ function guardarMaterial(el){
 // ---------- Costos fijos ----------
 function vistaFijos(){
   const total = totalFijos(), prom = promedioVentas(), pct = pctFijo(), imp = finImpuesto();
-  const ventas = finConfig('ventas_mensuales', []);
-  const sis = mesesSistema(), uso = mesesParaPromedio();
+  const sis = mesesSistema(), uso = mesesParaPromedio(), neta = ventaNetaMes();
   const filas = fin.fijos.slice().sort(finOrden).map(f=>{
     const k = 'fij-' + f.id + '-', tm = (Number(f.costo_mensual) || 0) * (1 + (Number(f.prestacion) || 0));
     return `<tr data-id="${f.id}">
@@ -1101,9 +1104,6 @@ function vistaFijos(){
       <td class="ins-pieza">${fin2(tm)}</td><td class="ins-pieza">${fin2(tm / 30.4)}</td>
       <td class="c fin-acc">${moverHtml('fin_costos_fijos', f.id)}<button type="button" class="ins-quitar" aria-label="Quitar" onclick="finQuitarFijo(${f.id})">×</button></td></tr>`;
   }).join('');
-  const filasV = ventas.map((v, i)=> `<tr><td><input type="text" data-k="ven-${i}-m" value="${escHtml(v.mes || '')}" onchange="finGuardarVenta(${i}, 'mes', this.value)" placeholder="Ej. Junio 2026"></td>
-    <td><div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" data-k="ven-${i}-v" value="${finValIn(v.venta)}" onchange="finGuardarVenta(${i}, 'venta', this.value)" placeholder="0" style="width:110px;"></div></td>
-    <td class="c"><button type="button" class="ins-quitar" aria-label="Quitar" onclick="finQuitarVenta(${i})">×</button></td></tr>`).join('');
   const banda = pct <= 0.25 ? 'De 0% a 25%: hay espacio para invertir en estrategia.' : pct < 0.5 ? 'De 26% a 49%: dentro de lo sano; buscar ahorros donde se pueda.' : '50% o más: los gastos fijos son muy altos para lo que se vende.';
   // Punto de equilibrio con el promedio de los productos (precio sin impuesto)
   const prods = fin.recetas.filter(r=> r.tipo === 'producto').map(resumenProducto).filter(s=> s.neto != null);
@@ -1121,26 +1121,26 @@ function vistaFijos(){
     <button type="button" class="btn-secundario" onclick="finAgregarFijo()">+ Agregar gasto fijo</button>
   </div>
   <div class="fin-dos">
-    <div class="seccion-resumen fin-tabla"><h3>Ventas de cada mes</h3>
-      <div class="hint fin-nota">Salen solas del sistema: mostrador + pedidos que se entregan en ese mes (igual que en Resumen). ${uso.fuente === 'sistema' ? `El promedio usa ${uso.meses.length === 1 ? 'el último mes completo' : 'los últimos ' + uso.meses.length + ' meses completos'}.` : 'Todavía no hay un mes completo en el sistema, así que el promedio usa los meses capturados a mano.'}</div>
+    <div class="seccion-resumen fin-tabla"><h3>Venta del mes</h3>
+      <div class="field"><label>Venta promedio del mes (la pones tú, por ahora)</label>
+        <div class="ins-precio"><span>$</span><input type="number" inputmode="decimal" data-k="venta-manual" value="${finValIn(ventaManual())}" placeholder="Ej. 350,000" onchange="finGuardarVentaManual(this.value)" style="width:150px;"></div>
+        <div class="hint">Pon el promedio real de tus últimos meses (con IEPS, lo que cobras). ${ventaManual() ? 'Se está usando este número.' : 'Está vacío: se usa el promedio del sistema.'} Cuando el sistema ya tenga meses completos, borra este número y se usará solo el del sistema.</div>
+      </div>
+      <div class="sub-titulo" style="margin-top:14px;">Lo que registra el sistema (se llena solo)</div>
+      <div class="hint fin-nota">Mostrador + pedidos que se entregan en ese mes, igual que en Resumen. Quita la palomita a un mes que no esté completo.</div>
       ${sis.length ? `<div class="tabla-scroll"><table class="tabla-insumos" style="min-width:0;"><thead><tr><th>Mes</th><th class="n">Mostrador</th><th class="n">Pedidos</th><th class="n">Total</th><th></th></tr></thead>
-        <tbody>${sis.map(m=>{ const fuera = finConfig('meses_excluidos', []).includes(m.mes); return `<tr><td>${escHtml(nombreMes(m.mes))}${m.completo ? (uso.fuente === 'sistema' && uso.meses.some(x=> x.mes === m.mes) ? ' <span class="fin-falta fin-mano">en el promedio</span>' : fuera ? ' <span class="fin-falta fin-mano">no cuenta</span>' : '') : ' <span class="fin-falta fin-mano">en curso</span>'}</td><td class="n">${fin2(m.local)}</td><td class="n">${fin2(m.pedidos)}</td><td class="n"><b>${fin2(m.total)}</b></td>
+        <tbody>${sis.map(m=>{ const fuera = finConfig('meses_excluidos', []).includes(m.mes); return `<tr><td>${escHtml(nombreMes(m.mes))}${m.completo ? (fuera ? ' <span class="fin-falta fin-mano">no cuenta</span>' : '') : ' <span class="fin-falta fin-mano">en curso</span>'}</td><td class="n">${fin2(m.local)}</td><td class="n">${fin2(m.pedidos)}</td><td class="n"><b>${fin2(m.total)}</b></td>
           <td>${m.completo ? `<label class="fe-todo"><input type="checkbox" ${fuera ? '' : 'checked'} onchange="finMesCuenta('${m.mes}', this.checked)"> Cuenta</label>` : ''}</td></tr>`; }).join('')}
-        <tr class="fin-total"><td colspan="3">Promedio que se usa</td><td class="n">${fin2(prom)}</td><td></td></tr></tbody></table></div>
-        <div class="hint">Quita la palomita a un mes que no esté completo en el sistema (por ejemplo, el primer mes que se usó el punto de venta).</div>` : '<div class="empty">Sin ventas en el sistema en los últimos meses.</div>'}
-      <details class="fin-mano-meses"${uso.fuente === 'mano' ? ' open' : ''}><summary>Meses de antes del sistema (a mano)</summary>
-        <div class="tabla-scroll"><table class="tabla-insumos" style="min-width:0;"><thead><tr><th>Mes</th><th>Venta</th><th></th></tr></thead>
-          <tbody>${filasV}</tbody></table></div>
-        <button type="button" class="btn-secundario" onclick="finAgregarVenta()">+ Agregar mes</button>
-      </details>
+        <tr class="fin-total"><td colspan="3">${uso.length ? `Promedio del sistema (${uso.length === 1 ? 'último mes completo' : 'últimos ' + uso.length + ' meses completos'})` : 'Promedio del sistema: todavía no hay un mes completo'}</td><td class="n">${uso.length ? fin2(promedioSistema()) : '—'}</td><td></td></tr></tbody></table></div>` : '<div class="empty">Sin ventas en el sistema en los últimos meses.</div>'}
     </div>
     <div class="seccion-resumen fin-tabla"><h3>Resultado</h3>
       <div class="fe-resultado fe-sola">
         ${fila('Costos fijos del mes', fin2(total))}
-        ${fila('Venta promedio del mes', fin2(prom))}
+        ${fila(`Venta del mes (${ventaManual() ? 'la que pusiste' : 'promedio del sistema'})`, fin2(prom))}
+        ${fila(`Venta del mes sin ${escHtml(imp.nombre)}`, fin2(neta))}
         ${fila('% de costo fijo', finPct(pct), 'fe-fuerte')}
-        <div class="hint">${banda} A cada producto le toca este % de su precio sin impuesto.</div>
-        ${pct > 0.6 ? '<div class="fe-revisa" style="margin:10px 0 0;"><b>Revisa:</b> un costo fijo tan alto casi siempre es porque un mes de ventas está incompleto en el sistema. Quítale la palomita a ese mes.</div>' : ''}
+        <div class="hint">Cómo sale: ${fin2(total)} de costos fijos ÷ ${fin2(neta)} de venta sin ${escHtml(imp.nombre)} = ${finPct(pct)}. A cada producto le toca ese % de su precio sin ${escHtml(imp.nombre)}. ${banda}</div>
+        ${!prom ? '<div class="fe-revisa" style="margin:10px 0 0;"><b>Revisa:</b> no hay venta del mes. Pon tu venta promedio arriba.</div>' : pct > 0.6 ? '<div class="fe-revisa" style="margin:10px 0 0;"><b>Revisa:</b> un costo fijo tan alto casi siempre es porque la venta del mes está incompleta. Pon tu venta promedio real arriba.</div>' : ''}
         <div class="sub-titulo" style="margin-top:16px;">Impuesto que se le quita al precio</div>
         <div class="fin-imp"><input type="text" data-k="imp-n" value="${escHtml(imp.nombre)}" onchange="finGuardarImpuesto('nombre', this.value)" style="width:110px;">
           <div class="ins-precio"><input type="number" inputmode="decimal" data-k="imp-t" value="${finValIn(Math.round(imp.tasa * 1000) / 10)}" onchange="finGuardarImpuesto('tasa', this.value)" style="width:64px;"><span>%</span></div></div>
@@ -1187,14 +1187,8 @@ async function finGuardarConfig(clave, valor){
   if(error) return finError(error);
   fin.config[clave] = valor; finMsg('Guardado'); finRepintar();
 }
-function finGuardarVenta(i, campo, valor){
-  const v = finConfig('ventas_mensuales', []).map(x=> ({ ...x }));
-  v[i][campo] = campo === 'venta' ? finNum(valor) : valor;
-  finGuardarConfig('ventas_mensuales', v);
-}
 function finMesCuenta(mes, cuenta){ const f = finConfig('meses_excluidos', []).filter(x=> x !== mes); if(!cuenta) f.push(mes); finGuardarConfig('meses_excluidos', f); }
-function finAgregarVenta(){ finGuardarConfig('ventas_mensuales', [...finConfig('ventas_mensuales', []), { mes:'', venta:null }]); }
-function finQuitarVenta(i){ const v = finConfig('ventas_mensuales', []).slice(); v.splice(i, 1); finGuardarConfig('ventas_mensuales', v); }
+function finGuardarVentaManual(valor){ const v = finNum(valor); finGuardarConfig('venta_promedio_manual', v > 0 ? v : null); }
 function finGuardarImpuesto(campo, valor){
   const imp = { ...finImpuesto() };
   if(campo === 'tasa') imp.tasa = Math.max(0, (finNum(valor) || 0) / 100); else imp.nombre = String(valor).trim() || 'Impuesto';

@@ -425,7 +425,8 @@ async function abrirHistorial(){
   // Venta de cada día calculada con lo que hay hoy (pedidos que se entregaron ese día con todo lo pagado de ellos)
   const fechas = data.map(d=> d.fecha).sort();
   let vivo = {};
-  try { vivo = await ventaPorDia(fechas[0], fechas[fechas.length - 1]); } catch(e){ vivo = null; }
+  let errVivo = '';
+  try { vivo = await ventaPorDia(fechas[0], fechas[fechas.length - 1]); } catch(e){ vivo = null; errVivo = e && e.message || String(e); }
   let filas = '';
   data.forEach(dia=>{
     const cc = dia.corte_caja || {};
@@ -447,7 +448,7 @@ async function abrirHistorial(){
 
   cont.className = '';
   cont.innerHTML = `
-    <div class="hint" style="margin:0 0 10px;">Ventas del día = mostrador + pedidos que se entregaron ese día (con todo lo pagado de ellos, aunque se haya pagado antes).${vivo ? '' : ' No se pudo recalcular: se muestra lo que se guardó en cada corte.'}</div>
+    <div class="hint" style="margin:0 0 10px;">Ventas del día = mostrador + pedidos que se entregaron ese día (con todo lo pagado de ellos, aunque se haya pagado antes).${vivo ? '' : ' <b>No se pudo recalcular (' + escHtml(errVivo) + '): se muestra lo que se guardó en cada corte.</b>'}</div>
     <div class="tabla-wrap">
       <table class="tabla-pedidos">
         <thead><tr>

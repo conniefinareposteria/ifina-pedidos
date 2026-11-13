@@ -54,6 +54,8 @@
     pedidos_entrega_hoy: () => tablas.pedidos.filter(p=> (p.fecha_entrega||'').slice(0,10) <= dia(0) && p.fecha_entrega >= ts(0,'00:00') && ['local','recoger',null,undefined].includes(p.entrega)),
     buscar_pedidos_pos: (a) => tablas.pedidos.filter(p=> !p.entregado && (p.nombre_cliente||'').toLowerCase().includes(String(a.q||'').toLowerCase())),
     anticipos_del_dia: () => [{metodo:'transferencia',monto:200},{metodo:'efectivo',monto:300}],
+    pedidos_pagos_por_entrega: (a) => tablas.pedidos.filter(p=> p.fecha_entrega && new Date(p.fecha_entrega) >= new Date(a.desde) && new Date(p.fecha_entrega) < new Date(a.hasta))
+      .map(p=> ({ id:p.id, fecha_entrega:p.fecha_entrega, created_at:p.created_at, precio:p.precio, anticipo:p.anticipo, metodo_pago:p.metodo_pago, pagos:p.pagos || [], pago_entrega:p.pago_entrega, metodo_entrega:p.metodo_entrega, descuento_entrega:p.descuento_entrega, entregado:p.entregado, entregado_at:p.entregado_at })),
     registrar_venta: () => 100 + window.__log.filter(x=>x[1]==='registrar_venta').length,
   };
 

@@ -129,6 +129,7 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'seccion pasteles inicio', async()=>{ await ev(()=> abrirSeccion('pasteles')); await ev(()=> abrirModoSeccionPasteles('inicio')); });
     await paso(page, huella, 'seccion pasteles cierre', async()=>{ await ev(()=> abrirSeccion('pasteles')); await ev(()=> abrirModoSeccionPasteles('cierre')); });
     await paso(page, huella, 'corte de caja', ()=> ev(()=> abrirSeccion('caja')));
+    await paso(page, huella, 'corte de caja guardar', async()=>{ await page.waitForTimeout(300); await ev(()=> guardarSeccion(false)); });
     await paso(page, huella, 'nuevo pedido', ()=> ev(()=> irNuevoPedido()));
     resultado.colaborador = huella;
     await ctx.close();
@@ -155,6 +156,7 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'editar pedido domicilio (cupcakes)', async()=>{ await ev(()=>{ elegirAccionPedido(9); accionEditarPedido(); }); await page.waitForTimeout(400); });
     await paso(page, huella, 'editar guardar sin cambios', async()=>{ await page.click('#btn-guardar'); await page.waitForTimeout(400); });
     await paso(page, huella, 'historial', ()=> ev(()=> abrirHistorial()));
+    await paso(page, huella, 'historial detalle de ayer', async()=>{ await ev(()=> abrirDetalleDia(fechaStrDesdeDate(new Date(Date.now() - 86400000)))); await page.waitForTimeout(200); });
     await paso(page, huella, 'resumen', ()=> ev(()=> abrirResumen()));
     for(const t of ['local','pedidos','todo']) await paso(page, huella, 'resumen ' + t, ()=> ev(x=> ponerTabResumen(x), t));
     await paso(page, huella, 'resumen mes', ()=> ev(()=> rangoResumenRapido('mes')));

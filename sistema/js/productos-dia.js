@@ -353,6 +353,7 @@ let cajaAuto = null;   // ventas del día tomadas del punto de venta
 
 function totalVentasCorte(cc){
   cc = cc || {};
+  if(cc.version === 3) return (cc.venta_local||0) + (cc.venta_pedidos||0);
   if(cc.version === 2) return (cc.venta_efectivo||0) + (cc.venta_tarjeta||0) + (cc.venta_transferencia||0);
   return (cc.venta_efectivo||0)+(cc.venta_tarjeta||0)+(cc.venta_transferencia||0)+(cc.venta_local||0)+(cc.venta_pedidos||0);
 }
@@ -368,10 +369,11 @@ async function abrirSeccionCaja(){
 
   const fecha = fechaHoyStr();
   const d0 = new Date(); const ini = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()); const fin = new Date(ini); fin.setDate(fin.getDate()+1);
-  const [prev, ventas, antic] = await Promise.all([
+  const [prev, ventas, antic, vdia] = await Promise.all([
     sb.from('cierres_dia').select('corte_caja').lt('fecha', fecha).order('fecha', {ascending:false}).limit(1).maybeSingle(),
     sb.from('ventas').select('total,monto_local,monto_pedidos,metodo_pago,pagos').eq('fecha', fecha),
-    sb.rpc('anticipos_del_dia', { desde: ini.toISOString(), hasta: fin.toISOString() })
+    sb.rpc('anticipos_del_dia', { desde: ini.toISOString(), hasta: fin.toISOString() }),
+    ventaPorDia(fecha, fecha).then(r=> ({ data: r[fecha] || diaVacio() }), e=> ({ error: e }))
   ]);
   if(ventas.error){ cont.innerHTML = `<div class="empty">No se pudieron cargar las ventas: ${escHtml(ventas.error.message)}</div>`; return; }
   fondoCajaAyer = (prev.data && prev.data.corte_caja && prev.data.corte_caja.fondo_caja) || 0;
@@ -386,7 +388,8 @@ async function abrirSeccionCaja(){
   });
   const anticipos = { efectivo:0, tarjeta:0, transferencia:0 };
   (antic.data||[]).forEach(r=>{ if(mt(r.metodo) in anticipos) anticipos[mt(r.metodo)] += Number(r.monto)||0; });
-  cajaAuto = { ...a, anticipos, anticiposError: antic.error ? antic.error.message : null };
+  cajaAuto = { ...a, anticipos, anticiposError: antic.error ? antic.error.message : null, dia: vdia.data || null, diaError: vdia.error ? vdia.error.message : null };
+  const vd = cajaAuto.dia;
 
   const datos = cierreDiaActual.corte_caja || {};
   const denom = datos.denominaciones || {};
@@ -404,24 +407,21 @@ async function abrirSeccionCaja(){
 
   const fila = (c, m, fuerte) => `<tr${fuerte ? ' style="font-weight:700;"' : ''}><td>${c}</td><td class="n">${fmtDinero(m)}</td></tr>`;
   const totMetodo = a.efectivo + a.tarjeta + a.transferencia;
-  const totTipo = a.local + a.pedidos;
   const antTot = anticipos.efectivo + anticipos.tarjeta + anticipos.transferencia;
 
   cont.innerHTML = `
-    <div style="font-family:'Tinos',Georgia,serif; font-size:19px; margin-bottom:4px;">Ventas del día</div>
-    <div class="hint" style="margin:0 0 10px;">Se llenan solas con lo cobrado en el punto de venta (${a.n} ${a.n === 1 ? 'venta' : 'ventas'}).</div>
-    <div class="tabla-wrap" style="margin-bottom:12px;"><table class="tabla-pedidos">
+    <div style="font-family:'Tinos',Georgia,serif; font-size:19px; margin-bottom:4px;">Venta del día</div>
+    <div class="hint" style="margin:0 0 10px;">Todo lo que le corresponde a hoy: lo de mostrador y los pedidos que se entregan hoy, aunque se hayan pagado otro día (cada pago con su método).</div>
+    ${vd ? tablaVentaDia(vd) : `<div class="empty" style="margin-bottom:12px;">No se pudo calcular la venta del día${cajaAuto.diaError ? ': ' + escHtml(cajaAuto.diaError) : ''}.</div>`}
+
+    <div style="font-family:'Tinos',Georgia,serif; font-size:19px; margin:18px 0 4px;">Dinero que entró hoy</div>
+    <div class="hint" style="margin:0 0 10px;">Para cuadrar la caja: lo que se cobró hoy en el punto de venta (${a.n} ${a.n === 1 ? 'cobro' : 'cobros'}) más los anticipos que se capturaron hoy en Nuevo pedido.</div>
+    <div class="tabla-wrap" style="margin-bottom:22px;"><table class="tabla-pedidos">
       <thead><tr><th>Por método de pago</th><th class="n">Monto</th></tr></thead>
-      <tbody>${fila('Efectivo', a.efectivo)}${fila('Tarjeta', a.tarjeta)}${fila('Transferencia', a.transferencia)}</tbody>
-      <tfoot><tr><td>Total vendido</td><td class="n">${fmtDinero(totMetodo)}</td></tr></tfoot>
+      <tbody>${fila('Efectivo', a.efectivo + anticipos.efectivo)}${fila('Tarjeta', a.tarjeta + anticipos.tarjeta)}${fila('Transferencia', a.transferencia + anticipos.transferencia)}</tbody>
+      <tfoot><tr><td>Total que entró</td><td class="n">${fmtDinero(totMetodo + antTot)}</td></tr></tfoot>
     </table></div>
-    <div class="tabla-wrap" style="margin-bottom:10px;"><table class="tabla-pedidos">
-      <thead><tr><th>Por tipo de venta</th><th class="n">Monto</th></tr></thead>
-      <tbody>${fila('Venta local (mostrador)', a.local)}${fila('Venta de pedidos (lo cobrado al entregar)', a.pedidos)}</tbody>
-      <tfoot><tr><td>Total vendido</td><td class="n">${fmtDinero(totTipo)}</td></tr></tfoot>
-    </table></div>
-    <div class="hint" style="margin:0 0 22px;">${cajaAuto.anticiposError ? 'No se pudieron leer los anticipos de hoy.' :
-      `Nota: hoy se recibieron ${fmtDinero(antTot)} de anticipos de pedidos (efectivo ${fmtDinero(anticipos.efectivo)} · tarjeta ${fmtDinero(anticipos.tarjeta)} · transferencia ${fmtDinero(anticipos.transferencia)}). No cuentan como venta.`}</div>
+    ${cajaAuto.anticiposError ? '<div class="hint" style="margin:-14px 0 22px;">No se pudieron leer los anticipos de hoy.</div>' : ''}
 
     <div style="font-family:'Tinos',Georgia,serif; font-size:19px; margin-bottom:8px;">Efectivo en caja</div>
     ${filasDenom}
@@ -464,14 +464,22 @@ async function guardarSeccionCaja(finalizar){
   });
   const a = cajaAuto || { efectivo:0, tarjeta:0, transferencia:0, local:0, pedidos:0, anticipos:{} };
 
+  // Versión 3: la venta es todo lo que le corresponde al día (pedidos que se entregan hoy con todo lo pagado
+  // de ellos, aunque sea de días antes). "entro" es el dinero que de verdad entró hoy (para cuadrar caja).
+  if(!a.dia){ const m = document.getElementById('seccion-msg'); m.className = 'msg err'; m.textContent = 'No se pudo calcular la venta del día; no se guardó. Revisa la conexión y vuelve a abrir el corte.'; return; }
+  const vd = a.dia;
   const corte_caja = {
-    version: 2,
+    version: 3,
     denominaciones,
-    venta_efectivo: a.efectivo,
-    venta_tarjeta: a.tarjeta,
-    venta_transferencia: a.transferencia,
-    venta_local: a.local,
-    venta_pedidos: a.pedidos,
+    venta_efectivo: vd.metodos.efectivo,
+    venta_tarjeta: vd.metodos.tarjeta,
+    venta_transferencia: vd.metodos.transferencia,
+    venta_otro: vd.metodos.otro,
+    venta_por_cobrar: vd.pedidos.porCobrar,
+    venta_local: vd.mostrador.total,
+    venta_pedidos: vd.pedidos.venta,
+    pedidos_pagado_antes: vd.pedidos.antes,
+    entro: { efectivo: a.efectivo + ((a.anticipos||{}).efectivo||0), tarjeta: a.tarjeta + ((a.anticipos||{}).tarjeta||0), transferencia: a.transferencia + ((a.anticipos||{}).transferencia||0) },
     anticipos: a.anticipos,
     fondo_caja: parseFloat(document.getElementById('vc_fondo').value) || 0,
     gastos: parseFloat(document.getElementById('vc_gastos').value) || 0

@@ -207,7 +207,9 @@ async function generarResumenBase(){
     ventaPedidos += cc.venta_pedidos||0;
   });
 
-  const totalCajaCrudo = data.reduce((acc, dia)=> acc + totalVentasCorte(dia.corte_caja), 0);
+  let vivoRango = null;
+  try { vivoRango = sumarDias(await ventaPorDia(desde, hasta)); } catch(e){ vivoRango = null; }
+  const totalCajaCrudo = vivoRango ? vivoRango.total : data.reduce((acc, dia)=> acc + totalVentasCorte(dia.corte_caja), 0);
 
   // Tablas por sección (mismo formato que el historial)
   const tablaVentas = (titulo, filas, conTamano, nota) => {
@@ -342,10 +344,14 @@ async function generarResumenBase(){
         <div class="tb-sub">Cobrado ${fmtDinero(pedidosCobrado)} · Falta por cobrar ${fmtDinero(pedidosFalta)}</div>
       </div>
       <div class="total-box caramelo">
-        <div class="tb-label">Venta reportada en caja (sin ajustar fondos)</div>
+        <div class="tb-label">Venta en caja (mostrador + pedidos entregados)</div>
         <div class="tb-monto">${fmtDinero(totalCajaCrudo)}</div>
+        ${vivoRango ? `<div class="tb-sub">Efectivo ${fmtDinero(vivoRango.metodos.efectivo)} · Tarjeta ${fmtDinero(vivoRango.metodos.tarjeta)} · Transf. ${fmtDinero(vivoRango.metodos.transferencia)}${vivoRango.pedidos.porCobrar ? ' · Por cobrar ' + fmtDinero(vivoRango.pedidos.porCobrar) : ''}</div>` : ''}
       </div>
     </div>
+    ${vivoRango ? `<h2 class="titulo-bloque">Venta del rango por método de pago</h2>
+    <div class="hint" style="margin:0 0 10px;">Cada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.</div>
+    <div style="max-width:560px;">${tablaVentaDia(vivoRango)}</div>` : ''}
 
     <div class="tabla-wrap" style="margin-bottom:8px;">
       <table class="tabla-pedidos">
@@ -416,10 +422,14 @@ async function abrirHistorial(){
   }
 
   const marca = v => v ? '<span class="tag-ok">✓</span>' : '<span style="color:var(--muted);">—</span>';
+  // Venta de cada día calculada con lo que hay hoy (pedidos que se entregaron ese día con todo lo pagado de ellos)
+  const fechas = data.map(d=> d.fecha).sort();
+  let vivo = {};
+  try { vivo = await ventaPorDia(fechas[0], fechas[fechas.length - 1]); } catch(e){ vivo = null; }
   let filas = '';
   data.forEach(dia=>{
     const cc = dia.corte_caja || {};
-    const totalVentasCrudo = totalVentasCorte(cc);
+    const totalVentasCrudo = vivo && vivo[dia.fecha] ? vivo[dia.fecha].total : totalVentasCorte(cc);
     const fechaLegible = new Date(dia.fecha + 'T12:00:00').toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
     filas += `
       <tr class="click" onclick="abrirDetalleDia('${dia.fecha}')">
@@ -437,6 +447,7 @@ async function abrirHistorial(){
 
   cont.className = '';
   cont.innerHTML = `
+    <div class="hint" style="margin:0 0 10px;">Ventas del día = mostrador + pedidos que se entregaron ese día (con todo lo pagado de ellos, aunque se haya pagado antes).${vivo ? '' : ' No se pudo recalcular: se muestra lo que se guardó en cada corte.'}</div>
     <div class="tabla-wrap">
       <table class="tabla-pedidos">
         <thead><tr>
@@ -480,7 +491,11 @@ async function abrirDetalleDia(fecha){
   const cont = document.getElementById('historial-detalle-contenido');
   cont.innerHTML = '<div class="loading">Cargando...</div>';
 
-  const { data, error } = await sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle();
+  const [rc, rvd] = await Promise.all([
+    sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle(),
+    ventaPorDia(fecha, fecha).then(r=> r[fecha] || diaVacio(), ()=> null)
+  ]);
+  const { data, error } = rc;
   if(error || !data){
     cont.innerHTML = '<div class="empty">No se pudo cargar el detalle.</div>';
     return;
@@ -529,21 +544,23 @@ async function abrirDetalleDia(fecha){
       <div class="tabla-wrap"><table class="tabla-pedidos">
         <thead><tr><th>Concepto</th><th class="n">Monto</th></tr></thead>
         <tbody>
-          ${cc.version === 2 ? `
-          ${filaCaja('Efectivo', cc.venta_efectivo)}
-          ${filaCaja('Tarjeta', cc.venta_tarjeta)}
-          ${filaCaja('Transferencia', cc.venta_transferencia)}
-          ${filaCaja('Total por método de pago', (cc.venta_efectivo||0)+(cc.venta_tarjeta||0)+(cc.venta_transferencia||0), true)}
-          ${filaCaja('Venta local (mostrador)', cc.venta_local)}
-          ${filaCaja('Venta de pedidos', cc.venta_pedidos)}
-          ${filaCaja('Total por tipo de venta', (cc.venta_local||0)+(cc.venta_pedidos||0), true)}
-          ${filaCaja('Anticipos recibidos (no cuentan como venta)', ((cc.anticipos||{}).efectivo||0)+((cc.anticipos||{}).tarjeta||0)+((cc.anticipos||{}).terminal||0)+((cc.anticipos||{}).transferencia||0))}` : `
+          ${rvd ? `
+          ${filaCaja('Efectivo', rvd.metodos.efectivo)}
+          ${filaCaja('Tarjeta', rvd.metodos.tarjeta)}
+          ${filaCaja('Transferencia', rvd.metodos.transferencia)}
+          ${rvd.metodos.otro ? filaCaja('Sin método registrado', rvd.metodos.otro) : ''}
+          ${rvd.pedidos.porCobrar ? filaCaja('Pedidos por cobrar todavía', rvd.pedidos.porCobrar) : ''}
+          ${filaCaja('Venta mostrador', rvd.mostrador.total)}
+          ${filaCaja(`Pedidos que se entregaron (${rvd.pedidos.n})`, rvd.pedidos.venta)}
+          ${filaCaja('Venta total del día', rvd.total, true)}
+          ${rvd.pedidos.antes ? filaCaja('De los pedidos, pagado en días anteriores', rvd.pedidos.antes) : ''}
+          ${cc.entro ? filaCaja('Dinero que entró ese día', (cc.entro.efectivo||0)+(cc.entro.tarjeta||0)+(cc.entro.transferencia||0)) : ''}` : `
           ${filaCaja('Venta en efectivo', cc.venta_efectivo)}
           ${filaCaja('Venta en tarjeta', cc.venta_tarjeta)}
           ${filaCaja('Venta en transferencia', cc.venta_transferencia)}
           ${filaCaja('Venta local', cc.venta_local)}
           ${filaCaja('Venta pedidos', cc.venta_pedidos)}
-          ${filaCaja('Total ventas (sin ajustar fondo)', totalVentasCrudo, true)}`}
+          ${filaCaja('Total ventas (como se guardó)', totalVentasCrudo, true)}`}
           ${filaCaja('Fondo de caja dejado', cc.fondo_caja)}
           ${filaCaja('Gastos', cc.gastos)}
         </tbody>

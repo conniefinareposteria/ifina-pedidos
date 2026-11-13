@@ -38,8 +38,15 @@ async function ventaPorDia(desde, hasta){
     sb.rpc('pedidos_pagos_por_entrega', { desde: ini.toISOString(), hasta: fin.toISOString() })
   ]);
   if(rv.error) throw rv.error;
-  if(rp.error) throw rp.error;
-  const ventas = rv.data || [], pedidos = rp.data || [];
+  let rped = rp;
+  if(rp.error){
+    // Si la función no responde, la directora puede leer los pedidos directo (mismo cálculo)
+    const directo = await sb.from('pedidos').select('id,fecha_entrega,created_at,precio,anticipo,metodo_pago,pagos,pago_entrega,metodo_entrega,descuento_entrega,entregado,entregado_at')
+      .gte('fecha_entrega', ini.toISOString()).lt('fecha_entrega', fin.toISOString());
+    if(directo.error) throw new Error(rp.error.message);
+    rped = directo;
+  }
+  const ventas = rv.data || [], pedidos = rped.data || [];
   const dias = {};
   const dia = f=> (dias[f] = dias[f] || diaVacio());
 

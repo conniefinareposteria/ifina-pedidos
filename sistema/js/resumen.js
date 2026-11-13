@@ -492,9 +492,12 @@ async function abrirDetalleDia(fecha){
   const cont = document.getElementById('historial-detalle-contenido');
   cont.innerHTML = '<div class="loading">Cargando...</div>';
 
-  const [rc, rvd] = await Promise.all([
+  const d0 = new Date(fecha + 'T00:00:00'), d1 = new Date(d0); d1.setDate(d1.getDate() + 1);
+  let errVivo = '';
+  const [rc, rvd, rped] = await Promise.all([
     sb.from('cierres_dia').select('*').eq('fecha', fecha).maybeSingle(),
-    ventaPorDia(fecha, fecha).then(r=> r[fecha] || diaVacio(), ()=> null)
+    ventaPorDia(fecha, fecha).then(r=> r[fecha] || diaVacio(), e=>{ errVivo = e && e.message || String(e); return null; }),
+    sb.from('pedidos').select('*').gte('fecha_entrega', d0.toISOString()).lt('fecha_entrega', d1.toISOString()).order('fecha_entrega')
   ]);
   const { data, error } = rc;
   if(error || !data){
@@ -561,7 +564,8 @@ async function abrirDetalleDia(fecha){
           ${filaCaja('Venta en transferencia', cc.venta_transferencia)}
           ${filaCaja('Venta local', cc.venta_local)}
           ${filaCaja('Venta pedidos', cc.venta_pedidos)}
-          ${filaCaja('Total ventas (como se guardó)', totalVentasCrudo, true)}`}
+          ${filaCaja('Total ventas (como se guardó)', totalVentasCrudo, true)}
+          <tr><td colspan="2" style="color:var(--jam-deep); font-weight:700;">No se pudo recalcular la venta del día${errVivo ? ': ' + escHtml(errVivo) : ''}. Se muestra lo que se guardó en el corte.</td></tr>`}
           ${filaCaja('Fondo de caja dejado', cc.fondo_caja)}
           ${filaCaja('Gastos', cc.gastos)}
         </tbody>
@@ -586,5 +590,27 @@ async function abrirDetalleDia(fecha){
         ${tablaInventario('Cupcakes', data.cupcakes_listo, filasCup, false)}
       </div>
     </div>
-    ${bloqueCaja}`;
+    ${bloqueCaja}
+    ${bloquePedidosDia(rped.data || [], fecha)}`;
+}
+// Pedidos que se entregaron ese día con cada pago (cuándo y cómo): para comprobar de dónde sale la venta del día
+function bloquePedidosDia(lista, fecha){
+  if(!lista.length) return '<div class="bloque-caja" style="display:block;"><h3>Pedidos que se entregaron este día</h3><div class="empty">No hubo pedidos con entrega este día.</div></div>';
+  const fd = t=> t ? new Date(t).toLocaleDateString('es-MX', { day:'numeric', month:'short' }) : '';
+  const filas = lista.map(p=>{
+    const pagos = [];
+    if(Number(p.anticipo) > 0) pagos.push(`${fmtDinero(p.anticipo)} ${formatNombre(mt(p.metodo_pago) || 'sin método')} (${fd(p.created_at)}, al agendar)`);
+    pagosDe(p).forEach(x=>{ if(Number(x.monto) > 0) pagos.push(`${fmtDinero(x.monto)} ${formatNombre(mt(x.metodo) || 'sin método')} (${fd(x.fecha)})`); });
+    if(Number(p.pago_entrega) > 0) pagos.push(`${fmtDinero(p.pago_entrega)} ${formatNombre(mt(p.metodo_entrega) || 'sin método')} (${fd(p.entregado_at)}, al entregar)`);
+    const venta = Math.max(0, (Number(p.precio)||0) - (Number(p.descuento_entrega)||0));
+    const pagado = (Number(p.anticipo)||0) + sumaPagos(p) + (Number(p.pago_entrega)||0);
+    return `<tr><td class="nombre">${escHtml(p.nombre_cliente || '')}</td><td class="n">${fmtDinero(venta)}</td>
+      <td>${pagos.length ? pagos.map(escHtml).join('<br>') : '<span style="color:var(--muted);">Sin pagos</span>'}</td>
+      <td class="n">${fmtDinero(Math.max(0, venta - pagado))}</td></tr>`;
+  }).join('');
+  return `<div class="bloque-caja" style="display:block;"><h3>Pedidos que se entregaron este día (${lista.length})</h3>
+    <div class="hint" style="margin:0 0 8px;">Todo lo pagado de estos pedidos cuenta en la venta de este día, aunque se haya pagado antes.</div>
+    <div class="tabla-wrap"><table class="tabla-pedidos">
+      <thead><tr><th>Cliente</th><th class="n">Total</th><th>Pagos (monto, método, fecha)</th><th class="n">Por cobrar</th></tr></thead>
+      <tbody>${filas}</tbody></table></div></div>`;
 }

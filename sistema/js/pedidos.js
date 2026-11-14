@@ -342,6 +342,7 @@ function imprimirPedidosDia(titulo, pedidos){
 <style>
   @page{size:letter landscape; margin:6mm 7mm;}
   *{box-sizing:border-box}
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}   /* que al imprimir no se quite el gris del encabezado */
   body{font-family:Arial,Helvetica,sans-serif; color:#000; margin:0; font-size:15px; line-height:1.25;}
   table{width:100%; border-collapse:collapse;}
   thead{display:table-header-group;}

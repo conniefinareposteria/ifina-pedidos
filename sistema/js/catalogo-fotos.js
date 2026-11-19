@@ -68,13 +68,14 @@ function pintarCatalogoFotos(){
   if(sec.id === 'pagina'){
     // Mismo orden que en la página: portada, bienvenida, Hazlo especial, galería de decorados, Visítanos
     const foto = k => { const f = FOTOS_PAGINA.find(x=> x.producto === k); return filaProductoFotos('pagina', f.producto, f.titulo, f.nota); };
+    // "Hazlo especial" ya no sale en la página (se quitó); la base blanca se elige en cada pastel
     cuerpo = foto('portada') + bloqueTextos('bienvenida')
-      + (decoracionesCat.length ? `<h3 class="cf-sub">Hazlo especial</h3><div class="hint" style="margin:0 0 10px;">Las opciones que se suman al precio del pastel. Se usa la foto principal.</div>`
-        + decoracionesCat.map(d=> filaProductoFotos('decoraciones', d.nombre, d.nombre)).join('') : '')
+      + `<h3 class="cf-sub">Pasteles decorados</h3>` + estadoSeccionHtml('decorados', 'Decorados')
       + foto('galeria_decorados') + bloqueTextos('visitanos') + foto('visitanos');
   } else {
     const filas = datosDeTabla(sec.tabla).filter(sec.filtro).slice().sort((a,b)=> formatNombre(a.nombre).localeCompare(formatNombre(b.nombre), 'es'));
-    cuerpo = filas.map(r=> filaProductoFotos(sec.tabla, r.nombre, null, null, true)).join('') || '<div class="empty">Sin productos.</div>';
+    cuerpo = estadoSeccionHtml(sec.id, sec.titulo)
+      + (filas.map(r=> filaProductoFotos(sec.tabla, r.nombre, null, null, true)).join('') || '<div class="empty">Sin productos.</div>');
   }
   cont.innerHTML = chips + `<div class="seccion-resumen"><h3>${sec.titulo}</h3>${cuerpo}</div>`;
 }
@@ -316,6 +317,23 @@ async function quitarFoto(id){
   pintarCatalogoFotos();
 }
 // Ocultar / volver a mostrar un producto en la página (no cambia nada en el sistema ni en el punto de venta)
+// Ocultar una sección completa de la página (ej. Cuchareables mientras no hay fotos).
+// Se guarda en productos_ocultos con tabla = 'seccion' y producto = la sección (pasteles, cheesecakes, cuchareables, cupcakes, panques, decorados).
+function estadoSeccionHtml(id, titulo){
+  const oculta = ocultosCatalogo.has('seccion|' + id);
+  return `<div class="cf-seccion${oculta ? ' oculta' : ''}"><span>${oculta ? `La sección <b>${escHtml(titulo)}</b> no se muestra en la página` : `La sección <b>${escHtml(titulo)}</b> se muestra en la página`}</span>
+    <button type="button" class="cf-ocultar" onclick="cambiarOcultoSeccion('${id}', '${escHtml(titulo)}', ${!oculta})">${oculta ? 'Mostrar sección' : 'Ocultar sección'}</button></div>`;
+}
+async function cambiarOcultoSeccion(id, titulo, ocultar){
+  if(ocultar && !confirm(`¿Ocultar toda la sección ${titulo} en la página? Se puede volver a mostrar cuando quieras.`)) return;
+  const q = ocultar
+    ? sb.from('productos_ocultos').insert([{ tabla:'seccion', producto:id }])
+    : sb.from('productos_ocultos').delete().eq('tabla', 'seccion').eq('producto', id);
+  const { error } = await q;
+  if(error){ alert('No se pudo cambiar: ' + error.message); return; }
+  if(ocultar) ocultosCatalogo.add('seccion|' + id); else ocultosCatalogo.delete('seccion|' + id);
+  pintarCatalogoFotos();
+}
 async function cambiarOcultoProducto(tabla, producto, ocultar){
   if(ocultar && !confirm(`¿Ocultar ${formatNombre(producto)} en la página? Se puede volver a mostrar cuando quieras.`)) return;
   const q = ocultar

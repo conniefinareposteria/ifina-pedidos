@@ -293,3 +293,8 @@ main:has(#view-finanzas.active){max-width:1180px;}
 .fe-usos{display:flex; flex-wrap:wrap; gap:6px 12px;} .fe-usos a{color:var(--cocoa); text-decoration:underline; text-underline-offset:3px;}
 .fe-acciones{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;} .fe-acciones button{width:auto; margin:0;}
 .fe-acciones button.primary{padding:12px 22px;}
+/* Catálogo: ocultar una sección completa de la página */
+.cf-seccion{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; border:2px solid var(--line); border-radius:14px; padding:10px 14px; margin:0 0 14px; background:var(--paper);}
+.cf-seccion.oculta{border-color:var(--jam-deep); background:var(--rojo-bg);}
+.cf-seccion .cf-ocultar{margin:0;}
+

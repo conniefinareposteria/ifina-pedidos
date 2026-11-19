@@ -875,7 +875,7 @@ function abrirPedido(){
 function waLink(texto){ return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(texto)}`; }
 
 async function enviarPedido(){
-  const msg = document.getElementById('pd-msg'); msg.textContent = '';
+  const msg = document.getElementById('pd-msg'); msg.textContent = ''; msg.style.color = '';
   const nombre = document.getElementById('pd-nombre').value.trim();
   const tel = document.getElementById('pd-tel').value.trim();
   const fecha = document.getElementById('pd-fecha').value;
@@ -894,29 +894,47 @@ async function enviarPedido(){
   if(entrega==='domicilio' && faltaDir.length){ msg.textContent = 'A la dirección le falta ' + faltaDir.join(', ') + '.'; return; }
 
   const {l,t} = totales();
-  const btn = document.getElementById('pd-enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
-  // Ventana abierta antes del await para que el navegador no la bloquee
-  const ventana = window.open('', '_blank');
+  const btn = document.getElementById('pd-enviar');
+  if(btn.disabled) return;   // ya se está enviando
+  btn.disabled = true; btn.textContent = 'Enviando…';
 
-  // 1) Se guarda completa en el sistema como solicitud
+  // 1) Se guarda completa en el sistema como solicitud.
+  // Si vuelve a picar el botón con el mismo pedido (porque WhatsApp no abrió), NO se guarda otra vez: solo se reabre WhatsApp.
   const items = carrito.map(it => ({tipo:it.tipo, nombre:it.nombre, cantidad:it.qty, precio:it.precio, detalle:it.detalle||null, ...(it.datos||{})}));
-  const { error } = await sb.from('solicitudes').insert([{
-    nombre, telefono:tel, fecha_deseada:fecha, entrega, direccion: entrega==='domicilio'?dir.slice(0,300):null, direccion_detalle: entrega==='domicilio'?dirDet:null,
-    comentarios: coment||null, items, total:t
-  }]);
+  const fila = { nombre, telefono:tel, fecha_deseada:fecha, entrega, direccion: entrega==='domicilio'?dir.slice(0,300):null, direccion_detalle: entrega==='domicilio'?dirDet:null,
+    comentarios: coment||null, items, total:t };
+  const firma = JSON.stringify(fila);
+  let yaEnviado = false;
+  try { yaEnviado = sessionStorage.getItem('pedido_enviado') === firma; } catch(_){ yaEnviado = ultimoEnviado === firma; }
+  if(!yaEnviado){
+    const { error } = await sb.from('solicitudes').insert([fila]);
+    if(error) console.error(error);
+    else { ultimoEnviado = firma; try { sessionStorage.setItem('pedido_enviado', firma); } catch(_){} }
+  }
   btn.disabled = false; btn.textContent = 'Enviar pedido por WhatsApp';
-  if(error) console.error(error);
 
   // 2) A WhatsApp solo va el resumen
   const fechaTxt = new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-  const texto = ['¡Hola! Quiero hacer un pedido 🎂','',
+  const texto = ['¡Hola! Quiero hacer un pedido','',
     ...l.map(x=>`• ${x.titulo} — ${dinero(x.total)}`),'',
     `Total estimado: ${dinero(t)}`,
     `Para: ${fechaTxt}, ${entrega==='domicilio'?'a domicilio':'recojo en el local'}`,
     `Nombre: ${nombre}`,
     '(Enviado desde conniereposteria.com)'
   ].join('\n');
-  if(ventana){ ventana.location.href = waLink(texto); } else { window.location.href = waLink(texto); }
+  abrirWhatsApp(texto);
+  msg.style.color = 'var(--char)';
+  msg.innerHTML = `Tu pedido quedó registrado. Si WhatsApp no se abrió, <a href="${waLink(texto)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">toca aquí</a>.`;
+}
+let ultimoEnviado = null;
+// En celular/iPad se abre la app de WhatsApp directo (sin pasar por la página de WhatsApp que ofrece descargarla).
+// En computadora se usa wa.me (WhatsApp Web o la app de escritorio).
+function abrirWhatsApp(texto){
+  const ua = navigator.userAgent || '';
+  const movil = /iPhone|iPad|iPod|Android/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(movil){ window.location.href = `whatsapp://send?phone=${WHATSAPP}&text=${encodeURIComponent(texto)}`; return; }
+  const w = window.open(waLink(texto), '_blank');
+  if(!w) window.location.href = waLink(texto);
 }
 
 // ===== Menú y hojas =====

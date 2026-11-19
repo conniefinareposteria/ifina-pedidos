@@ -20,7 +20,7 @@
       {id:2,tabla:'sabores_pasteles',producto:'white_velvet',orden:1,ruta:'sabores_pasteles/whitevelvet/b.jpg',url:'https://fotos.prueba/b.jpg',ruta_original:'sabores_pasteles/whitevelvet/b-original.jpg'}],
     decoraciones: [{nombre:'Base blanca',precio:0,orden:1},{nombre:'Corona de color',precio:100,orden:2},{nombre:'Decorado simple',precio:150,orden:3},{nombre:'Decorado de evento',precio:null,orden:4}],
     productos_ocultos: [{tabla:'individuales',producto:'carlota_limon'}],
-    solicitudes: [{id:7, created_at:'2026-10-27T18:00:00Z', nombre:'Ana López', telefono:'667 123 4567', fecha_deseada:'2026-10-30', entrega:'domicilio', direccion:'Rosales 12, Col. Centro, Culiacán', direccion_detalle:{calle:'Rosales', numero_exterior:'12', numero_interior:'', colonia:'Centro', codigo_postal:'', ciudad:'Culiacán', referencias:'portón café'}, comentarios:'Que diga Feliz cumple', total:1270, estado:'nueva',
+    solicitudes: [{id:7, folio:41, created_at:'2026-10-27T18:00:00Z', nombre:'Ana López', telefono:'667 123 4567', fecha_deseada:'2026-10-30', entrega:'domicilio', direccion:'Rosales 12, Col. Centro, Culiacán', direccion_detalle:{calle:'Rosales', numero_exterior:'12', numero_interior:'', colonia:'Centro', codigo_postal:'', ciudad:'Culiacán', referencias:'portón café'}, comentarios:'Que diga Feliz cumple', total:1270, estado:'nueva',
       items:[{tipo:'pastel', nombre:'white_velvet', cantidad:1, precio:650, detalle:'Chico · corona incluida · base blanca · Nota: con velitas', tamano:'chico', corona:'incluida', base:'blanca', comentario:'con velitas'},
              {tipo:'cupcake', nombre:'Caja de 4', cantidad:1, precio:180, detalle:'2 Limón · 2 Pistache', caja:4, sabores:{limon:2, pistache:2}},
              {tipo:'cuchareable', nombre:'cuchareable_coco', cantidad:2, precio:80},
@@ -56,7 +56,10 @@
   };
   window.__tablas = tablas;
 
+  let folioSim = 100;
   const rpcs = {
+    folio_nuevo_pedido: () => ++folioSim,
+    crear_solicitud: (a) => { const f = ++folioSim; tablas.solicitudes.push({ ...a.p, id: 50 + tablas.solicitudes.length, estado:'nueva', folio: f }); return f; },
     pedidos_entrega_hoy: () => tablas.pedidos.filter(p=> (p.fecha_entrega||'').slice(0,10) <= dia(0) && p.fecha_entrega >= ts(0,'00:00') && ['local','recoger',null,undefined].includes(p.entrega)),
     buscar_pedidos_pos: (a) => tablas.pedidos.filter(p=> !p.entregado && (p.nombre_cliente||'').toLowerCase().includes(String(a.q||'').toLowerCase())),
     anticipos_del_dia: () => [{metodo:'transferencia',monto:200},{metodo:'efectivo',monto:300}],

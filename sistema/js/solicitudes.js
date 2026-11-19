@@ -80,7 +80,7 @@ function tarjetaSolicitud(s){
   }).join('');
   const entrega = s.entrega === 'domicilio' ? 'A domicilio' + (s.direccion ? ': ' + s.direccion : '') : 'Recoge en el local';
   return `<div class="sol-card">
-    <div class="sol-cab"><div><b>${escHtml(s.nombre || '')}</b> · ${escHtml(s.telefono || '')}</div>
+    <div class="sol-cab"><div>${s.folio ? `<b>Folio ${folioPed(s.folio)}</b> · ` : ''}<b>${escHtml(s.nombre || '')}</b> · ${escHtml(s.telefono || '')}</div>
       <span class="hint" style="margin:0;">Lo mandó el ${escHtml(fechaCorta(s.created_at))}</span></div>
     <div class="sol-dato"><span>Para</span> ${escHtml(fechaCorta(s.fecha_deseada) || 'sin fecha')}</div>
     <div class="sol-dato"><span>Entrega</span> ${escHtml(entrega)}</div>
@@ -181,7 +181,7 @@ function revisarSolicitud(id){
   } else if(s.entrega) elegirChip('#entrega-chips .chip[data-entrega="recoger"]');
   if(s.fecha_deseada) document.getElementById('fecha_entrega').value = String(s.fecha_deseada).slice(0, 10);
   document.getElementById('notas').value = s.comentarios || '';
-  document.getElementById('solicitud-titulo').textContent = `Pedido de la página: ${s.nombre || ''} · ${s.telefono || ''}`;
+  document.getElementById('solicitud-titulo').textContent = `Pedido de la página${s.folio ? ' ' + folioPed(s.folio) : ''}: ${s.nombre || ''} · ${s.telefono || ''}`;
   document.getElementById('solicitud-sub').textContent = 'Busca al cliente abajo o agrégalo como nuevo. Puedes quitar o agregar productos. Al guardar se pasa a Confirmados.';
   document.getElementById('solicitud-banner').style.display = 'flex';
 }

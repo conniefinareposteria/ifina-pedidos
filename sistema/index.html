@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="css/base.css?v=20261119c">
-<link rel="stylesheet" href="css/tema.css?v=20261119c">
+<link rel="stylesheet" href="css/base.css?v=20261119d">
+<link rel="stylesheet" href="css/tema.css?v=20261119d">
 </head>
 <body>
 
@@ -319,6 +319,7 @@
     <div id="confirmacion" style="display:none; text-align:center; padding:50px 20px;">
       <div style="font-size:40px; margin-bottom:10px;">✅</div>
       <div style="font-family:'Tinos',Georgia,serif; font-size:19px; font-weight:600; color:var(--jam-deep); margin-bottom:6px;">Tu pedido se guardó exitosamente</div>
+      <div id="conf-folio" style="font-size:17px; font-weight:700; margin-bottom:6px;"></div>
       <div style="font-size:13.5px; color:var(--cocoa-soft); margin-bottom:22px;">Ya puedes capturar el siguiente.</div>
       <button class="primary" style="max-width:260px;" onclick="iniciarNuevoPedido()">Iniciar nuevo pedido</button>
       <div class="msg" id="conf-msg" style="max-width:420px; margin:12px auto 0;"></div>
@@ -338,8 +339,8 @@
     <div style="text-align:right;" id="link-eliminados-wrap"><a href="#" class="link-accion" style="margin-bottom:6px;" onclick="abrirEliminados(); return false;">Ver pedidos eliminados</a></div>
     <div style="margin-bottom:16px;">
       <div class="field" style="margin-bottom:10px;">
-        <label>Buscar por nombre</label>
-        <input type="text" id="filtro-nombre" oninput="cargarPedidos()" placeholder="Nombre de cliente...">
+        <label>Buscar por nombre o folio</label>
+        <input type="text" id="filtro-nombre" oninput="cargarPedidos()" placeholder="Nombre de cliente o folio (P-12)">
       </div>
       <div class="row2" style="margin-bottom:10px;">
         <div class="field">
@@ -691,24 +692,24 @@
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarPreguntaCorona()">Cancelar</button></div>
 </div>
 <!-- ?v= obliga al navegador (iPad) a bajar la versión nueva: cambiarlo en cada publicación -->
-<script src="js/nucleo.js?v=20261119c"></script>
-<script src="js/catalogos.js?v=20261119c"></script>
-<script src="js/cuentas.js?v=20261119c"></script>
-<script src="js/inventario.js?v=20261119c"></script>
-<script src="js/sesion.js?v=20261119c"></script>
-<script src="js/nuevo-pedido.js?v=20261119c"></script>
-<script src="js/pedidos.js?v=20261119c"></script>
-<script src="js/solicitudes.js?v=20261119c"></script>
-<script src="js/clientes.js?v=20261119c"></script>
-<script src="js/productos-dia.js?v=20261119c"></script>
-<script src="js/resumen.js?v=20261119c"></script>
-<script src="js/tickets.js?v=20261119c"></script>
-<script src="js/punto-venta.js?v=20261119c"></script>
-<script src="js/produccion.js?v=20261119c"></script>
-<script src="js/catalogo-fotos.js?v=20261119c"></script>
-<script src="js/finanzas.js?v=20261119c"></script>
-<script src="js/interfaz.js?v=20261119c"></script>
-<script src="js/inicio.js?v=20261119c"></script>
+<script src="js/nucleo.js?v=20261119d"></script>
+<script src="js/catalogos.js?v=20261119d"></script>
+<script src="js/cuentas.js?v=20261119d"></script>
+<script src="js/inventario.js?v=20261119d"></script>
+<script src="js/sesion.js?v=20261119d"></script>
+<script src="js/nuevo-pedido.js?v=20261119d"></script>
+<script src="js/pedidos.js?v=20261119d"></script>
+<script src="js/solicitudes.js?v=20261119d"></script>
+<script src="js/clientes.js?v=20261119d"></script>
+<script src="js/productos-dia.js?v=20261119d"></script>
+<script src="js/resumen.js?v=20261119d"></script>
+<script src="js/tickets.js?v=20261119d"></script>
+<script src="js/punto-venta.js?v=20261119d"></script>
+<script src="js/produccion.js?v=20261119d"></script>
+<script src="js/catalogo-fotos.js?v=20261119d"></script>
+<script src="js/finanzas.js?v=20261119d"></script>
+<script src="js/interfaz.js?v=20261119d"></script>
+<script src="js/inicio.js?v=20261119d"></script>
 
 </body>
 </html>

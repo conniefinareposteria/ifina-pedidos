@@ -631,6 +631,10 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
   }
 
   const solicitud = solicitudEnRevision;
+  // Folio P-: el del pedido de la página, o uno nuevo. Si no se pudo pedir, Supabase lo pone solo al guardar.
+  let folio = solicitud && solicitud.folio ? solicitud.folio : null;
+  if(!folio){ const r = await sb.rpc('folio_nuevo_pedido'); if(!r.error && r.data) folio = r.data; }
+  if(folio) filas.forEach(f=> f.folio = folio);
   const { error } = await sb.from('pedidos').insert(filas);
   // Pedido de la página: ya aceptado, se quita de "Por confirmar"
   let errSolicitud = null;
@@ -648,11 +652,12 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     document.getElementById('form-pedido').style.display = 'none';
     document.getElementById('confirmacion').style.display = 'block';
     document.getElementById('conf-msg').className = 'msg';
+    document.getElementById('conf-folio').textContent = folio ? 'Folio ' + folioPed(folio) : '';
     if(errSolicitud){ document.getElementById('conf-msg').className = 'msg err'; document.getElementById('conf-msg').textContent = 'El pedido sí se guardó, pero sigue en "Por confirmar": ' + errSolicitud + ' Cancélalo ahí para que no se repita.'; }
     // En el local: si dejó anticipo (o pagó completo), ofrecer el comprobante impreso
     if(rolActual === 'colaborador' && anticipoTotal > 0){
       const totalTodo = filas.reduce((a, f)=> a + (Number(f.precio)||0), 0);
-      ticketPendiente = { comprobante:true, fecha:new Date(), items:filas.map(itemTicketPedido), subtotal:0, cort:0, total:0, metodo:null,
+      ticketPendiente = { comprobante:true, folio, folioTxt: folioPed(folio), fecha:new Date(), items:filas.map(itemTicketPedido), subtotal:0, cort:0, total:0, metodo:null,
         metodoAnticipo: pedido.metodo_pago || null, recibe:0, msgId:'conf-msg', nota:'El pedido sí quedó guardado.' };
       document.getElementById('tk-sub').textContent = `${pedido.nombre_cliente || 'Pedido'} · pagó ${fmtDinero(anticipoTotal)} de ${fmtDinero(totalTodo)}`;
       abrirModal('tk');
@@ -906,7 +911,7 @@ async function editarPedidoEnFormulario(p){
   pedidoEnEdicion = p;
   actualizarBotonAgregar();
   document.getElementById('edicion-titulo').textContent = 'Editando pedido de ' + (p.nombre_cliente || 'cliente');
-  document.getElementById('edicion-sub').textContent = 'Pedido #' + p.id + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric', month:'long'}) : '') + (p.entregado ? ' · ya entregado' : '');
+  document.getElementById('edicion-sub').textContent = (p.folio ? 'Folio ' + folioPed(p.folio) : 'Pedido #' + p.id) + (p.created_at ? ' · capturado el ' + new Date(p.created_at).toLocaleDateString('es-MX',{day:'numeric', month:'long'}) : '') + (p.entregado ? ' · ya entregado' : '');
   document.getElementById('edicion-banner').style.display = 'flex';
   document.getElementById('btn-guardar').textContent = 'Guardar cambios';
   const msg = document.getElementById('msg');

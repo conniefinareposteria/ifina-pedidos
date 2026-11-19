@@ -222,7 +222,7 @@ async function abrirResumenDiaPOS(){
     }).join('');
     const desc = Number(v.descuento)||0;
     return `<div class="rd-venta">
-      <div class="rd-cab"><span><b>${hora}</b> · Folio ${v.id}${tag ? `<span class="rd-tag">${tag}</span>` : ''}</span>
+      <div class="rd-cab"><span><b>${hora}</b> · Folio ${folioLoc(v.id)}${tag ? `<span class="rd-tag">${tag}</span>` : ''}</span>
         <span><b>${fmtDinero(v.total)}</b>${v.metodo_pago ? ' · ' + escHtml(textoMetodoVenta(v)) : ''}</span></div>
       ${lineas}
       ${desc > 0 && !esMerma ? `<div class="rd-lin"><span>Descuento / cortesía</span><span>-${fmtDinero(desc)}</span></div>` : ''}
@@ -236,7 +236,7 @@ let rdVentas = [];
 async function editarVentaPOS(v){
   if(!v) return;
   if(posVenta.length && !(posEditando && posEditando.id === v.id)){
-    if(!confirm(`Hay una venta en curso. ¿Quitarla para editar el folio ${v.id}?`)) return;
+    if(!confirm(`Hay una venta en curso. ¿Quitarla para editar el folio ${folioLoc(v.id)}?`)) return;
   }
   vaciarVenta(false);
   const items = v.items || [];
@@ -280,7 +280,7 @@ function textoDiferenciaEdicion(total, metodo){
 }
 function pintarBannerEdicion(){
   const b = document.getElementById('pos-edit-banner');
-  document.getElementById('pos-h2-titulo').textContent = posEditando ? `Editando folio ${posEditando.id}` : 'Venta actual';
+  document.getElementById('pos-h2-titulo').textContent = posEditando ? `Editando folio ${folioLoc(posEditando.id)}` : 'Venta actual';
   const dif = document.getElementById('pos-dif');
   document.getElementById('pos-total-lbl').textContent = posEditando ? 'Nuevo total' : 'Total';
   if(!posEditando){ b.style.display = 'none'; dif.style.display = 'none'; return; }
@@ -303,7 +303,7 @@ async function guardarEdicionVenta(){
   const metodo = total > 0 ? posMetodo : null;
   if(total > 0 && !metodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
   const items = posVenta.filter(it=> it.tipo === 'local' && it.cantidad > 0).map(it=>({ tipo:'local', cortesia: !!it.cortesia, cat:it.cat, categoria:it.categoria, clave:it.clave, tam:it.tam, variante:it.variante || null, nombre:it.nombre, precio:it.precio, cantidad:it.cantidad, subtotal:it.precio*it.cantidad }));
-  if(!items.length && !confirm(`¿Devolver todo el folio ${ed.id}? El ticket queda en $0 y todo regresa a existencia.`)) return;
+  if(!items.length && !confirm(`¿Devolver todo el folio ${folioLoc(ed.id)}? El ticket queda en $0 y todo regresa a existencia.`)) return;
   const aviso = textoDiferenciaEdicion(total, metodo);
   posGuardando = true; actualizarBotonCobrar();
   const { error } = await sb.rpc('editar_venta', { p_id: ed.id, p_items: items, p_subtotal: subtotal, p_descuento: Math.max(0, subtotal - total),
@@ -317,12 +317,12 @@ async function guardarEdicionVenta(){
   }
   if(items.length){
     ticketPendiente = { folio: ed.id, fecha: ed.creado, items, subtotal, cort, total, metodo, recibe: 0 };
-    document.getElementById('tk-sub').textContent = `Folio ${ed.id} actualizado · ${aviso}`;
+    document.getElementById('tk-sub').textContent = `Folio ${folioLoc(ed.id)} actualizado · ${aviso}`;
     abrirModal('tk');
   }
   vaciarVenta();
   // Este aviso se queda hasta la siguiente acción para que no se olvide devolver o cobrar
-  msg.className = 'msg ok'; msg.textContent = `Folio ${ed.id} actualizado. ${aviso}.`;
+  msg.className = 'msg ok'; msg.textContent = `Folio ${folioLoc(ed.id)} actualizado. ${aviso}.`;
 }
 let pedidoEditPOS = null;
 function editarPedidoPOS(p){
@@ -642,7 +642,7 @@ function actualizarBotonCobrar(){
     btn.disabled = posGuardando;
     const f = filasDiferenciaEdicion(Math.max(0, total), total > 0 ? posMetodo : null);
     const accion = f.map(x=> x.monto > 0 ? `${x.que.split(' ')[0]} ${fmtDinero(x.monto)}` : '').filter(Boolean).join(' y ');
-    btn.textContent = (posVenta.length ? `Actualizar folio ${posEditando.id}` : `Devolver todo (folio ${posEditando.id})`) + (accion ? ' · ' + accion : '');
+    btn.textContent = (posVenta.length ? `Actualizar folio ${folioLoc(posEditando.id)}` : `Devolver todo (folio ${folioLoc(posEditando.id)})`) + (accion ? ' · ' + accion : '');
     return;
   }
   const nPed = posVenta.filter(x=>x.tipo==='pedido' && x.entregar).length;

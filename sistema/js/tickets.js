@@ -59,7 +59,7 @@ function armarMermaXML(t){
   let cuerpo = '', piezas = 0;
   t.items.forEach(it=>{ piezas += Number(it.cantidad)||0; cuerpo += tkFila(`${it.cantidad} ${it.nombre}`, tkPesos(it.precio * it.cantidad)) + '\n'; });
   return tkSobre(tkLogo() + tkTitulo('MERMA')
-    + `<text>${tkTexto(tkFechaTxt(t.fecha) + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : ''))}</text>`
+    + `<text>${tkTexto(tkFechaTxt(t.fecha) + '\n' + (t.folio ? 'Folio ' + (t.folioTxt || folioLoc(t.folio)) + '\n' : ''))}</text>`
     + `<text>${tkTexto(tkBloque(raya + cuerpo + raya + tkFila(piezas + (piezas === 1 ? ' pieza' : ' piezas'), tkPesos(t.valor)) + '\n'))}</text>`);
 }
 function armarTicketXML(t){
@@ -108,7 +108,7 @@ function armarTicketXML(t){
     t.pagos.forEach(x=> pago += tkFila('  ' + formatNombre(x.metodo), tkPesos(x.monto)) + '\n');
   } else if(t.metodo) pago += tkFila('Método', formatNombre(t.metodo)) + '\n';
   if(t.recibe > 0) pago += tkFila('Recibe', tkPesos(t.recibe)) + '\n' + tkFila('Cambio', tkPesos(t.cambio != null ? t.cambio : t.recibe - t.total)) + '\n';
-  const encabezado = 'WhatsApp 667 139 0756\nAv. Juan de la Barrera 1141, Local 2\nCol. Chapultepec, C.P. 80040\n' + fechaTxt + '\n' + (t.folio ? 'Folio ' + t.folio + '\n' : '');
+  const encabezado = 'WhatsApp 667 139 0756\nAv. Juan de la Barrera 1141, Local 2\nCol. Chapultepec, C.P. 80040\n' + fechaTxt + '\n' + (t.folio ? 'Folio ' + (t.folioTxt || folioLoc(t.folio)) + '\n' : '');
   return '<?xml version="1.0" encoding="utf-8"?>'
     + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>'
     + '<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">'

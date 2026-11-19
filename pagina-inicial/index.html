@@ -326,6 +326,7 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .ch button.on{background:var(--char);color:#fff;border-color:var(--char)}
 input,textarea{width:100%;font:inherit;font-size:16px;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:13px;color:var(--char);margin-bottom:10px}
 textarea{min-height:80px;resize:vertical}
+.nota-tel{font-size:13px;color:var(--soft);margin:0 2px 12px;line-height:1.35}
 .dir2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hoja-pie{position:fixed;left:0;right:0;bottom:0;padding:14px 20px calc(18px + env(safe-area-inset-bottom));background:var(--cream);z-index:2}
 @media(min-width:760px){.hoja-pie{position:sticky}}
@@ -474,7 +475,8 @@ textarea{min-height:80px;resize:vertical}
     <div id="pd-items"></div>
     <div class="totl"><span style="color:var(--soft)">Total estimado</span><span class="serif" id="pd-total">$0</span></div>
     <input id="pd-nombre" placeholder="Tu nombre" autocomplete="name" maxlength="80">
-    <input id="pd-tel" type="tel" inputmode="tel" placeholder="Teléfono / WhatsApp" autocomplete="tel" maxlength="20">
+    <input id="pd-tel" type="tel" inputmode="tel" placeholder="Celular con WhatsApp" autocomplete="tel" maxlength="20" style="margin-bottom:4px">
+    <div class="nota-tel">Escribe el celular con el WhatsApp desde el que nos vas a mandar el pedido. Por ahí te daremos seguimiento.</div>
     <div class="caps lbl" style="margin-top:6px">Fecha de entrega</div>
     <input id="pd-fecha" type="date">
     <div class="ch" id="pd-entrega" style="margin-bottom:10px">
@@ -904,23 +906,28 @@ async function enviarPedido(){
   const fila = { nombre, telefono:tel, fecha_deseada:fecha, entrega, direccion: entrega==='domicilio'?dir.slice(0,300):null, direccion_detalle: entrega==='domicilio'?dirDet:null,
     comentarios: coment||null, items, total:t };
   const firma = JSON.stringify(fila);
-  let yaEnviado = false;
-  try { yaEnviado = sessionStorage.getItem('pedido_enviado') === firma; } catch(_){ yaEnviado = ultimoEnviado === firma; }
-  if(!yaEnviado){
-    const { error } = await sb.from('solicitudes').insert([fila]);
+  // Se guarda con crear_solicitud (sql/039), que regresa el folio P- del pedido
+  let previo = ultimoEnviado;
+  try { previo = JSON.parse(sessionStorage.getItem('pedido_enviado') || 'null') || previo; } catch(_){}
+  let folio = previo && previo.firma === firma ? previo.folio : null;
+  if(!(previo && previo.firma === firma)){
+    const { data, error } = await sb.rpc('crear_solicitud', { p: fila });
     if(error) console.error(error);
-    else { ultimoEnviado = firma; try { sessionStorage.setItem('pedido_enviado', firma); } catch(_){} }
+    else {
+      folio = data || null;
+      ultimoEnviado = { firma, folio };
+      try { sessionStorage.setItem('pedido_enviado', JSON.stringify(ultimoEnviado)); } catch(_){}
+    }
   }
   btn.disabled = false; btn.textContent = 'Enviar pedido por WhatsApp';
 
-  // 2) A WhatsApp solo va el resumen
-  const fechaTxt = new Date(fecha+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-  const texto = ['¡Hola! Quiero hacer un pedido','',
-    ...l.map(x=>`• ${x.titulo} — ${dinero(x.total)}`),'',
-    `Total estimado: ${dinero(t)}`,
-    `Para: ${fechaTxt}, ${entrega==='domicilio'?'a domicilio':'recojo en el local'}`,
-    `Nombre: ${nombre}`,
-    '(Enviado desde conniereposteria.com)'
+  // 2) A WhatsApp va solo lo básico; lo demás (dirección, comentarios…) ya está en el sistema
+  const texto = ['¡Hola! Quiero hacer un pedido.',
+    `A nombre de: ${nombre}`,
+    `Número: ${tel}`,
+    ...(folio ? [`Folio: P-${folio}`] : []),
+    '',
+    ...l.map(x=>`• ${x.titulo}`)
   ].join('\n');
   abrirWhatsApp(texto);
   msg.style.color = 'var(--char)';

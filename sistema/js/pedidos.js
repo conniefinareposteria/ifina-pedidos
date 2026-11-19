@@ -70,12 +70,15 @@ async function cargarPedidos(){
   let q = sb.from('pedidos').select('*').order('fecha_entrega', {ascending:true});
 
   const nombre = document.getElementById('filtro-nombre').value.trim();
-  if(nombre) q = q.ilike('nombre_cliente', `%${nombre}%`);
+  // Folio (P-12, p12 o solo 12): se busca en todas las fechas
+  const mFolio = nombre.match(/^p?\s*-?\s*(\d+)$/i);
+  if(mFolio) q = q.eq('folio', Number(mFolio[1]));
+  else if(nombre) q = q.ilike('nombre_cliente', `%${nombre}%`);
 
   const categoria = document.getElementById('filtro-categoria').value;
   if(categoria) q = q.eq('categoria', categoria);
 
-  const rango = document.getElementById('filtro-rango').value;
+  const rango = mFolio ? 'todos' : document.getElementById('filtro-rango').value;
   if(rango === 'proximos'){
     const h = new Date();
     q = q.gte('fecha_entrega', new Date(h.getFullYear(), h.getMonth(), h.getDate()).toISOString());
@@ -156,7 +159,7 @@ function pintarPedidosPorDia(data, cont){
         <tr>
           ${puede('pedidos_editar') ? `<td class="c"><button type="button" class="btn-editar-fila" onclick="event.stopPropagation(); elegirAccionPedido(${Number(p.id)})">Editar</button></td>` : ''}
           <td class="num">${idx+1}</td>
-          <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${parteGrupo(p) ? `<span class="sub"><b>${parteGrupo(p)}</b></span>` : ''}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
+          <td class="nombre">${esc(p.nombre_cliente || 'Sin nombre')}${p.folio ? `<span class="sub">Folio ${folioPed(p.folio)}</span>` : ''}${parteGrupo(p) ? `<span class="sub"><b>${parteGrupo(p)}</b></span>` : ''}${p.recibe_nombre ? `<span class="sub">Recibe: ${esc(p.recibe_nombre)}${p.recibe_telefono ? ' · ' + esc(p.recibe_telefono) : ''}</span>` : ''}</td>
           <td class="nowrap">${esc(p.telefono || '')}</td>
           <td class="nowrap">${producto}</td>
           <td class="nowrap">${esc(tamano)}</td>

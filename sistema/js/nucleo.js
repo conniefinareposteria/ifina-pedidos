@@ -116,3 +116,7 @@ new MutationObserver(ms=> ms.forEach(m=> m.addedNodes.forEach(n=>{
   if(n.nodeType !== 1) return;
   if(n.matches && n.matches('input[type="number"]')) numConComas(n); else aplicarNumConComas(n);
 }))).observe(document.documentElement, { childList:true, subtree:true });
+
+// Folios: L- = venta del local (número de ticket), P- = pedido agendado (sql/039)
+function folioLoc(n){ return n ? 'L-' + n : ''; }
+function folioPed(n){ return n ? 'P-' + n : ''; }

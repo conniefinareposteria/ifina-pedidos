@@ -98,6 +98,13 @@
     <a href="#" class="link-inicio solo-colab" onclick="irInicio(); return false;">← Inicio</a>
     <form id="form-pedido">
       <!-- Al editar un pedido se usa este mismo formulario (ver editarPedidoEnFormulario) -->
+      <div id="solicitud-banner" class="edicion-banner" style="display:none;">
+        <div><b id="solicitud-titulo">Pedido de la página</b><div class="hint" id="solicitud-sub" style="margin:2px 0 0;"></div></div>
+        <div class="botones-fila" style="margin:0;">
+          <button type="button" class="btn-secundario" onclick="regresarASolicitudes()">Regresar</button>
+          <button type="button" class="btn-borrar" onclick="cancelarSolicitudEnRevision()">Cancelar pedido</button>
+        </div>
+      </div>
       <div id="edicion-banner" class="edicion-banner" style="display:none;">
         <div><b id="edicion-titulo">Editando pedido</b><div class="hint" id="edicion-sub" style="margin:2px 0 0;"></div></div>
         <div class="botones-fila" style="margin:0;">
@@ -321,6 +328,13 @@
 
   <!-- VISTA: LISTA DE PEDIDOS -->
   <section id="view-lista" class="view">
+    <!-- Por confirmar = pedidos que mandaron desde la página (tabla solicitudes); Confirmados = los pedidos de siempre -->
+    <div class="chip-group" id="pedidos-secciones" style="display:none; margin-bottom:14px;">
+      <div class="chip" data-s="porconfirmar" onclick="elegirSeccionPedidos('porconfirmar')">Por confirmar</div>
+      <div class="chip selected" data-s="confirmados" onclick="elegirSeccionPedidos('confirmados')">Confirmados</div>
+    </div>
+    <div id="pedidos-porconfirmar" style="display:none;"><div id="solicitudes-contenido" class="loading">Cargando…</div></div>
+    <div id="pedidos-confirmados">
     <div style="text-align:right;" id="link-eliminados-wrap"><a href="#" class="link-accion" style="margin-bottom:6px;" onclick="abrirEliminados(); return false;">Ver pedidos eliminados</a></div>
     <div style="margin-bottom:16px;">
       <div class="field" style="margin-bottom:10px;">
@@ -353,6 +367,7 @@
       </div>
     </div>
     <div id="lista-contenido" class="loading">Cargando pedidos...</div>
+    </div>
   </section>
 
   <!-- VISTA: PUNTO DE VENTA (colaborador) -->
@@ -683,6 +698,7 @@
 <script src="js/sesion.js?v=20261119a"></script>
 <script src="js/nuevo-pedido.js?v=20261119a"></script>
 <script src="js/pedidos.js?v=20261119a"></script>
+<script src="js/solicitudes.js?v=20261119a"></script>
 <script src="js/clientes.js?v=20261119a"></script>
 <script src="js/productos-dia.js?v=20261119a"></script>
 <script src="js/resumen.js?v=20261119a"></script>

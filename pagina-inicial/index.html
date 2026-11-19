@@ -448,6 +448,8 @@ textarea{min-height:80px;resize:vertical}
       <div class="caps lbl">Base</div>
       <div class="ch" id="hp-base"></div>
     </div>
+    <div class="caps lbl">Comentarios de este pastel</div>
+    <textarea id="hp-coment" placeholder="Opcional: corona de color, una duda, dedicatoria, algo especial para este pastel" maxlength="300"></textarea>
   </div>
   <div class="hoja-pie"><button class="btn char" id="hp-btn" onclick="agregarPastel()">Elige un tamaño</button><div class="msg" id="hp-msg"></div></div>
 </div>
@@ -618,8 +620,9 @@ function cardCantidad(tipo, r, precio){
     <div class="t serif">${esc(nombreBonito(r.nombre))}</div><div class="d">${dinero(precio)}</div>${hechoHtml(r) ? `<div class="hecho mini">${hechoHtml(r)}</div>` : ''}${r.descripcion ? `<div class="d">${esc(r.descripcion)}</div>` : ''}
     <div class="step${n?' con':''}"><button aria-label="Quitar uno" onclick="cambiar('${tipo}','${esc(r.nombre)}',${Number(precio)||0},-1,'${esc(r.foto_url||'')}')">−</button><span>${n}</span><button aria-label="Agregar uno" onclick="cambiar('${tipo}','${esc(r.nombre)}',${Number(precio)||0},1,'${esc(r.foto_url||'')}')">+</button></div></div>`;
 }
+// Mismo encabezado que Pasteles y Cheesecakes (antes era un recuadro azul con corona)
 function banner(titulo, precio){
-  return `<div class="banner wall"><img src="${CORONA_L}" alt=""><div><h2 class="serif">${titulo}</h2>${precio?`<div class="pr">${precio}</div>`:''}</div></div>`;
+  return `<div class="cat-h"><h2 class="serif">${titulo}</h2>${precio?`<p>${precio}</p>`:''}</div>`;
 }
 function pintarCat(c){
   catActual = c;
@@ -754,6 +757,7 @@ function abrirProducto(grupo, nombre){
   // En cheesecakes la descripción es "Por encima" y ya sale en la lista
   document.getElementById('hp-desc').textContent = grupo === 'cheesecake' ? '' : (sf.descripcion || '');
   document.getElementById('hp-msg').textContent = '';
+  document.getElementById('hp-coment').value = '';
   pintarHP();
   mostrar('hoja-prod');
 }
@@ -815,9 +819,12 @@ function agregarPastel(){
     else det += ' · sin corona';
     det += hp.base==='blanca' ? ' · base blanca' : ' · base dorada';
   }
+  // Comentario de este pastel (va con este producto, no con todo el pedido)
+  const comentario = document.getElementById('hp-coment').value.trim();
+  if(comentario) det += ' · Nota: ' + comentario;
   const titulo = hp.grupo==='cheesecake' ? 'Cheesecake ' + nombreBonito(hp.sabor) : hp.grupo==='tresleches' ? 'Pastel de tres leches' : 'Pastel de ' + nombreBonito(hp.sabor);
   carrito.push({tipo:hp.grupo, nombre:hp.sabor, titulo, detalle:det, precio:precioHP(), qty:1, foto:hp.foto,
-    datos:{tamano:hp.tamano, corona, ...(hp.grupo==='pastel' ? {base: hp.base} : {}), ...(hp.relleno ? {relleno: hp.relleno} : {})}});
+    datos:{tamano:hp.tamano, corona, ...(hp.grupo==='pastel' ? {base: hp.base} : {}), ...(hp.relleno ? {relleno: hp.relleno} : {}), ...(comentario ? {comentario} : {})}});
   cerrarTodo(); actualizarBarra();
 }
 

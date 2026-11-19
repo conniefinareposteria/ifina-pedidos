@@ -35,7 +35,7 @@ function switchView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-nuevo').classList.toggle('active', view==='nuevo');
   document.getElementById('view-lista').classList.toggle('active', view==='lista');
-  if(view==='lista') cargarPedidos();
+  if(view==='lista'){ cargarPedidos(); refrescarSeccionesPedidos(); }
 }
 function irInicio(){
   limpiarFormularioPedido();

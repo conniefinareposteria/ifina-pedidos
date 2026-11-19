@@ -1402,7 +1402,7 @@
    {
     "paso": "pedidos",
     "vista": "view-lista",
-    "texto": "Ver pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
+    "texto": "Por confirmar (2)\nConfirmados\nVer pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -1421,7 +1421,7 @@
    {
     "paso": "pedidos imprimir dia",
     "vista": "view-lista",
-    "texto": "Ver pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
+    "texto": "Por confirmar (2)\nConfirmados\nVer pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -1442,7 +1442,7 @@
    {
     "paso": "pedidos editar",
     "vista": "view-lista",
-    "texto": "Ver pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
+    "texto": "Por confirmar (2)\nConfirmados\nVer pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
     "modales": [
      "Ana López\nPastel · Chico · Chocolate · Total $700 · Falta $500\nEditar pedido\nIngresar monto pagado\nCancelar"
     ],
@@ -1463,7 +1463,7 @@
    {
     "paso": "pedidos ingresar pago",
     "vista": "view-lista",
-    "texto": "Ver pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
+    "texto": "Por confirmar (2)\nConfirmados\nVer pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,690\nFalta pago $940\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona ámbar\t11:00 a.m.\tRecoge en local\t$700\t$200\nTransferencia\n\t$500\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
     "modales": [
      "Ingresar pago — Ana López\nPastel · Chico · Chocolate · para el miércoles, 28 de octubre\nTotal\n$700\nPagado\n$200\nFalta\n$500\nPagos anteriores: Anticipo $200 (Transferencia)\nMONTO QUE PAGÓ\nMÉTODO DE PAGO\nTransferencia\nEfectivo\nTarjeta\nCancelar\nGuardar pago"
     ],
@@ -1590,7 +1590,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "264",
-        "grupo": "1d601e95-600b-4312-befa-062b152dc00c",
+        "grupo": "8d3ed62f-e84e-4a5d-a49e-fc9378099656",
         "grupo_parte": 1,
         "grupo_total": 2
        },
@@ -1617,7 +1617,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "36",
-        "grupo": "1d601e95-600b-4312-befa-062b152dc00c",
+        "grupo": "8d3ed62f-e84e-4a5d-a49e-fc9378099656",
         "grupo_parte": 2,
         "grupo_total": 2
        }
@@ -1678,7 +1678,7 @@
    {
     "paso": "editar guardar cambios",
     "vista": "view-lista",
-    "texto": "Ver pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
+    "texto": "Por confirmar (2)\nConfirmados\nVer pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
     "modales": [],
     "log": [
      [
@@ -1748,7 +1748,7 @@
    {
     "paso": "editar guardar sin cambios",
     "vista": "view-lista",
-    "texto": "Ver pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
+    "texto": "Por confirmar (2)\nConfirmados\nVer pedidos eliminados\nBUSCAR POR NOMBRE\nCATEGORÍA\nTodas\nPastel\nCupcake\nCuchareables\nPanqué\nMOSTRAR\nPróximos (desde hoy)\nTodos\nFechas personalizadas\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nDomingo, 1 de noviembre\nEfectivo $300\nTransferencia $0\nTarjeta $0\nTotal $1,000\nFalta pago $700\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tDiego Ruiz\t6671000011\tPastel\tMediano\tWhite Velvet · Corona incluida · Decorado\nBlanco con perlas\n\t11:00 a.m.\tRecoge en local\t$1,000\t$300\nEfectivo\n\t$700\t\nImprimir",
     "modales": [],
     "log": [
      [
@@ -3458,10 +3458,10 @@
         "tabla": "pagina",
         "producto": "portada",
         "orden": 0,
-        "ruta": "pagina/portada/1793215800000-umchs.jpg",
-        "url": "https://fotos.prueba/pagina/portada/1793215800000-umchs.jpg",
-        "ruta_original": "pagina/portada/1793215800000-umchs-original.png",
-        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-umchs-original.png"
+        "ruta": "pagina/portada/1793215800000-sqdqs.jpg",
+        "url": "https://fotos.prueba/pagina/portada/1793215800000-sqdqs.jpg",
+        "ruta_original": "pagina/portada/1793215800000-sqdqs-original.png",
+        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-sqdqs-original.png"
        }
       ]
      ]
@@ -3779,10 +3779,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 0,
-        "ruta": "sabores_cupcakes/limon/1793215800000-lh9dx.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-lh9dx.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-lh9dx-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-lh9dx-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-zvi0n.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-zvi0n.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-zvi0n-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-zvi0n-original.png"
        }
       ]
      ],
@@ -3810,10 +3810,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 1,
-        "ruta": "sabores_cupcakes/limon/1793215800000-k5ifv.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-k5ifv.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-k5ifv-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-k5ifv-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-6g4vj.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-6g4vj.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-6g4vj-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-6g4vj-original.png"
        }
       ]
      ]

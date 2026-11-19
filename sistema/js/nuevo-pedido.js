@@ -319,6 +319,7 @@ function abrirClienteNuevo(){
     if(/^[\d\s+()-]+$/.test(texto)) document.getElementById('cn-telefono').value = texto;
     else document.getElementById('cn-nombre').value = texto;
   }
+  prellenarClienteDeSolicitud();
   document.getElementById('cn-nombre').focus();
 }
 function limpiarFormCliente(){
@@ -602,8 +603,10 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
   const anticipoTotal = Number(document.getElementById('anticipo').value) || 0;
   const partes = repartirAnticipo(anticipoTotal, productos.map(x=> Number(x.precio) || 0));
   const grupo = productos.length > 1 ? nuevoIdGrupo() : null;
-  const filas = productos.map((prod, k)=> ({
+  // nota_producto: comentario de ese producto (pedidos de la página); se junta con las notas del pedido
+  const filas = productos.map(({ nota_producto, ...prod }, k)=> ({
     ...base, ...prod,
+    notas: [base.notas, nota_producto].filter(Boolean).join('\n'),
     precio: prod.precio || '0',
     anticipo: String(partes[k]),
     ...(grupo ? { grupo, grupo_parte: k + 1, grupo_total: productos.length } : {})
@@ -626,7 +629,11 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     return;
   }
 
+  const solicitud = solicitudEnRevision;
   const { error } = await sb.from('pedidos').insert(filas);
+  // Pedido de la página: ya aceptado, se quita de "Por confirmar"
+  let errSolicitud = null;
+  if(!error && solicitud) errSolicitud = await cambiarEstadoSolicitud(solicitud.id, 'aceptada');
 
   btn.disabled = false;
   btn.textContent = 'Guardar pedido';
@@ -640,6 +647,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     document.getElementById('form-pedido').style.display = 'none';
     document.getElementById('confirmacion').style.display = 'block';
     document.getElementById('conf-msg').className = 'msg';
+    if(errSolicitud){ document.getElementById('conf-msg').className = 'msg err'; document.getElementById('conf-msg').textContent = 'El pedido sí se guardó, pero sigue en "Por confirmar": ' + errSolicitud + ' Cancélalo ahí para que no se repita.'; }
     // En el local: si dejó anticipo (o pagó completo), ofrecer el comprobante impreso
     if(rolActual === 'colaborador' && anticipoTotal > 0){
       const totalTodo = filas.reduce((a, f)=> a + (Number(f.precio)||0), 0);
@@ -689,6 +697,7 @@ function limpiarFormularioPedido(){
   document.getElementById('pago-nuevo-wrap').style.display = 'block';
   document.getElementById('dir-edicion-hint').style.display = 'none';
   document.getElementById('btn-guardar').textContent = 'Guardar pedido';
+  terminarRevisionSolicitud();
 }
 function iniciarNuevoPedido(){
   document.getElementById('confirmacion').style.display = 'none';
@@ -761,9 +770,9 @@ function quitarProductoPedido(i){ productosPedido.splice(i, 1); pintarProductosP
 function textoProducto(x){
   if(x.categoria === 'pastel'){
     const cor = x.corona_tipo === 'incluida' ? 'corona incluida' : x.corona_tipo === 'ambar' ? 'corona ámbar' : x.corona_tipo === 'color' ? 'corona de color' + (x.corona_color ? ' (' + x.corona_color + ')' : '') : '';
-    return ['Pastel ' + formatNombre(x.tamano_o_sabor), formatNombre(x.sabor), cor, x.decorado ? 'decorado' : ''].filter(Boolean).join(' · ');
+    return ['Pastel ' + formatNombre(x.tamano_o_sabor), formatNombre(x.sabor), cor, x.decorado ? 'decorado' : '', x.nota_producto || ''].filter(Boolean).join(' · ');
   }
-  return ({cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[x.categoria] || x.categoria) + ': ' + x.sabor;
+  return ({cupcake:'Cupcakes', individual:'Cuchareables', panque:'Panqués'}[x.categoria] || x.categoria) + ': ' + x.sabor + (x.nota_producto ? ' · ' + x.nota_producto : '');
 }
 function pintarProductosPedido(){
   const wrap = document.getElementById('productos-agregados-wrap');

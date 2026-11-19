@@ -958,3 +958,6 @@ begin
 end $$;
 revoke execute on function pedidos_pagos_por_entrega(timestamptz, timestamptz) from public, anon;
 grant execute on function pedidos_pagos_por_entrega(timestamptz, timestamptz) to authenticated;
+
+-- 038: dirección por campos en los pedidos de la página
+alter table solicitudes add column if not exists direccion_detalle jsonb;

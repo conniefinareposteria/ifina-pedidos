@@ -290,7 +290,7 @@ async function cargarFinanzas(){
   fin.insumos = (a.data || []).map(r=> ({ ...r, tipo: r.tipo || 'insumo' }));
   fin.recetas = b.data || []; fin.partes = c.data || []; fin.fijos = d.data || [];
   fin.config = {}; (e.data || []).forEach(x=> fin.config[x.clave] = x.valor);
-  const ORDEN_T = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','plancha50','plancha60'];
+  const ORDEN_T = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','extragrande50','extragrande60','plancha50','plancha60'];
   const posT = t=>{ const i = ORDEN_T.indexOf(finQ(t).replace(/[^a-z0-9]/g, '')); return i < 0 ? 99 : i; };
   fin.catalogo = [
     ...[...(ct.data || [])].sort((x, y)=> posT(x.tamano) - posT(y.tamano)).map(x=> ({ tabla:'tamanos_pastel', clave:x.tamano, precio:x.precio, personas:x.personas })),

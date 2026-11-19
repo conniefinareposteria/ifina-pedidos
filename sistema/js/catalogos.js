@@ -50,7 +50,7 @@ async function cargarCatalogos(){
 
   const selTamano = document.getElementById('sel-tamano');
   // Orden fijo de tamaños; los que no estén en la lista van al final
-  const ORDEN_TAMANOS = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','plancha50','plancha60'];
+  const ORDEN_TAMANOS = ['cheesecake','tresleches','mini','chico','mediano','grande','extragrande','extragrande50','extragrande60','plancha50','plancha60'];
   const claveTam = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
   const posTam = s => { const i = ORDEN_TAMANOS.indexOf(claveTam(s)); return i === -1 ? 999 : i; };
   [...tamanosData].sort((a,b)=> posTam(a.tamano) - posTam(b.tamano)).forEach(row=>{

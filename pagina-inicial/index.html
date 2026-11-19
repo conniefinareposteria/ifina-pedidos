@@ -326,6 +326,7 @@ footer{padding:22px 0 calc(110px + env(safe-area-inset-bottom));text-align:cente
 .ch button.on{background:var(--char);color:#fff;border-color:var(--char)}
 input,textarea{width:100%;font:inherit;font-size:16px;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:13px;color:var(--char);margin-bottom:10px}
 textarea{min-height:80px;resize:vertical}
+.dir2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hoja-pie{position:fixed;left:0;right:0;bottom:0;padding:14px 20px calc(18px + env(safe-area-inset-bottom));background:var(--cream);z-index:2}
 @media(min-width:760px){.hoja-pie{position:sticky}}
 .msg{font-size:13.5px;color:#9B2C2C;font-weight:600;min-height:18px;margin-top:8px;text-align:center}
@@ -480,7 +481,15 @@ textarea{min-height:80px;resize:vertical}
       <button data-v="recoger">Recojo en el local</button>
       <button data-v="domicilio">A domicilio</button>
     </div>
-    <textarea id="pd-dir" placeholder="Dirección: calle, número, colonia y referencias" maxlength="300" style="display:none"></textarea>
+    <!-- Dirección con los mismos campos que el sistema (Nuevo pedido), para que se pase igual -->
+    <div id="pd-dir" style="display:none">
+      <div class="caps lbl">Dirección de entrega</div>
+      <input id="pd-calle" placeholder="Calle" maxlength="80" autocomplete="address-line1">
+      <div class="dir2"><input id="pd-numero_exterior" placeholder="Número exterior" maxlength="10"><input id="pd-numero_interior" placeholder="Interior (opcional)" maxlength="10"></div>
+      <input id="pd-colonia" placeholder="Colonia o fraccionamiento" maxlength="60">
+      <div class="dir2"><input id="pd-codigo_postal" placeholder="Código postal" inputmode="numeric" maxlength="5"><input id="pd-ciudad" placeholder="Ciudad" value="Culiacán" maxlength="40"></div>
+      <textarea id="pd-referencias" placeholder="Referencias (opcional): entre calles, color de fachada, privada, etc." maxlength="90"></textarea>
+    </div>
     <textarea id="pd-coment" placeholder="Comentarios (dedicatoria, alergias, detalles)" maxlength="500"></textarea>
   </div>
   <div class="hoja-pie"><button class="btn wa" id="pd-enviar" onclick="enviarPedido()">Enviar pedido por WhatsApp</button><div class="msg" id="pd-msg"></div><div class="aviso">Te confirmamos disponibilidad y anticipo por WhatsApp.</div></div>
@@ -870,14 +879,19 @@ async function enviarPedido(){
   const nombre = document.getElementById('pd-nombre').value.trim();
   const tel = document.getElementById('pd-tel').value.trim();
   const fecha = document.getElementById('pd-fecha').value;
-  const dir = document.getElementById('pd-dir').value.trim();
+  // Dirección: mismos campos y mismo texto que en el sistema
+  const dirDet = {};
+  ['calle','numero_exterior','numero_interior','colonia','codigo_postal','ciudad','referencias'].forEach(k=>{ dirDet[k] = document.getElementById('pd-'+k).value.trim(); });
+  const faltaDir = [['calle','la calle'],['numero_exterior','el número exterior'],['colonia','la colonia']].filter(([k])=>!dirDet[k]).map(x=>x[1]);
+  let dir = [dirDet.calle, dirDet.numero_exterior].filter(Boolean).join(' ') + (dirDet.numero_interior ? ' int. ' + dirDet.numero_interior : '');
+  dir = [dir, dirDet.colonia ? 'Col. ' + dirDet.colonia : '', dirDet.codigo_postal ? 'C.P. ' + dirDet.codigo_postal : '', dirDet.ciudad].filter(Boolean).join(', ') + (dirDet.referencias ? '. Ref: ' + dirDet.referencias : '');
   const coment = document.getElementById('pd-coment').value.trim();
   if(!carrito.length){ msg.textContent = 'Agrega al menos un producto.'; return; }
   if(!nombre){ msg.textContent = 'Escribe tu nombre.'; return; }
   if(tel.replace(/\D/g,'').length < 10){ msg.textContent = 'Escribe un teléfono de 10 dígitos.'; return; }
   if(!fecha){ msg.textContent = 'Elige la fecha de entrega.'; return; }
   if(!entrega){ msg.textContent = 'Indica si recoges o es a domicilio.'; return; }
-  if(entrega==='domicilio' && !dir){ msg.textContent = 'Escribe la dirección de entrega.'; return; }
+  if(entrega==='domicilio' && faltaDir.length){ msg.textContent = 'A la dirección le falta ' + faltaDir.join(', ') + '.'; return; }
 
   const {l,t} = totales();
   const btn = document.getElementById('pd-enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
@@ -887,7 +901,7 @@ async function enviarPedido(){
   // 1) Se guarda completa en el sistema como solicitud
   const items = carrito.map(it => ({tipo:it.tipo, nombre:it.nombre, cantidad:it.qty, precio:it.precio, detalle:it.detalle||null, ...(it.datos||{})}));
   const { error } = await sb.from('solicitudes').insert([{
-    nombre, telefono:tel, fecha_deseada:fecha, entrega, direccion: entrega==='domicilio'?dir:null,
+    nombre, telefono:tel, fecha_deseada:fecha, entrega, direccion: entrega==='domicilio'?dir.slice(0,300):null, direccion_detalle: entrega==='domicilio'?dirDet:null,
     comentarios: coment||null, items, total:t
   }]);
   btn.disabled = false; btn.textContent = 'Enviar pedido por WhatsApp';

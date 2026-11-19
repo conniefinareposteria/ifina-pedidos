@@ -296,7 +296,8 @@ function seleccionarCliente(c){
   card.style.display = 'block';
   document.getElementById('pedido-resto').style.display = 'block';
   document.getElementById('pedido-sin-cliente').style.display = 'none';
-  dirOpcion = null;
+  // Pedido de la página con dirección: se queda la que escribió el cliente (aunque tenga otra guardada)
+  dirOpcion = (typeof solicitudEnRevision !== 'undefined' && solicitudEnRevision && solicitudEnRevision.direccion_detalle) ? 'nueva' : null;
   actualizarDireccionUI();
 }
 function quitarCliente(){

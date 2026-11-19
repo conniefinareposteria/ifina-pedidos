@@ -1590,7 +1590,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "264",
-        "grupo": "8d3ed62f-e84e-4a5d-a49e-fc9378099656",
+        "grupo": "e27937e6-e076-4744-92cc-9d75e12b3bbe",
         "grupo_parte": 1,
         "grupo_total": 2
        },
@@ -1617,7 +1617,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "36",
-        "grupo": "8d3ed62f-e84e-4a5d-a49e-fc9378099656",
+        "grupo": "e27937e6-e076-4744-92cc-9d75e12b3bbe",
         "grupo_parte": 2,
         "grupo_total": 2
        }
@@ -3458,10 +3458,10 @@
         "tabla": "pagina",
         "producto": "portada",
         "orden": 0,
-        "ruta": "pagina/portada/1793215800000-sqdqs.jpg",
-        "url": "https://fotos.prueba/pagina/portada/1793215800000-sqdqs.jpg",
-        "ruta_original": "pagina/portada/1793215800000-sqdqs-original.png",
-        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-sqdqs-original.png"
+        "ruta": "pagina/portada/1793215800000-ut4nn.jpg",
+        "url": "https://fotos.prueba/pagina/portada/1793215800000-ut4nn.jpg",
+        "ruta_original": "pagina/portada/1793215800000-ut4nn-original.png",
+        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-ut4nn-original.png"
        }
       ]
      ]
@@ -3779,10 +3779,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 0,
-        "ruta": "sabores_cupcakes/limon/1793215800000-zvi0n.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-zvi0n.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-zvi0n-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-zvi0n-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-j2lgt.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-j2lgt.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-j2lgt-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-j2lgt-original.png"
        }
       ]
      ],
@@ -3810,10 +3810,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 1,
-        "ruta": "sabores_cupcakes/limon/1793215800000-6g4vj.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-6g4vj.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-6g4vj-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-6g4vj-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-nf4eh.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-nf4eh.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-nf4eh-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-nf4eh-original.png"
        }
       ]
      ]

@@ -168,7 +168,12 @@ function revisarSolicitud(id){
   // Entrega y fecha
   if(s.entrega === 'domicilio'){
     elegirChip('#entrega-chips .chip[data-entrega="domicilio"]');
-    if(s.direccion){
+    const det = s.direccion_detalle;
+    if(det && typeof det === 'object'){
+      // Viene con los mismos campos que el sistema: se pasa tal cual
+      dirOpcion = 'nueva'; actualizarDireccionUI();
+      CAMPOS_DIR.forEach(c=>{ document.getElementById('pd-' + c.k).value = det[c.k] || ''; });
+    } else if(s.direccion){
       const h = document.getElementById('dir-edicion-hint');
       h.textContent = 'Dirección que escribió el cliente: ' + s.direccion;
       h.style.display = 'block';

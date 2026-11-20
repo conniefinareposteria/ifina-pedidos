@@ -378,10 +378,10 @@ body{font-size:16.5px}
 #hoja-ped{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
 #hoja-ped .hoja-pie{position:static;padding-top:6px}
 /* Mientras se escribe, los botones fijos se esconden para que se vea lo que se teclea */
-body.tecleando .hoja-pie{position:static}
+body.tecleando .hoja-pie{visibility:hidden}
 body.tecleando .barra{display:none}
 /* Botón Agendar en cada pastel */
-.agendar{display:block;margin:10px auto 0;width:fit-content;min-width:60%;text-align:center;background:var(--char);color:var(--yeso);font-family:'Mulish',sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;padding:11px 22px;border-radius:999px}
+.agendar{display:block;margin:10px 4px 0;text-align:center;background:linear-gradient(135deg,#B9853A,#8F5A14);color:#FFF8EC;font-family:'Mulish',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;padding:9px 10px;border-radius:999px;box-shadow:0 4px 12px -6px rgba(143,90,20,.7)}
 .card:active .agendar{opacity:.85}
 </style>
 </head>
@@ -829,7 +829,8 @@ function abrirProducto(grupo, nombre){
 // Al elegir tamaño, la lista se cierra y la hoja sube a esa parte (para no quedarse hasta abajo)
 function subirATamano(){
   const el = document.getElementById('hp-tam');
-  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  const hoja = document.getElementById('hoja-prod');
+  if(el && hoja){ const arriba = el.getBoundingClientRect().top - hoja.getBoundingClientRect().top; if(arriba < 80) hoja.scrollTop += arriba - 90; }
 }
 function pintarHP(){
   // Tamaño: se ve el elegido; al tocarlo se abre la lista de todos
@@ -1034,7 +1035,6 @@ document.addEventListener('focusin', e=>{
   const el = e.target;
   if(!el.matches || !el.matches('input, textarea, select')) return;
   document.body.classList.add('tecleando');
-  setTimeout(()=> el.scrollIntoView({ behavior:'smooth', block:'center' }), 350);
 });
 document.addEventListener('focusout', ()=> setTimeout(()=>{
   const a = document.activeElement;

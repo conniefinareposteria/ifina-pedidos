@@ -387,6 +387,9 @@ body.tecleando .barra{display:none}
 /* Botón Agendar en cada pastel */
 .agendar{display:block;margin:10px 4px 0;text-align:center;background:linear-gradient(135deg,#B9853A,#8F5A14);color:#FFF8EC;font-family:'Mulish',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;padding:9px 10px;border-radius:999px;box-shadow:0 4px 12px -6px rgba(143,90,20,.7)}
 .card:active .agendar{opacity:.85}
+.loc-apartar{margin-top:22px;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:18px;text-align:center}
+.loc-apartar b{display:block;font-size:24px;font-weight:500}
+.loc-apartar p{font-size:15px;line-height:1.5;color:var(--soft);margin:6px 0 14px}
 </style>
 </head>
 <body>
@@ -512,7 +515,12 @@ body.tecleando .barra{display:none}
     <h2 class="serif">Hoy en el local</h2>
     <div class="loc-act" id="loc-act"></div>
     <div id="loc-cont"><div class="cargando">Cargando…</div></div>
-    <div class="loc-nota">Es lo que tenemos en vitrina en este momento; puede cambiar rápido. Para apartar algo, escríbenos por WhatsApp.</div>
+    <div class="loc-nota">Es lo que tenemos en vitrina en este momento y puede cambiar rápido.</div>
+    <div class="loc-apartar">
+      <b class="serif">¿Se te antojó algo?</b>
+      <p>Escríbenos para apartártelo para hoy o para resolver cualquier duda. Por ahora los apartados se confirman por mensaje.</p>
+      <a class="btn wa" id="loc-wa" target="_blank" rel="noopener">Apartar o preguntar por WhatsApp</a>
+    </div>
   </div>
 </div>
 
@@ -1101,12 +1109,15 @@ function alternarPrecios(){
 })();
 // ===== Lo que hay hoy en el local (lo guarda el punto de venta; sql/030) =====
 async function abrirLocal(){
+  document.getElementById('loc-wa').href = waLink('¡Hola! Vi lo que tienen hoy en el local y me gustaría apartar: ');
+  document.querySelector('.loc-apartar').style.display = '';
   mostrar('hoja-local');
   const cont = document.getElementById('loc-cont'), act = document.getElementById('loc-act');
   cont.innerHTML = '<div class="cargando">Cargando…</div>'; act.textContent = '';
   const { data, error } = await sb.from('existencias_local').select('datos,updated_at').eq('id', 1).maybeSingle();
   const hoy = new Date(); const fHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0') + '-' + String(hoy.getDate()).padStart(2,'0');
   if(error || !data || !data.datos || data.datos.fecha !== fHoy){
+    document.querySelector('.loc-apartar').style.display = 'none';   // ya trae su propio botón de WhatsApp
     cont.innerHTML = `<div class="vacio" style="margin-top:20px">Todavía no tenemos el inventario de hoy. <a class="btn wa" style="margin-top:14px" href="${waLink('¡Hola! ¿Qué tienen hoy en el local?')}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a></div>`;
     return;
   }

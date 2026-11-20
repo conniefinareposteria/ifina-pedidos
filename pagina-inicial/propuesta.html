@@ -913,6 +913,7 @@ function actualizarBarra(){
   document.getElementById('barra-n').textContent = `${n} ${n===1?'producto':'productos'}`;
   document.getElementById('barra-t').textContent = dinero(t);
   if(document.getElementById('hoja-ped').classList.contains('on')) pintarPedido();
+  guardarLocal();
 }
 function quitar(i){ carrito.splice(i,1); actualizarBarra(); pintarCat(catActual); if(!carrito.length) cerrarTodo(); }
 function pintarPedido(){
@@ -926,8 +927,31 @@ document.querySelectorAll('#pd-entrega button').forEach(b => b.onclick = () => {
   entrega = b.dataset.v;
   document.querySelectorAll('#pd-entrega button').forEach(x=>{ x.classList.toggle('on', x===b); x.textContent = (x===b?'✓ ':'') + x.textContent.replace(/^✓ /,''); });
   document.getElementById('pd-dir').style.display = entrega==='domicilio' ? 'block' : 'none';
-  if(entrega==='domicilio') setTimeout(()=> document.getElementById('pd-dir').scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+  if(entrega==='domicilio' && !restaurando) setTimeout(()=> document.getElementById('pd-dir').scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+  guardarLocal();
 });
+// ===== Que no se pierda nada al recargar: carrito y datos del pedido se guardan en este teléfono (3 días) =====
+const CAMPOS_PED = ['pd-nombre','pd-tel','pd-fecha','pd-coment','pd-calle','pd-numero_exterior','pd-numero_interior','pd-colonia','pd-codigo_postal','pd-ciudad','pd-referencias'];
+let restaurando = false;
+function guardarLocal(){
+  if(restaurando) return;
+  try {
+    const campos = {}; CAMPOS_PED.forEach(id=>{ const el = document.getElementById(id); if(el) campos[id] = el.value; });
+    localStorage.setItem('connie_pedido', JSON.stringify({ t: Date.now(), carrito, campos, entrega }));
+  } catch(_){}
+}
+document.getElementById('hoja-ped').addEventListener('input', guardarLocal);
+(function restaurarLocal(){
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem('connie_pedido') || 'null'); } catch(_){}
+  if(!d || Date.now() - (d.t || 0) > 3 * 864e5) return;
+  restaurando = true;
+  (d.carrito || []).forEach(it=> carrito.push(it));
+  Object.entries(d.campos || {}).forEach(([id, v])=>{ const el = document.getElementById(id); if(el && v) el.value = v; });
+  if(d.entrega){ const b = document.querySelector(`#pd-entrega button[data-v="${d.entrega}"]`); if(b) b.click(); }
+  restaurando = false;
+  actualizarBarra();
+})();
 function abrirPedido(){
   const d = new Date(); const f = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
   document.getElementById('pd-fecha').min = f(d);

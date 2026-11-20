@@ -374,6 +374,15 @@ body{font-size:16.5px}
 .btn-local .punto{width:11px;height:11px;flex:none}
 /* Visítanos: dirección en letra de texto (los números se leen mejor) */
 .visita #txt-visitanos_direccion{font-family:'Mulish',sans-serif;font-weight:700;font-size:20px;line-height:1.4;max-width:520px;margin-left:auto;margin-right:auto}
+/* Mi pedido: el botón de WhatsApp va al final del formulario (no fijo), para no tapar la pantalla */
+#hoja-ped{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
+#hoja-ped .hoja-pie{position:static;padding-top:6px}
+/* Mientras se escribe, los botones fijos se esconden para que se vea lo que se teclea */
+body.tecleando .hoja-pie{position:static}
+body.tecleando .barra{display:none}
+/* Botón Agendar en cada pastel */
+.agendar{display:block;margin:10px auto 0;width:fit-content;min-width:60%;text-align:center;background:var(--char);color:var(--yeso);font-family:'Mulish',sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;padding:11px 22px;border-radius:999px}
+.card:active .agendar{opacity:.85}
 </style>
 </head>
 <body>
@@ -655,7 +664,7 @@ function irCat(c){
 function cardSabor(s, grupo){
   return `<div class="card" role="button" tabindex="0" onclick="abrirProducto('${grupo}','${esc(s.nombre)}')">
     <div class="ph">${galeriaHtml(s._fotos, s.foto_url, nombreBonito(s.nombre))}${s.incluye_corona && grupo==='pastel'?`<span class="tag"><img src="${CORONA}" alt="">Corona incluida</span>`:''}</div>
-    <div class="t serif">${esc(nombreBonito(s.nombre))}</div></div>`;
+    <div class="t serif">${esc(nombreBonito(s.nombre))}</div><span class="agendar">Agendar</span></div>`;
 }
 // De qué está hecho (se llena en el sistema: Catálogo). Solo se muestran los campos llenos.
 // Relleno a elegir (ej. Vintage): "A elegir: mermelada de fresa o cajeta"
@@ -817,6 +826,11 @@ function abrirProducto(grupo, nombre){
   pintarHP();
   mostrar('hoja-prod');
 }
+// Al elegir tamaño, la lista se cierra y la hoja sube a esa parte (para no quedarse hasta abajo)
+function subirATamano(){
+  const el = document.getElementById('hp-tam');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
 function pintarHP(){
   // Tamaño: se ve el elegido; al tocarlo se abre la lista de todos
   const sel = hp.tams.find(t=>t.tamano===hp.tamano);
@@ -825,7 +839,7 @@ function pintarHP(){
   if(hp.tams.length > 1 || !sel){
     html += `<button class="sel-tam${hp.tamAbierto?' abierto':''}" onclick="hp.tamAbierto=!hp.tamAbierto;pintarHP()" aria-expanded="${hp.tamAbierto}">
       ${sel ? fila(sel) : '<div>Elige un tamaño</div>'}<div class="der">${sel?`<b>${dinero(sel.precio)}</b>`:''}<span class="chev"></span></div></button>`;
-    if(hp.tamAbierto) html += `<div class="lista-tam">${hp.tams.map(t=>`<button class="opt${hp.tamano===t.tamano?' on':''}" onclick="hp.tamano='${esc(t.tamano)}';hp.tamAbierto=false;pintarHP()">
+    if(hp.tamAbierto) html += `<div class="lista-tam">${hp.tams.map(t=>`<button class="opt${hp.tamano===t.tamano?' on':''}" onclick="hp.tamano='${esc(t.tamano)}';hp.tamAbierto=false;pintarHP();subirATamano()">
       ${fila(t)}<div class="der"><b>${dinero(t.precio)}</b><span class="ck">${hp.tamano===t.tamano?'✓':''}</span></div></button>`).join('')}</div>`;
   } else html = `<div class="opt on">${fila(sel)}<div class="der"><b>${dinero(sel.precio)}</b></div></div>`;
   document.getElementById('hp-tam').innerHTML = html;
@@ -912,6 +926,7 @@ document.querySelectorAll('#pd-entrega button').forEach(b => b.onclick = () => {
   entrega = b.dataset.v;
   document.querySelectorAll('#pd-entrega button').forEach(x=>{ x.classList.toggle('on', x===b); x.textContent = (x===b?'✓ ':'') + x.textContent.replace(/^✓ /,''); });
   document.getElementById('pd-dir').style.display = entrega==='domicilio' ? 'block' : 'none';
+  if(entrega==='domicilio') setTimeout(()=> document.getElementById('pd-dir').scrollIntoView({ behavior:'smooth', block:'start' }), 50);
 });
 function abrirPedido(){
   const d = new Date(); const f = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
@@ -991,6 +1006,16 @@ function abrirWhatsApp(texto){
 }
 
 // ===== Menú y hojas =====
+document.addEventListener('focusin', e=>{
+  const el = e.target;
+  if(!el.matches || !el.matches('input, textarea, select')) return;
+  document.body.classList.add('tecleando');
+  setTimeout(()=> el.scrollIntoView({ behavior:'smooth', block:'center' }), 350);
+});
+document.addEventListener('focusout', ()=> setTimeout(()=>{
+  const a = document.activeElement;
+  if(!a || !a.matches || !a.matches('input, textarea, select')) document.body.classList.remove('tecleando');
+}, 100));
 function abrirMenu(){ document.getElementById('menu').classList.add('on'); document.getElementById('velo').classList.add('on'); }
 function mostrar(id){ document.getElementById(id).classList.add('on'); document.body.style.overflow='hidden'; }
 function cerrarTodo(){

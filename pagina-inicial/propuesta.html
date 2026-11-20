@@ -377,6 +377,8 @@ body{font-size:16.5px}
 /* Hojas en teléfono: del alto visible (arriba del teclado), para que el iPhone no mueva toda la página */
 @media(max-width:759px){.hoja{top:var(--arriba-visible,0px);bottom:auto;height:var(--alto-visible,100%)}}
 .hoja{overscroll-behavior:contain}
+/* Lo que se acomoda solo dentro de una hoja queda debajo del encabezado con curvas, no tapado */
+.hoja input,.hoja textarea,.hoja select,#pd-dir,#hp-tam{scroll-margin-top:104px;scroll-margin-bottom:20px}
 /* Mi pedido: el botón de WhatsApp va al final del formulario (no fijo), para no tapar la pantalla */
 #hoja-ped{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
 #hoja-ped .hoja-pie{position:static;padding-top:6px}

@@ -374,6 +374,9 @@ body{font-size:16.5px}
 .btn-local .punto{width:11px;height:11px;flex:none}
 /* Visítanos: dirección en letra de texto (los números se leen mejor) */
 .visita #txt-visitanos_direccion{font-family:'Mulish',sans-serif;font-weight:700;font-size:20px;line-height:1.4;max-width:520px;margin-left:auto;margin-right:auto}
+/* Hojas en teléfono: del alto visible (arriba del teclado), para que el iPhone no mueva toda la página */
+@media(max-width:759px){.hoja{top:var(--arriba-visible,0px);bottom:auto;height:var(--alto-visible,100%)}}
+.hoja{overscroll-behavior:contain}
 /* Mi pedido: el botón de WhatsApp va al final del formulario (no fijo), para no tapar la pantalla */
 #hoja-ped{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
 #hoja-ped .hoja-pie{position:static;padding-top:6px}
@@ -1041,11 +1044,35 @@ document.addEventListener('focusout', ()=> setTimeout(()=>{
   if(!a || !a.matches || !a.matches('input, textarea, select')) document.body.classList.remove('tecleando');
 }, 100));
 function abrirMenu(){ document.getElementById('menu').classList.add('on'); document.getElementById('velo').classList.add('on'); }
-function mostrar(id){ document.getElementById(id).classList.add('on'); document.body.style.overflow='hidden'; }
+// Con una hoja abierta la página de atrás queda fija: en iPhone, al escribir, se movía la de atrás y todo "bailaba"
+let scrollGuardado = null;
+function bloquearFondo(){
+  if(scrollGuardado !== null) return;
+  scrollGuardado = window.scrollY;
+  const b = document.body.style;
+  b.position = 'fixed'; b.top = (-scrollGuardado) + 'px'; b.left = '0'; b.right = '0'; b.overflow = 'hidden';
+}
+function soltarFondo(){
+  if(scrollGuardado === null) return;
+  const b = document.body.style, y = scrollGuardado;
+  b.position = ''; b.top = ''; b.left = ''; b.right = ''; b.overflow = '';
+  scrollGuardado = null;
+  window.scrollTo({ top: y, behavior: 'instant' });
+}
+function mostrar(id){ document.getElementById(id).classList.add('on'); bloquearFondo(); ajustarAlTeclado(); }
 function cerrarTodo(){
   document.querySelectorAll('.hoja,.menu,.velo').forEach(e=>e.classList.remove('on'));
-  document.body.style.overflow='';
+  soltarFondo();
 }
+// La hoja mide lo que queda visible arriba del teclado; el campo que se escribe se acomoda una sola vez, sin animación
+function ajustarAlTeclado(){
+  const vv = window.visualViewport; if(!vv) return;
+  document.documentElement.style.setProperty('--alto-visible', vv.height + 'px');
+  document.documentElement.style.setProperty('--arriba-visible', vv.offsetTop + 'px');
+  const a = document.activeElement;
+  if(a && a.matches && a.matches('input, textarea') && a.closest('.hoja.on')) a.scrollIntoView({ block:'nearest' });
+}
+if(window.visualViewport){ visualViewport.addEventListener('resize', ajustarAlTeclado); visualViewport.addEventListener('scroll', ajustarAlTeclado); }
 document.addEventListener('keydown', e => { if(e.key==='Escape') cerrarTodo(); });
 // El logo de Connie lleva al inicio desde cualquier parte (producto, pedido, menú) sin borrar el carrito
 // Vitrina: jaladeras en las puertas del centro (como la repisa del local)

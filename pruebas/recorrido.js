@@ -110,7 +110,10 @@ async function paso(page, huella, nombre, fn){
     await paso(page, huella, 'pos entregar pedido', async()=>{ await page.click('#pos-metodos .pos-chip[data-m=efectivo]'); await page.click('#pos-cobrar'); });
     await paso(page, huella, 'pos no ticket', ()=> ev(()=> responderTicket(false)));
     await paso(page, huella, 'pos buscar pedido', async()=>{ await page.fill('#pos-buscar','diego'); await page.waitForTimeout(500); });
-    await paso(page, huella, 'pos anticipo', async()=>{ await page.click('#pos-contenido .pos-prow >> nth=0'); await ev(()=>{ window.__respuestaPrompt = '200'; }); await page.click('#pos-btn-anticipo'); await page.click('#pos-metodos .pos-chip[data-m=transferencia]'); });
+    await paso(page, huella, 'pos anticipo', async()=>{ await page.click('#pos-contenido .pos-prow >> nth=0'); await ev(()=>{ window.__respuestaPrompt = '200'; }); await page.click('#pos-btn-anticipo'); await page.click('#pos-metodos .pos-chip[data-m=transferencia]');
+      // Transferencia: el comprobante es obligatorio (la función de validar está simulada)
+      require('fs').writeFileSync('/tmp/comprobante-prueba.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64'));
+      await page.setInputFiles('#pos-comprobante input[type=file]', '/tmp/comprobante-prueba.png'); await page.waitForTimeout(150); });
     await paso(page, huella, 'pos cobrar anticipo', ()=> page.click('#pos-cobrar'));
     await paso(page, huella, 'pos ticket anticipo', ()=> ev(()=> responderTicket(true)));
     await paso(page, huella, 'pos editar pedido', async()=>{ await page.fill('#pos-buscar',''); await page.waitForTimeout(400); await page.click('#pos-contenido .pos-editar >> nth=0'); });

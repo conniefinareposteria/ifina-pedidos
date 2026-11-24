@@ -291,25 +291,31 @@ function accionRegistrarPago(){
   document.getElementById('pg-monto').value = falta > 0 ? falta : '';
   pgMetodo = null;
   document.querySelectorAll('#pg-metodos .chip').forEach(c=>c.classList.remove('selected'));
+  compPG.reset(); compPG.mostrar(false);
   document.getElementById('pg-msg').className = 'msg';
   abrirModal('pg');
 }
 document.querySelectorAll('#pg-metodos .chip').forEach(c=> c.addEventListener('click', ()=>{
   pgMetodo = c.dataset.m;
   document.querySelectorAll('#pg-metodos .chip').forEach(x=>x.classList.toggle('selected', x === c));
+  compPG.mostrar(pgMetodo === 'transferencia');
 }));
+// Comprobante obligatorio para pagos por transferencia (transferencias.js)
+const compPG = crearComprobante('pg-comprobante', ()=> leerNum('pg-monto'));
 async function guardarPagoPedido(){
   const p = pedidoAccion; if(!p) return;
   const msg = document.getElementById('pg-msg'); msg.className = 'msg';
   const monto = Number(document.getElementById('pg-monto').value);
   if(!(monto > 0)){ msg.className = 'msg err'; msg.textContent = 'Escribe el monto que pagó.'; return; }
   if(!pgMetodo){ msg.className = 'msg err'; msg.textContent = 'Elige el método de pago.'; return; }
+  if(pgMetodo === 'transferencia' && !(await compPG.revisarAntesDeGuardar())) return;
   const pagos = [...pagosDe(p), { monto, metodo: pgMetodo, fecha: new Date().toISOString() }];
   const btn = document.getElementById('pg-guardar'); btn.disabled = true; btn.textContent = 'Guardando...';
   const { data, error } = await sb.from('pedidos').update({ pagos }).eq('id', p.id).select();
   btn.disabled = false; btn.textContent = 'Guardar pago';
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo guardar: ' + error.message; return; }
   if(!data || !data.length){ msg.className = 'msg err'; msg.textContent = 'No se guardó. Revisa que ya se haya corrido el SQL de pagos.'; return; }
+  if(pgMetodo === 'transferencia') await compPG.vincular({ pedido_id: p.id });
   cerrarModal('pg');
   refrescarVistaActual();
 }

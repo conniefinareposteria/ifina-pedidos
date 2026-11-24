@@ -3,6 +3,8 @@
 let posTab = 'cupcakes';
 let posVenta = [];          // [{tipo:'local', cat, clave, tam, nombre, precio, cantidad} | {tipo:'pedido', pedido_id, nombre, detalle, total, falta}]
 let posMetodo = null;
+// Comprobante obligatorio cuando se cobra (todo o una parte) por transferencia (transferencias.js)
+const compPOS = crearComprobante('pos-comprobante', ()=> montoTransferenciaPOS());
 let posStock = {};          // posStock[cat][clave|tam] = disponibles (sin contar la venta actual)
 let posHayCierre = false;
 let posPedidos = [];
@@ -628,8 +630,15 @@ function actualizarCambioPOS(){
   else { el.textContent = 'Faltan ' + fmtDinero(-dif); el.style.color = '#F2B8AC'; }
 }
 document.getElementById('pos-recibe').addEventListener('input', actualizarCambioPOS);
+function montoTransferenciaPOS(){
+  if(posEditando) return 0;
+  if(posMetodo === 'transferencia') return leerNum('pos-total');
+  if(posMetodo === 'mixto') return leerNum('pos-div-transferencia');
+  return 0;
+}
 function actualizarBotonCobrar(){
   actualizarCambioPOS();
+  compPOS.mostrar(montoTransferenciaPOS() > 0);
   const ba = document.getElementById('pos-btn-anticipo');
   if(ba) ba.disabled = !posVenta.some(x=>x.tipo==='pedido');
   const btn = document.getElementById('pos-cobrar');
@@ -666,6 +675,7 @@ function vaciarVenta(recargar){
   const estabaEditando = !!posEditando;
   posEditando = null;
   posVenta = []; posMetodo = null; posTotalManual = false;
+  compPOS.reset();
   alternarPagoDiferido(false);
   limpiarPct();
   if(posModoCortesia) alternarModoCortesia();
@@ -710,6 +720,8 @@ async function cobrarVenta(){
     return { tipo:'pedido', pedido_id:it.pedido_id, nombre:it.nombre, detalle:it.detalle, falta:it.falta, cobrado: Math.max(0, cobrado),
       anticipo: it.abono != null, entregar: it.abono != null ? false : !!it.entregar };
   });
+  const conComprobante = !soloEntrega && montoTransferenciaPOS() > 0;
+  if(conComprobante && !(await compPOS.revisarAntesDeGuardar())) return;
   posGuardando = true; actualizarBotonCobrar();
   const { data: folio, error } = await sb.rpc('registrar_venta', {
     p_fecha: fechaHoyStr(), p_items: items, p_subtotal: subtotal, p_descuento: Math.max(0, subtotal - total),
@@ -718,6 +730,7 @@ async function cobrarVenta(){
   });
   posGuardando = false;
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo registrar: ' + error.message; actualizarBotonCobrar(); return; }
+  if(conComprobante) await compPOS.vincular({ venta_id: folio });
   const metodoTxt = pagosFinal ? pagosFinal.map(x=> formatNombre(x.metodo) + ' ' + fmtDinero(x.monto)).join(' + ') : formatNombre(metodoFinal);
   const texto = soloEntrega ? (habiaLocal ? 'Cortesía registrada.' : 'Pedido entregado.') : `Venta registrada: ${fmtDinero(total)} en ${metodoTxt}.`;
   const recibe = Number(document.getElementById('pos-recibe').value) || 0;

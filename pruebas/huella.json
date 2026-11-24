@@ -738,9 +738,19 @@
    {
     "paso": "pos anticipo",
     "vista": "view-pos",
-    "texto": "Resumen del día\n← Inicio\nmiércoles, 28 de octubre\nVenta actual\nPedido de Diego Ruiz PEDIDO\nPastel · Mediano · White Velvet · Para el dom 1 de nov · Total $1,000 · Falta $700\nAnticipo $200 · Falta de pago $500 quitar\n$200\n×\nSubtotal\n$200\nDescuento\n10%\n15%\n20%\n25%\nOtro\nTOTAL\nMÉTODO DE PAGO\nEfectivo\nTransferencia\nTarjeta\nCobrar $200\nAnticipo\nPago diferido\nMerma\nCortesía\nVenta registrada: $30 en Efectivo.\nVaciar venta\nPasteles\nCupcakes\nCuchareables\nPanqués\nPedidos de hoy2\nRESULTADOS DE LA BÚSQUEDA\ndom 1 de nov\n11:00 a.m.\nDiego Ruiz\n6671000011\nPastel · Mediano · White Velvet\nRecoge en local · Corona incluida\n$1,000\nTotal · pagó $300\n$700\nFalta\nEn la venta\nEditar\nPEDIDOS DE HOY\n11:00 a.m.\nAna López\n6671000000\nPastel · Chico · Chocolate\nRecoge en local · Corona ámbar · Feliz cumpleaños\n$700\nTotal · pagó $200\n$500\nFalta\nPendiente\nEditar\n12:00 p.m.\nBeto Ramos\n6671000008\nPastel · Mini · Zanahoria\nRecoge en local\n$450\nTotal · pagó $450\n✓ Pagado\nFalta $0\nPor entregar\nEditar",
+    "texto": "Resumen del día\n← Inicio\nmiércoles, 28 de octubre\nVenta actual\nPedido de Diego Ruiz PEDIDO\nPastel · Mediano · White Velvet · Para el dom 1 de nov · Total $1,000 · Falta $700\nAnticipo $200 · Falta de pago $500 quitar\n$200\n×\nSubtotal\n$200\nDescuento\n10%\n15%\n20%\n25%\nOtro\nTOTAL\nMÉTODO DE PAGO\nEfectivo\nTransferencia\nTarjeta\nComprobante de la transferencia (obligatorio)\nCambiar comprobante\n✓ Sí llegó\n$450 de ANA LOPEZ (BBVA)\nBanxico confirma que sí llegó. · Clave: MBAN01TEST\nOjo: el comprobante es por $450 y aquí se está registrando $200.\nCobrar $200\nAnticipo\nPago diferido\nMerma\nCortesía\nVenta registrada: $30 en Efectivo.\nVaciar venta\nPasteles\nCupcakes\nCuchareables\nPanqués\nPedidos de hoy2\nRESULTADOS DE LA BÚSQUEDA\ndom 1 de nov\n11:00 a.m.\nDiego Ruiz\n6671000011\nPastel · Mediano · White Velvet\nRecoge en local · Corona incluida\n$1,000\nTotal · pagó $300\n$700\nFalta\nEn la venta\nEditar\nPEDIDOS DE HOY\n11:00 a.m.\nAna López\n6671000000\nPastel · Chico · Chocolate\nRecoge en local · Corona ámbar · Feliz cumpleaños\n$700\nTotal · pagó $200\n$500\nFalta\nPendiente\nEditar\n12:00 p.m.\nBeto Ramos\n6671000008\nPastel · Mini · Zanahoria\nRecoge en local\n$450\nTotal · pagó $450\n✓ Pagado\nFalta $0\nPor entregar\nEditar",
     "modales": [],
-    "log": [],
+    "log": [
+     [
+      "funcion",
+      "validar-transferencia",
+      {
+       "accion": "validar",
+       "tipo": "image/jpeg",
+       "tam": true
+      }
+     ]
+    ],
     "dialogos": [
      [
       "prompt",
@@ -780,6 +790,16 @@
        "p_total": 200,
        "p_monto_local": 0,
        "p_metodo": "transferencia"
+      }
+     ],
+     [
+      "rpc",
+      "vincular_transferencia",
+      {
+       "p_id": 77,
+       "p_pedido_id": null,
+       "p_venta_id": 101,
+       "p_folio": null
       }
      ],
      [
@@ -852,7 +872,12 @@
       }
      ]
     ],
-    "dialogos": [],
+    "dialogos": [
+     [
+      "confirm",
+      "El comprobante es por $450 y se está registrando $200. ¿Seguir así?"
+     ]
+    ],
     "impresiones": [],
     "nav": []
    },
@@ -1595,7 +1620,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "264",
-        "grupo": "ed92ea00-3a73-4292-845a-ee7772283a84",
+        "grupo": "5f62576f-5ef2-46a5-9c48-1746f652f336",
         "grupo_parte": 1,
         "grupo_total": 2,
         "folio": 101
@@ -1623,7 +1648,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "36",
-        "grupo": "ed92ea00-3a73-4292-845a-ee7772283a84",
+        "grupo": "5f62576f-5ef2-46a5-9c48-1746f652f336",
         "grupo_parte": 2,
         "grupo_total": 2,
         "folio": 101
@@ -1861,7 +1886,7 @@
    {
     "paso": "resumen",
     "vista": "view-resumen",
-    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nTICKET PROMEDIO GENERAL\n$414\n7 clientes (3 de mostrador · 4 pedidos)\nTICKET PROMEDIO LOCAL\n$225\nSolo mostrador\nTICKET PROMEDIO PEDIDOS\n$555\nPor pedido agendado\nTop 10 de lo que más sale\n#\tPRODUCTO\tPIEZAS / PEDIDOS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\n4\tPastel Chico Chocolate\t1\t$750\n5\tPastel Mini Zanahoria\t1\t$450\n6\t6 Pistache, 6 Chocolate\t1\t$540\n7\tPastel Mini Caramelo\t1\t$480\n2 día(s) capturados en mostrador · 1 cerrado(s) · 4 pedido(s) agendados\nTOTAL VENDIDO (MOSTRADOR + PEDIDOS)\n$8,025\nMOSTRADOR (LO QUE SALIÓ DE VITRINA)\n$5,805\n52 piezas\nPEDIDOS AGENDADOS\n$2,220\nCobrado $1,230 · Falta por cobrar $990\nVENTA EN CAJA (MOSTRADOR + PEDIDOS ENTREGADOS)\n$2,895\nEfectivo $1,341.92 · Tarjeta $363.08 · Transf. $200 · Por cobrar $990\nVenta del rango por método de pago\nCada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.\nVENTA POR MÉTODO DE PAGO\tMONTO\nEfectivo\t$1,341.92\nTarjeta\t$363.08\nTransferencia\t$200\nPedidos por cobrar todavía\t$990\nVenta total\t$2,895\nPOR TIPO DE VENTA\tMONTO\nMostrador\t$675\nPedidos que se entregan (4)\t$2,220\nVenta total\t$2,895\nDe los pedidos, $1,230 se pagaron en días anteriores (anticipos o pagos completos); ya van incluidos arriba con su método.\nCATEGORÍA\tMOSTRADOR\tPEDIDOS\tTOTAL\nPasteles\t$3,350\n7 piezas\n\t$1,680\n3 pedidos\n\t$5,030\nCupcakes\t$1,575\n35 piezas\n\t$540\n1 pedido\n\t$2,115\nCuchareables\t$640\n8 piezas\n\t$0\n0 pedidos\n\t$640\nPanqués\t$240\n2 piezas\n\t$0\n0 pedidos\n\t$240\nTotal\t$5,805\t$2,220\t$8,025\nMostrador\nLo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).\nPasteles\nSABOR\tTAMAÑO\tPIEZAS\tPRECIO\tTOTAL\nWhite velvet\tMini\t3\t$450\t$1,350\nZanahoria\tMini\t2\t$450\t$900\nZanahoria\tChico\t1\t$650\t$650\nCoco\tMini\t1\t$450\t$450\nTotal\t7\t\t$3,350\nCuchareables\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nCuchareable Coco\t8\t$80\t$640\nTotal\t8\t\t$640\nPanqués\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nPanque Platano\t2\t$120\t$240\nTotal\t2\t\t$240\nCupcakes\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nLimón\t21\t$45\t$945\nPistache\t14\t$45\t$630\nTotal\t35\t\t$1,575\nPedidos agendados\nPedidos con fecha de entrega dentro del rango.\nMartes, 27 de octubre\nEfectivo $480\nTransferencia $0\nTarjeta $0\nTotal $480\nFalta pago $0\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tElena Soto\t6671000012\tPastel\tMini\tCaramelo · Corona ámbar mini\t12:00 p.m.\tRecoge en local\t$480\t$480\nEfectivo\n\t✓ Pagado\nEntregado\n\t\nImprimir\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir",
+    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nTICKET PROMEDIO GENERAL\n$414\n7 clientes (3 de mostrador · 4 pedidos)\nTICKET PROMEDIO LOCAL\n$225\nSolo mostrador\nTICKET PROMEDIO PEDIDOS\n$555\nPor pedido agendado\nTop 10 de lo que más sale\n#\tPRODUCTO\tPIEZAS / PEDIDOS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\n4\tPastel Chico Chocolate\t1\t$750\n5\tPastel Mini Zanahoria\t1\t$450\n6\t6 Pistache, 6 Chocolate\t1\t$540\n7\tPastel Mini Caramelo\t1\t$480\n2 día(s) capturados en mostrador · 1 cerrado(s) · 4 pedido(s) agendados\nTOTAL VENDIDO (MOSTRADOR + PEDIDOS)\n$8,025\nMOSTRADOR (LO QUE SALIÓ DE VITRINA)\n$5,805\n52 piezas\nPEDIDOS AGENDADOS\n$2,220\nCobrado $1,230 · Falta por cobrar $990\nVENTA EN CAJA (MOSTRADOR + PEDIDOS ENTREGADOS)\n$2,895\nEfectivo $1,341.92 · Tarjeta $363.08 · Transf. $200 · Por cobrar $990\nVenta del rango por método de pago\nCada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.\nVENTA POR MÉTODO DE PAGO\tMONTO\nEfectivo\t$1,341.92\nTarjeta\t$363.08\nTransferencia\t$200\nPedidos por cobrar todavía\t$990\nVenta total\t$2,895\nPOR TIPO DE VENTA\tMONTO\nMostrador\t$675\nPedidos que se entregan (4)\t$2,220\nVenta total\t$2,895\nDe los pedidos, $1,230 se pagaron en días anteriores (anticipos o pagos completos); ya van incluidos arriba con su método.\nCATEGORÍA\tMOSTRADOR\tPEDIDOS\tTOTAL\nPasteles\t$3,350\n7 piezas\n\t$1,680\n3 pedidos\n\t$5,030\nCupcakes\t$1,575\n35 piezas\n\t$540\n1 pedido\n\t$2,115\nCuchareables\t$640\n8 piezas\n\t$0\n0 pedidos\n\t$640\nPanqués\t$240\n2 piezas\n\t$0\n0 pedidos\n\t$240\nTotal\t$5,805\t$2,220\t$8,025\nMostrador\nLo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).\nPasteles\nSABOR\tTAMAÑO\tPIEZAS\tPRECIO\tTOTAL\nWhite velvet\tMini\t3\t$450\t$1,350\nZanahoria\tMini\t2\t$450\t$900\nZanahoria\tChico\t1\t$650\t$650\nCoco\tMini\t1\t$450\t$450\nTotal\t7\t\t$3,350\nCuchareables\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nCuchareable Coco\t8\t$80\t$640\nTotal\t8\t\t$640\nPanqués\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nPanque Platano\t2\t$120\t$240\nTotal\t2\t\t$240\nCupcakes\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nLimón\t21\t$45\t$945\nPistache\t14\t$45\t$630\nTotal\t35\t\t$1,575\nPedidos agendados\nPedidos con fecha de entrega dentro del rango.\nMartes, 27 de octubre\nEfectivo $480\nTransferencia $0\nTarjeta $0\nTotal $480\nFalta pago $0\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tElena Soto\t6671000012\tPastel\tMini\tCaramelo · Corona ámbar mini\t12:00 p.m.\tRecoge en local\t$480\t$480\nEfectivo\n\t✓ Pagado\nEntregado\n\t\nImprimir\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nTransferencias\nVuelve a consultar a Banxico las transferencias del último mes (no gasta en lectura de fotos). Abajo salen solo las que no están confirmadas.\nRevisar transferencias del mes\nÚltimo mes: 0 confirmadas · 0 sin encontrar · 0 para revisar a mano · 0 a otra cuenta\nTodas las transferencias del último mes están confirmadas.",
     "modales": [],
     "log": [
      [
@@ -1889,7 +1914,7 @@
    {
     "paso": "resumen local",
     "vista": "view-resumen",
-    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nVENTA LOCAL\n$675\n3 tickets\nTICKET PROMEDIO\n$225\nSolo lo comprado en mostrador\nPOR MÉTODO\n$411.92\nEfectivo · Tarjeta $263.08 · Transf. $0\nCORTESÍAS Y MERMA\n2 piezas\nCortesía 1 ($45) · Merma 1 ($80)\n1 cliente llegó por un pedido y además compró en mostrador (solo cuenta lo de mostrador).\nLo que más se vende en el local\n#\tPRODUCTO\tPIEZAS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450",
+    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nVENTA LOCAL\n$675\n3 tickets\nTICKET PROMEDIO\n$225\nSolo lo comprado en mostrador\nPOR MÉTODO\n$411.92\nEfectivo · Tarjeta $263.08 · Transf. $0\nCORTESÍAS Y MERMA\n2 piezas\nCortesía 1 ($45) · Merma 1 ($80)\n1 cliente llegó por un pedido y además compró en mostrador (solo cuenta lo de mostrador).\nLo que más se vende en el local\n#\tPRODUCTO\tPIEZAS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\nTransferencias\nVuelve a consultar a Banxico las transferencias del último mes (no gasta en lectura de fotos). Abajo salen solo las que no están confirmadas.\nRevisar transferencias del mes\nÚltimo mes: 0 confirmadas · 0 sin encontrar · 0 para revisar a mano · 0 a otra cuenta\nTodas las transferencias del último mes están confirmadas.",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -1908,7 +1933,7 @@
    {
     "paso": "resumen pedidos",
     "vista": "view-resumen",
-    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nPEDIDOS AGENDADOS\n$2,220\n4 pedidos\nTICKET PROMEDIO\n$555\nPor pedido\nCOBRADO\n$1,230\nFalta por cobrar $990\nCOBRADO EN EL LOCAL\n$200\nPagos de pedidos en el punto de venta\nPor categoría\nCATEGORÍA\tPEDIDOS\tTOTAL\nPastel\t3\t$1,680\nCupcakes\t1\t$540\nLo que más se pide\n#\tPRODUCTO\tPEDIDOS\tTOTAL\n1\tPastel Chico Chocolate\t1\t$750\n2\tPastel Mini Zanahoria\t1\t$450\n3\t6 Pistache, 6 Chocolate\t1\t$540\n4\tPastel Mini Caramelo\t1\t$480",
+    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nPEDIDOS AGENDADOS\n$2,220\n4 pedidos\nTICKET PROMEDIO\n$555\nPor pedido\nCOBRADO\n$1,230\nFalta por cobrar $990\nCOBRADO EN EL LOCAL\n$200\nPagos de pedidos en el punto de venta\nPor categoría\nCATEGORÍA\tPEDIDOS\tTOTAL\nPastel\t3\t$1,680\nCupcakes\t1\t$540\nLo que más se pide\n#\tPRODUCTO\tPEDIDOS\tTOTAL\n1\tPastel Chico Chocolate\t1\t$750\n2\tPastel Mini Zanahoria\t1\t$450\n3\t6 Pistache, 6 Chocolate\t1\t$540\n4\tPastel Mini Caramelo\t1\t$480\nTransferencias\nVuelve a consultar a Banxico las transferencias del último mes (no gasta en lectura de fotos). Abajo salen solo las que no están confirmadas.\nRevisar transferencias del mes\nÚltimo mes: 0 confirmadas · 0 sin encontrar · 0 para revisar a mano · 0 a otra cuenta\nTodas las transferencias del último mes están confirmadas.",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -1927,7 +1952,7 @@
    {
     "paso": "resumen todo",
     "vista": "view-resumen",
-    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nTICKET PROMEDIO GENERAL\n$414\n7 clientes (3 de mostrador · 4 pedidos)\nTICKET PROMEDIO LOCAL\n$225\nSolo mostrador\nTICKET PROMEDIO PEDIDOS\n$555\nPor pedido agendado\nTop 10 de lo que más sale\n#\tPRODUCTO\tPIEZAS / PEDIDOS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\n4\tPastel Chico Chocolate\t1\t$750\n5\tPastel Mini Zanahoria\t1\t$450\n6\t6 Pistache, 6 Chocolate\t1\t$540\n7\tPastel Mini Caramelo\t1\t$480\n2 día(s) capturados en mostrador · 1 cerrado(s) · 4 pedido(s) agendados\nTOTAL VENDIDO (MOSTRADOR + PEDIDOS)\n$8,025\nMOSTRADOR (LO QUE SALIÓ DE VITRINA)\n$5,805\n52 piezas\nPEDIDOS AGENDADOS\n$2,220\nCobrado $1,230 · Falta por cobrar $990\nVENTA EN CAJA (MOSTRADOR + PEDIDOS ENTREGADOS)\n$2,895\nEfectivo $1,341.92 · Tarjeta $363.08 · Transf. $200 · Por cobrar $990\nVenta del rango por método de pago\nCada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.\nVENTA POR MÉTODO DE PAGO\tMONTO\nEfectivo\t$1,341.92\nTarjeta\t$363.08\nTransferencia\t$200\nPedidos por cobrar todavía\t$990\nVenta total\t$2,895\nPOR TIPO DE VENTA\tMONTO\nMostrador\t$675\nPedidos que se entregan (4)\t$2,220\nVenta total\t$2,895\nDe los pedidos, $1,230 se pagaron en días anteriores (anticipos o pagos completos); ya van incluidos arriba con su método.\nCATEGORÍA\tMOSTRADOR\tPEDIDOS\tTOTAL\nPasteles\t$3,350\n7 piezas\n\t$1,680\n3 pedidos\n\t$5,030\nCupcakes\t$1,575\n35 piezas\n\t$540\n1 pedido\n\t$2,115\nCuchareables\t$640\n8 piezas\n\t$0\n0 pedidos\n\t$640\nPanqués\t$240\n2 piezas\n\t$0\n0 pedidos\n\t$240\nTotal\t$5,805\t$2,220\t$8,025\nMostrador\nLo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).\nPasteles\nSABOR\tTAMAÑO\tPIEZAS\tPRECIO\tTOTAL\nWhite velvet\tMini\t3\t$450\t$1,350\nZanahoria\tMini\t2\t$450\t$900\nZanahoria\tChico\t1\t$650\t$650\nCoco\tMini\t1\t$450\t$450\nTotal\t7\t\t$3,350\nCuchareables\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nCuchareable Coco\t8\t$80\t$640\nTotal\t8\t\t$640\nPanqués\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nPanque Platano\t2\t$120\t$240\nTotal\t2\t\t$240\nCupcakes\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nLimón\t21\t$45\t$945\nPistache\t14\t$45\t$630\nTotal\t35\t\t$1,575\nPedidos agendados\nPedidos con fecha de entrega dentro del rango.\nMartes, 27 de octubre\nEfectivo $480\nTransferencia $0\nTarjeta $0\nTotal $480\nFalta pago $0\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tElena Soto\t6671000012\tPastel\tMini\tCaramelo · Corona ámbar mini\t12:00 p.m.\tRecoge en local\t$480\t$480\nEfectivo\n\t✓ Pagado\nEntregado\n\t\nImprimir\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir",
+    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nTICKET PROMEDIO GENERAL\n$414\n7 clientes (3 de mostrador · 4 pedidos)\nTICKET PROMEDIO LOCAL\n$225\nSolo mostrador\nTICKET PROMEDIO PEDIDOS\n$555\nPor pedido agendado\nTop 10 de lo que más sale\n#\tPRODUCTO\tPIEZAS / PEDIDOS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\n4\tPastel Chico Chocolate\t1\t$750\n5\tPastel Mini Zanahoria\t1\t$450\n6\t6 Pistache, 6 Chocolate\t1\t$540\n7\tPastel Mini Caramelo\t1\t$480\n2 día(s) capturados en mostrador · 1 cerrado(s) · 4 pedido(s) agendados\nTOTAL VENDIDO (MOSTRADOR + PEDIDOS)\n$8,025\nMOSTRADOR (LO QUE SALIÓ DE VITRINA)\n$5,805\n52 piezas\nPEDIDOS AGENDADOS\n$2,220\nCobrado $1,230 · Falta por cobrar $990\nVENTA EN CAJA (MOSTRADOR + PEDIDOS ENTREGADOS)\n$2,895\nEfectivo $1,341.92 · Tarjeta $363.08 · Transf. $200 · Por cobrar $990\nVenta del rango por método de pago\nCada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.\nVENTA POR MÉTODO DE PAGO\tMONTO\nEfectivo\t$1,341.92\nTarjeta\t$363.08\nTransferencia\t$200\nPedidos por cobrar todavía\t$990\nVenta total\t$2,895\nPOR TIPO DE VENTA\tMONTO\nMostrador\t$675\nPedidos que se entregan (4)\t$2,220\nVenta total\t$2,895\nDe los pedidos, $1,230 se pagaron en días anteriores (anticipos o pagos completos); ya van incluidos arriba con su método.\nCATEGORÍA\tMOSTRADOR\tPEDIDOS\tTOTAL\nPasteles\t$3,350\n7 piezas\n\t$1,680\n3 pedidos\n\t$5,030\nCupcakes\t$1,575\n35 piezas\n\t$540\n1 pedido\n\t$2,115\nCuchareables\t$640\n8 piezas\n\t$0\n0 pedidos\n\t$640\nPanqués\t$240\n2 piezas\n\t$0\n0 pedidos\n\t$240\nTotal\t$5,805\t$2,220\t$8,025\nMostrador\nLo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).\nPasteles\nSABOR\tTAMAÑO\tPIEZAS\tPRECIO\tTOTAL\nWhite velvet\tMini\t3\t$450\t$1,350\nZanahoria\tMini\t2\t$450\t$900\nZanahoria\tChico\t1\t$650\t$650\nCoco\tMini\t1\t$450\t$450\nTotal\t7\t\t$3,350\nCuchareables\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nCuchareable Coco\t8\t$80\t$640\nTotal\t8\t\t$640\nPanqués\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nPanque Platano\t2\t$120\t$240\nTotal\t2\t\t$240\nCupcakes\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nLimón\t21\t$45\t$945\nPistache\t14\t$45\t$630\nTotal\t35\t\t$1,575\nPedidos agendados\nPedidos con fecha de entrega dentro del rango.\nMartes, 27 de octubre\nEfectivo $480\nTransferencia $0\nTarjeta $0\nTotal $480\nFalta pago $0\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tElena Soto\t6671000012\tPastel\tMini\tCaramelo · Corona ámbar mini\t12:00 p.m.\tRecoge en local\t$480\t$480\nEfectivo\n\t✓ Pagado\nEntregado\n\t\nImprimir\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nTransferencias\nVuelve a consultar a Banxico las transferencias del último mes (no gasta en lectura de fotos). Abajo salen solo las que no están confirmadas.\nRevisar transferencias del mes\nÚltimo mes: 0 confirmadas · 0 sin encontrar · 0 para revisar a mano · 0 a otra cuenta\nTodas las transferencias del último mes están confirmadas.",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -1946,7 +1971,7 @@
    {
     "paso": "resumen mes",
     "vista": "view-resumen",
-    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nTICKET PROMEDIO GENERAL\n$414\n7 clientes (3 de mostrador · 4 pedidos)\nTICKET PROMEDIO LOCAL\n$225\nSolo mostrador\nTICKET PROMEDIO PEDIDOS\n$555\nPor pedido agendado\nTop 10 de lo que más sale\n#\tPRODUCTO\tPIEZAS / PEDIDOS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\n4\tPastel Chico Chocolate\t1\t$750\n5\tPastel Mini Zanahoria\t1\t$450\n6\t6 Pistache, 6 Chocolate\t1\t$540\n7\tPastel Mini Caramelo\t1\t$480\n2 día(s) capturados en mostrador · 1 cerrado(s) · 4 pedido(s) agendados\nTOTAL VENDIDO (MOSTRADOR + PEDIDOS)\n$8,025\nMOSTRADOR (LO QUE SALIÓ DE VITRINA)\n$5,805\n52 piezas\nPEDIDOS AGENDADOS\n$2,220\nCobrado $1,230 · Falta por cobrar $990\nVENTA EN CAJA (MOSTRADOR + PEDIDOS ENTREGADOS)\n$2,895\nEfectivo $1,341.92 · Tarjeta $363.08 · Transf. $200 · Por cobrar $990\nVenta del rango por método de pago\nCada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.\nVENTA POR MÉTODO DE PAGO\tMONTO\nEfectivo\t$1,341.92\nTarjeta\t$363.08\nTransferencia\t$200\nPedidos por cobrar todavía\t$990\nVenta total\t$2,895\nPOR TIPO DE VENTA\tMONTO\nMostrador\t$675\nPedidos que se entregan (4)\t$2,220\nVenta total\t$2,895\nDe los pedidos, $1,230 se pagaron en días anteriores (anticipos o pagos completos); ya van incluidos arriba con su método.\nCATEGORÍA\tMOSTRADOR\tPEDIDOS\tTOTAL\nPasteles\t$3,350\n7 piezas\n\t$1,680\n3 pedidos\n\t$5,030\nCupcakes\t$1,575\n35 piezas\n\t$540\n1 pedido\n\t$2,115\nCuchareables\t$640\n8 piezas\n\t$0\n0 pedidos\n\t$640\nPanqués\t$240\n2 piezas\n\t$0\n0 pedidos\n\t$240\nTotal\t$5,805\t$2,220\t$8,025\nMostrador\nLo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).\nPasteles\nSABOR\tTAMAÑO\tPIEZAS\tPRECIO\tTOTAL\nWhite velvet\tMini\t3\t$450\t$1,350\nZanahoria\tMini\t2\t$450\t$900\nZanahoria\tChico\t1\t$650\t$650\nCoco\tMini\t1\t$450\t$450\nTotal\t7\t\t$3,350\nCuchareables\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nCuchareable Coco\t8\t$80\t$640\nTotal\t8\t\t$640\nPanqués\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nPanque Platano\t2\t$120\t$240\nTotal\t2\t\t$240\nCupcakes\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nLimón\t21\t$45\t$945\nPistache\t14\t$45\t$630\nTotal\t35\t\t$1,575\nPedidos agendados\nPedidos con fecha de entrega dentro del rango.\nMartes, 27 de octubre\nEfectivo $480\nTransferencia $0\nTarjeta $0\nTotal $480\nFalta pago $0\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tElena Soto\t6671000012\tPastel\tMini\tCaramelo · Corona ámbar mini\t12:00 p.m.\tRecoge en local\t$480\t$480\nEfectivo\n\t✓ Pagado\nEntregado\n\t\nImprimir\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir",
+    "texto": "Hoy\nEsta semana\nEste mes\nDESDE\nHASTA\nVer resumen\nTodo\nLocal\nPedidos\nTICKET PROMEDIO GENERAL\n$414\n7 clientes (3 de mostrador · 4 pedidos)\nTICKET PROMEDIO LOCAL\n$225\nSolo mostrador\nTICKET PROMEDIO PEDIDOS\n$555\nPor pedido agendado\nTop 10 de lo que más sale\n#\tPRODUCTO\tPIEZAS / PEDIDOS\tTOTAL\n1\tCupcake Limón\t3\t$135\n2\tCupcake Pistache\t2\t$90\n3\tPastel mini White velvet\t1\t$450\n4\tPastel Chico Chocolate\t1\t$750\n5\tPastel Mini Zanahoria\t1\t$450\n6\t6 Pistache, 6 Chocolate\t1\t$540\n7\tPastel Mini Caramelo\t1\t$480\n2 día(s) capturados en mostrador · 1 cerrado(s) · 4 pedido(s) agendados\nTOTAL VENDIDO (MOSTRADOR + PEDIDOS)\n$8,025\nMOSTRADOR (LO QUE SALIÓ DE VITRINA)\n$5,805\n52 piezas\nPEDIDOS AGENDADOS\n$2,220\nCobrado $1,230 · Falta por cobrar $990\nVENTA EN CAJA (MOSTRADOR + PEDIDOS ENTREGADOS)\n$2,895\nEfectivo $1,341.92 · Tarjeta $363.08 · Transf. $200 · Por cobrar $990\nVenta del rango por método de pago\nCada pedido cuenta el día que se entrega, con todo lo que se pagó de él (aunque se haya pagado antes) y su método.\nVENTA POR MÉTODO DE PAGO\tMONTO\nEfectivo\t$1,341.92\nTarjeta\t$363.08\nTransferencia\t$200\nPedidos por cobrar todavía\t$990\nVenta total\t$2,895\nPOR TIPO DE VENTA\tMONTO\nMostrador\t$675\nPedidos que se entregan (4)\t$2,220\nVenta total\t$2,895\nDe los pedidos, $1,230 se pagaron en días anteriores (anticipos o pagos completos); ya van incluidos arriba con su método.\nCATEGORÍA\tMOSTRADOR\tPEDIDOS\tTOTAL\nPasteles\t$3,350\n7 piezas\n\t$1,680\n3 pedidos\n\t$5,030\nCupcakes\t$1,575\n35 piezas\n\t$540\n1 pedido\n\t$2,115\nCuchareables\t$640\n8 piezas\n\t$0\n0 pedidos\n\t$640\nPanqués\t$240\n2 piezas\n\t$0\n0 pedidos\n\t$240\nTotal\t$5,805\t$2,220\t$8,025\nMostrador\nLo que se vendió de vitrina según Productos del día (existencia + entradas − cierre − merma − cortesía).\nPasteles\nSABOR\tTAMAÑO\tPIEZAS\tPRECIO\tTOTAL\nWhite velvet\tMini\t3\t$450\t$1,350\nZanahoria\tMini\t2\t$450\t$900\nZanahoria\tChico\t1\t$650\t$650\nCoco\tMini\t1\t$450\t$450\nTotal\t7\t\t$3,350\nCuchareables\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nCuchareable Coco\t8\t$80\t$640\nTotal\t8\t\t$640\nPanqués\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nPanque Platano\t2\t$120\t$240\nTotal\t2\t\t$240\nCupcakes\nPRODUCTO\tPIEZAS\tPRECIO\tTOTAL\nLimón\t21\t$45\t$945\nPistache\t14\t$45\t$630\nTotal\t35\t\t$1,575\nPedidos agendados\nPedidos con fecha de entrega dentro del rango.\nMartes, 27 de octubre\nEfectivo $480\nTransferencia $0\nTarjeta $0\nTotal $480\nFalta pago $0\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tElena Soto\t6671000012\tPastel\tMini\tCaramelo · Corona ámbar mini\t12:00 p.m.\tRecoge en local\t$480\t$480\nEfectivo\n\t✓ Pagado\nEntregado\n\t\nImprimir\nMiércoles, 28 de octubre\nEfectivo $450\nTransferencia $200\nTarjeta $100\nTotal $1,740\nFalta pago $990\n\tNO.\tNOMBRE\tTELÉFONO\tPRODUCTO\tTAMAÑO\tSABOR / DETALLE\tHORA\tENTREGA\tTOTAL\tPAGÓ\tFALTA\tCOMENTARIOS\nEditar\t1\tAna López\t6671000000\tPastel\tChico\tChocolate · Corona de color (rosa)\t11:00 a.m.\tRecoge en local\t$750\t$200\nTransferencia\n\t$550\tFeliz cumpleaños\nEditar\t2\tBeto Ramos\t6671000008\tPastel\tMini\tZanahoria\t12:00 p.m.\tRecoge en local\t$450\t$450\nEfectivo\n\t✓ Pagado\t\nEditar\t3\tCarmen Díaz\t6671000010\tCupcakes\t—\t6 Pistache, 6 Chocolate\t02:00 p.m.\tDomicilio\nRío Culiacán 12, Col. Centro\n\t$540\t$100\nTarjeta\n\t$440\t\n🛵 Copiar domicilios para el repartidor (1)Imprimir\nTransferencias\nVuelve a consultar a Banxico las transferencias del último mes (no gasta en lectura de fotos). Abajo salen solo las que no están confirmadas.\nRevisar transferencias del mes\nÚltimo mes: 0 confirmadas · 0 sin encontrar · 0 para revisar a mano · 0 a otra cuenta\nTodas las transferencias del último mes están confirmadas.",
     "modales": [],
     "log": [
      [
@@ -3465,10 +3490,10 @@
         "tabla": "pagina",
         "producto": "portada",
         "orden": 0,
-        "ruta": "pagina/portada/1793215800000-3xzk7.jpg",
-        "url": "https://fotos.prueba/pagina/portada/1793215800000-3xzk7.jpg",
-        "ruta_original": "pagina/portada/1793215800000-3xzk7-original.png",
-        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-3xzk7-original.png"
+        "ruta": "pagina/portada/1793215800000-vdz29.jpg",
+        "url": "https://fotos.prueba/pagina/portada/1793215800000-vdz29.jpg",
+        "ruta_original": "pagina/portada/1793215800000-vdz29-original.png",
+        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-vdz29-original.png"
        }
       ]
      ]
@@ -3786,10 +3811,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 0,
-        "ruta": "sabores_cupcakes/limon/1793215800000-aqgpf.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-aqgpf.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-aqgpf-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-aqgpf-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-v47do.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-v47do.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-v47do-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-v47do-original.png"
        }
       ]
      ],
@@ -3817,10 +3842,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 1,
-        "ruta": "sabores_cupcakes/limon/1793215800000-s2ygk.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-s2ygk.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-s2ygk-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-s2ygk-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-0xlby.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-0xlby.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-0xlby-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-0xlby-original.png"
        }
       ]
      ]

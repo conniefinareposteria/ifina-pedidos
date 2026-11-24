@@ -437,8 +437,11 @@ document.querySelectorAll('#metodo-pago-chips .chip').forEach(chip=>{
     document.querySelectorAll('#metodo-pago-chips .chip').forEach(c=>c.classList.remove('selected'));
     chip.classList.add('selected');
     metodoPagoActual = chip.dataset.metodo;
+    compNP.mostrar(metodoPagoActual === 'transferencia');
   });
 });
+// Comprobante obligatorio si el anticipo/pago es por transferencia (transferencias.js)
+const compNP = crearComprobante('np-comprobante', ()=> leerNum('anticipo'));
 let pagoDadoActual = null;
 document.querySelectorAll('#pago-si-no-chips .chip').forEach(chip=>{
   chip.addEventListener('click', ()=>{
@@ -451,6 +454,7 @@ document.querySelectorAll('#pago-si-no-chips .chip').forEach(chip=>{
       document.getElementById('anticipo').value = '';
       metodoPagoActual = null;
       document.querySelectorAll('#metodo-pago-chips .chip').forEach(c=>c.classList.remove('selected'));
+      compNP.mostrar(false);
     }
     actualizarFaltaPago();
   });
@@ -586,6 +590,8 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
     msg.textContent = 'Selecciona el método de pago.';
     return;
   }
+  const conComprobante = !pedidoEnEdicion && pagoDadoActual === 'si' && metodoPagoActual === 'transferencia' && leerNum('anticipo') > 0;
+  if(conComprobante && !(await compNP.revisarAntesDeGuardar())) return;
 
   const base = {
     cliente_id: clienteActual.id,
@@ -639,6 +645,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
   // Pedido de la página: ya aceptado, se quita de "Por confirmar"
   let errSolicitud = null;
   if(!error && solicitud) errSolicitud = await cambiarEstadoSolicitud(solicitud.id, 'aceptada');
+  if(!error && conComprobante) await compNP.vincular({ folio });
 
   btn.disabled = false;
   btn.textContent = 'Guardar pedido';
@@ -666,6 +673,7 @@ document.getElementById('form-pedido').addEventListener('submit', async (e)=>{
 });
 // Deja el formulario de Nuevo pedido completamente limpio
 function limpiarFormularioPedido(){
+  compNP.reset(); compNP.mostrar(false);
   document.getElementById('form-pedido').reset();
   categoriaActual = null;
   document.querySelectorAll('#form-pedido .chip').forEach(c=>c.classList.remove('selected'));

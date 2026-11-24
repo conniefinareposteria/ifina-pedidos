@@ -307,4 +307,23 @@ main:has(#view-finanzas.active){max-width:1180px;}
 .sol-item{display:flex; justify-content:space-between; gap:10px; padding:8px 0;}
 .sol-item + .sol-item{border-top:1px dashed var(--line);}
 .sol-total{display:flex; justify-content:space-between; font-size:16px; margin-bottom:6px;}
+/* Comprobante de transferencia (transferencias.js) */
+.tr-box{margin:10px 0 4px;padding:12px 14px;border:1.5px dashed var(--line);border-radius:14px;background:#fff;color:#2E2B23;text-align:left;}
+.tr-box .hint{color:#5A564E !important;}
+.tr-tit,.tr-card,.tr-card b,.tr-card div{color:#2E2B23;}
+.tr-tit{font-weight:700;margin-bottom:8px;}
+.tr-tit span{font-weight:400;color:var(--cocoa-soft);font-size:13px;}
+.tr-subir{display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:var(--char,#3D3A2F);color:#FFF8EC;padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;}
+.tr-subir input{display:none;}
+.tr-subir.ocupado{opacity:.6;pointer-events:none;}
+.tr-card{margin-top:10px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);font-size:14px;line-height:1.4;}
+.tr-card b{font-size:15px;}
+.tr-card.ok{border-color:#3F7D4E;background:#EEF6EF;}
+.tr-card.aviso{border-color:#B9853A;background:#FBF3E6;}
+.tr-card.mal{border-color:#A3402F;background:#FBECE9;}
+.tr-dif{margin-top:6px;font-weight:700;}
+.tr-card .btn-secundario{margin-top:8px;}
+.tr-tabla{width:100%;border-collapse:collapse;font-size:13.5px;}
+.tr-tabla th,.tr-tabla td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+.tr-tabla small{display:block;color:var(--cocoa-soft);font-size:12px;}
 

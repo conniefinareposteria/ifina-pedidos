@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="css/base.css?v=20261119e">
-<link rel="stylesheet" href="css/tema.css?v=20261119e">
+<link rel="stylesheet" href="css/base.css?v=20261123a">
+<link rel="stylesheet" href="css/tema.css?v=20261123a">
 </head>
 <body>
 
@@ -297,6 +297,7 @@
           <label>Monto pagado</label>
           <input type="number" id="anticipo" placeholder="0" inputmode="numeric">
         </div>
+        <div id="np-comprobante" style="display:none;"></div>
         <div class="field">
           <div class="price-tag" style="background:var(--sage-bg);">
             <span class="label">Falta por pagar:</span>
@@ -404,6 +405,7 @@
             <div class="pos-row"><span>Transferencia</span><input type="number" id="pos-div-transferencia" inputmode="decimal" placeholder="0"></div>
             <div class="pos-row"><span>Restante</span><b id="pos-div-resta" style="font-family:'Tinos',Georgia,serif; font-size:20px; font-weight:400; color:var(--amber-l);">$0</b></div>
           </div>
+          <div id="pos-comprobante" style="display:none;"></div>
           <div id="pos-efectivo-wrap" style="display:none; margin-top:8px;">
             <div class="pos-row"><span>Recibe</span><input type="number" id="pos-recibe" inputmode="decimal" placeholder="0"></div>
             <div class="pos-row"><span>Cambio</span><b id="pos-cambio" style="font-family:'Tinos',Georgia,serif; font-size:24px; font-weight:400; color:var(--amber-l);">$0</b></div>
@@ -585,6 +587,14 @@
     <div id="res-panel-todo"><div id="res-todo-extra"></div><div id="resumen-contenido"></div></div>
     <div id="res-panel-local" style="display:none;"></div>
     <div id="res-panel-pedidos" style="display:none;"></div>
+    <!-- Transferencias validadas con Banxico (transferencias.js, sql/041) -->
+    <div class="tr-resumen">
+      <h3 class="cf-sub" style="margin-top:26px;">Transferencias</h3>
+      <div class="hint" style="margin:0 0 10px;">Vuelve a consultar a Banxico las transferencias del último mes (no gasta en lectura de fotos). Abajo salen solo las que no están confirmadas.</div>
+      <button type="button" class="btn-secundario" id="tr-revisar" onclick="revisarTransferenciasMes()">Revisar transferencias del mes</button>
+      <div class="msg" id="tr-msg"></div>
+      <div id="tr-lista" style="margin-top:10px;"></div>
+    </div>
   </section>
 
   <!-- VISTA: HISTORIAL (LISTA) -->
@@ -678,6 +688,7 @@
     <div class="chip" data-m="efectivo">Efectivo</div>
     <div class="chip" data-m="tarjeta">Tarjeta</div>
   </div>
+  <div id="pg-comprobante" style="display:none;"></div>
   <div class="ep-acc">
     <button type="button" class="btn-cerrar-ep" onclick="cerrarModal('pg')">Cancelar</button>
     <button type="button" class="primary" id="pg-guardar" onclick="guardarPagoPedido()">Guardar pago</button>
@@ -692,24 +703,25 @@
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarPreguntaCorona()">Cancelar</button></div>
 </div>
 <!-- ?v= obliga al navegador (iPad) a bajar la versión nueva: cambiarlo en cada publicación -->
-<script src="js/nucleo.js?v=20261119e"></script>
-<script src="js/catalogos.js?v=20261119e"></script>
-<script src="js/cuentas.js?v=20261119e"></script>
-<script src="js/inventario.js?v=20261119e"></script>
-<script src="js/sesion.js?v=20261119e"></script>
-<script src="js/nuevo-pedido.js?v=20261119e"></script>
-<script src="js/pedidos.js?v=20261119e"></script>
-<script src="js/solicitudes.js?v=20261119e"></script>
-<script src="js/clientes.js?v=20261119e"></script>
-<script src="js/productos-dia.js?v=20261119e"></script>
-<script src="js/resumen.js?v=20261119e"></script>
-<script src="js/tickets.js?v=20261119e"></script>
-<script src="js/punto-venta.js?v=20261119e"></script>
-<script src="js/produccion.js?v=20261119e"></script>
-<script src="js/catalogo-fotos.js?v=20261119e"></script>
-<script src="js/finanzas.js?v=20261119e"></script>
-<script src="js/interfaz.js?v=20261119e"></script>
-<script src="js/inicio.js?v=20261119e"></script>
+<script src="js/nucleo.js?v=20261123a"></script>
+<script src="js/catalogos.js?v=20261123a"></script>
+<script src="js/cuentas.js?v=20261123a"></script>
+<script src="js/inventario.js?v=20261123a"></script>
+<script src="js/sesion.js?v=20261123a"></script>
+<script src="js/transferencias.js?v=20261123a"></script>
+<script src="js/nuevo-pedido.js?v=20261123a"></script>
+<script src="js/pedidos.js?v=20261123a"></script>
+<script src="js/solicitudes.js?v=20261123a"></script>
+<script src="js/clientes.js?v=20261123a"></script>
+<script src="js/productos-dia.js?v=20261123a"></script>
+<script src="js/resumen.js?v=20261123a"></script>
+<script src="js/tickets.js?v=20261123a"></script>
+<script src="js/punto-venta.js?v=20261123a"></script>
+<script src="js/produccion.js?v=20261123a"></script>
+<script src="js/catalogo-fotos.js?v=20261123a"></script>
+<script src="js/finanzas.js?v=20261123a"></script>
+<script src="js/interfaz.js?v=20261123a"></script>
+<script src="js/inicio.js?v=20261123a"></script>
 
 </body>
 </html>

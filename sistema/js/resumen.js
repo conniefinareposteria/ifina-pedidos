@@ -5,6 +5,7 @@ function abrirResumen(){
   document.getElementById('tab-resumen').classList.add('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-resumen').classList.add('active');
+  cargarTransferencias();
   if(!document.getElementById('resumen-desde').value){
     rangoResumenRapido('semana');
   }

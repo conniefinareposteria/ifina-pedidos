@@ -123,7 +123,7 @@
   window.supabase = { createClient(){ return {
     from: consulta,
     // Función validar-transferencia: respuesta fija según window.__TR (por defecto, "sí llegó")
-    functions: { invoke(nombre, o){ const body = (o||{}).body || {}; log('funcion', nombre, { accion: body.accion, tipo: body.tipo, tam: (body.archivo||'').length > 0 });
+    functions: { invoke(nombre, o){ const body = (o||{}).body || {}; log('funcion', nombre, { accion: body.accion, tipo: body.tipo, tam: (body.archivo||'').length > 0, fotos: body.archivos ? body.archivos.length : undefined });
       if(body.accion === 'ticket') return new Promise(res=> setTimeout(()=> res({ data: { lectura: JSON.parse(JSON.stringify(window.__TICKET || {})) }, error: null }), 30));
       const r = Object.assign({ id: 77, estado:'liquidada', monto: 450, ordenante:'ANA LOPEZ', banco_emisor_nombre:'BBVA', clave_rastreo:'MBAN01TEST', detalle:'Banxico confirma que sí llegó.' }, window.__TR || {});
       return new Promise(res=> setTimeout(()=> res({ data: r, error: null }), 30)); } },

@@ -3,7 +3,8 @@
 // 2) Se consulta a Banxico (CEP) si esa transferencia de verdad llegó a la cuenta del negocio.
 // 3) Se guarda en la tabla "transferencias" (sql/041) y se regresa el resultado al sistema.
 // Acciones: { accion:'validar', archivo:<base64>, tipo:<mime>, monto_esperado? }  |  { accion:'revisar' }
-//           { accion:'ticket', archivo, tipo, insumos:[{id,nombre,unidad}], tiendas:[nombre] }  (solo directora: lee un ticket de compra)
+//           { accion:'ticket', archivos:[{archivo,tipo}], insumos:[{id,nombre,unidad}], tiendas:[nombre] }  (solo directora: lee un ticket de compra;
+//             varias fotos = partes del MISMO ticket)
 // Secrets necesarios en Supabase: ANTHROPIC_API_KEY, CLABE_DEPOSITOS (la CLABE donde se reciben las transferencias).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -60,13 +61,15 @@ async function leerComprobante(base64: string, tipo: string) {
 }
 
 // ---------- Tickets de compra (Compras) ----------
-async function leerTicket(base64: string, tipo: string, insumos: { id: number; nombre: string; unidad: string }[], tiendas: string[]) {
-  const esPdf = /pdf/i.test(tipo);
-  const bloque = esPdf
-    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-    : { type: "image", source: { type: "base64", media_type: tipo || "image/jpeg", data: base64 } };
+async function leerTicket(archivos: { archivo: string; tipo: string }[], insumos: { id: number; nombre: string; unidad: string }[], tiendas: string[]) {
+  const bloques = archivos.map(({ archivo, tipo }) => /pdf/i.test(tipo)
+    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: archivo } }
+    : { type: "image", source: { type: "base64", media_type: tipo || "image/jpeg", data: archivo } });
+  const varias = archivos.length > 1
+    ? `Son ${archivos.length} fotos del MISMO ticket (partes de un ticket largo, en orden; pueden encimarse). Junta todo en un solo ticket y NO repitas los renglones que salgan en dos fotos.\n`
+    : "";
   const lista = insumos.map((i) => `${i.id}|${i.nombre}|${i.unidad === "kg" ? "g" : i.unidad}`).join("\n");
-  const pide = `Es un ticket o factura de compra de insumos de una repostería en México. Léelo con cuidado y responde SOLO un JSON (sin texto extra):
+  const pide = varias + `Es un ticket o factura de compra de insumos de una repostería en México. Léelo con cuidado y responde SOLO un JSON (sin texto extra):
 {"es_ticket": true/false,
  "tienda": "nombre comercial de la tienda o proveedor",
  "fecha": "YYYY-MM-DD", "hora": "HH:MM o null", "folio": "folio o número de ticket, o null",
@@ -83,7 +86,7 @@ ${lista}`;
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": Deno.env.get("ANTHROPIC_API_KEY") || "", "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODELO, max_tokens: 4000, messages: [{ role: "user", content: [bloque, { type: "text", text: pide }] }] }),
+    body: JSON.stringify({ model: MODELO, max_tokens: 4000, messages: [{ role: "user", content: [...bloques, { type: "text", text: pide }] }] }),
   });
   const d = await r.json();
   if (!r.ok) throw new Error("La IA no pudo leer el ticket: " + (d?.error?.message || r.status));
@@ -175,12 +178,13 @@ Deno.serve(async (req) => {
   // ---- Leer un ticket de compra (solo directora): regresa lo leído; el sistema lo guarda después de revisarlo
   if (body.accion === "ticket") {
     if (perfil.rol !== "director") return json({ error: "Sin permiso." }, 403);
-    const archivo = String(body.archivo || ""), tipo = String(body.tipo || "image/jpeg");
-    if (!archivo) return json({ error: "Falta la foto del ticket." }, 400);
+    const lista = Array.isArray(body.archivos) ? body.archivos as { archivo: string; tipo: string }[] : [{ archivo: String(body.archivo || ""), tipo: String(body.tipo || "image/jpeg") }];
+    const archivos = lista.filter((a) => a && a.archivo).slice(0, 5).map((a) => ({ archivo: String(a.archivo), tipo: String(a.tipo || "image/jpeg") }));
+    if (!archivos.length) return json({ error: "Falta la foto del ticket." }, 400);
     try {
       const ins = Array.isArray(body.insumos) ? (body.insumos as { id: number; nombre: string; unidad: string }[]).slice(0, 400) : [];
       const tie = Array.isArray(body.tiendas) ? (body.tiendas as string[]).slice(0, 50) : [];
-      return json({ lectura: await leerTicket(archivo, tipo, ins, tie) });
+      return json({ lectura: await leerTicket(archivos, ins, tie) });
     } catch (e) { return json({ error: String((e as Error).message || e) }); }
   }
 

@@ -5,7 +5,7 @@
 // y por dentro todo se convierte a g / ml / piezas para comparar presentaciones y precios.
 
 let cmp = { tiendas: [], insumos: [], arts: {}, pres: [], lista: null, items: {}, movs: [], hist: [], equiv: {}, vista: 'inventario', abierto: null, buscar: '', cargado: false,
-  tk: null, tkLeyendo: false, tkMes: null, tickets: [], tkAbierto: null, tkResultado: null };
+  tk: null, tkFotos: [], tkLeyendo: false, tkMes: null, tickets: [], tkAbierto: null, tkResultado: null };
 
 const CMP_VISTAS = [ { id:'inventario', titulo:'Inventario' }, { id:'comprar', titulo:'Comprar' }, { id:'tickets', titulo:'Tickets y gastos' }, { id:'ajustes', titulo:'Ajustes' } ];
 
@@ -455,6 +455,7 @@ async function quitarTiendaCompras(id){
 // Al guardar, el precio del insumo en Finanzas se actualiza (si no hay un ticket más reciente de ese insumo).
 const cmpClave = s=> finQ(s).replace(/[^a-z0-9]+/g, ' ').trim();
 function cmpHistTicket(t){ const i = cmpInsumo(t.insumo_id); if(i && Number(t.contenido) > 0 && Number(t.cantidad) > 0 && t.importe != null) cmp.hist.push({ insumo_id: t.insumo_id, fecha: new Date(t.fecha + 'T12:00:00'), pu: Number(t.importe) / Number(t.cantidad) / Number(t.contenido), ticket_id: t.ticket_id }); }
+const cmpFotosDe = t=> (t.fotos && t.fotos.length ? t.fotos : [t.foto]).filter(Boolean);
 const CMP_PAGOS = [ ['efectivo','Efectivo'], ['tarjeta','Tarjeta'], ['transferencia','Transferencia'], ['otro','Otro'] ];
 function cmpMesActual(){ return fechaHoyStr().slice(0, 7); }
 function cmpFechaCorta(f){ return new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'short', day:'numeric', month:'short' }); }
@@ -465,31 +466,49 @@ function vistaTicketsCompras(){
   if(cmp.tk) return html + revisionTicket();
   html += `<div class="fin-titulo"><h3>Subir ticket</h3></div>
     <div class="hint fin-nota">Toma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.</div>
-    ${cmp.tkLeyendo ? '<div class="loading" style="margin:0 0 18px;">Leyendo el ticket…</div>'
-      : `<label class="primary cmp-subir">Tomar foto o elegir archivo<input type="file" accept="image/*,application/pdf" style="display:none;" onchange="subirTicketCompras(this)"></label>`}`;
+    ${cmp.tkLeyendo ? `<div class="loading" style="margin:0 0 18px;">Leyendo el ticket${cmp.tkFotos.length > 1 ? ` (${cmp.tkFotos.length} fotos)` : ''}…</div>`
+      : cmp.tkFotos.length ? fotosPendientesTicket()
+      : `<label class="primary cmp-subir">Tomar foto o elegir archivo<input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="subirTicketCompras(this)"></label>`}`;
   html += listaTicketsMes();
   return html;
 }
 
+// Las fotos se juntan primero (un ticket largo puede ir en 2 o más fotos) y luego se leen todas juntas
 async function subirTicketCompras(input){
-  const f = input.files && input.files[0]; input.value = '';
-  if(!f) return;
-  cmp.tkLeyendo = true; cmp.tkResultado = null; pintarCompras();
+  const fs = [...(input.files || [])]; input.value = '';
+  for(const f of fs){
+    if(cmp.tkFotos.length >= 5){ cmpMsg('Máximo 5 fotos por ticket.', 'err'); break; }
+    try { cmp.tkFotos.push(await archivoABase64(f)); } catch(e){ cmpMsg(e.message || String(e), 'err'); }
+  }
+  cmp.tkResultado = null;
+  pintarCompras();
+}
+function fotosPendientesTicket(){
+  const n = cmp.tkFotos.length;
+  return `<div class="cmp-fotos">${cmp.tkFotos.map((a, k)=> `<div class="cmp-foto">${/pdf/.test(a.tipo) ? '<span>PDF</span>' : `<img src="data:${a.tipo};base64,${a.base64}" alt="Foto ${k + 1}">`}
+      <b>Parte ${k + 1}</b><button type="button" class="ins-quitar" aria-label="Quitar foto ${k + 1}" onclick="cmp.tkFotos.splice(${k}, 1); pintarCompras()">×</button></div>`).join('')}</div>
+    <div class="hint" style="margin:0 0 10px;">${n === 1 ? '¿El ticket no salió completo? Agrega otra foto con la parte que falta; se leen juntas como un solo ticket.' : `Se van a leer las ${n} fotos como un solo ticket.`}</div>
+    <div class="botones-fila"><button type="button" class="primary" style="margin:0;" onclick="leerTicketCompras()">Leer ticket</button>
+      ${n < 5 ? `<label class="btn-secundario cmp-agregar-foto">+ Otra parte del ticket<input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="subirTicketCompras(this)"></label>` : ''}</div>`;
+}
+async function leerTicketCompras(){
+  if(!cmp.tkFotos.length) return;
+  cmp.tkLeyendo = true; pintarCompras();
   try {
-    const a = await archivoABase64(f);
-    const { data, error } = await sb.functions.invoke('bright-task', { body: { accion: 'ticket', archivo: a.base64, tipo: a.tipo,
+    const { data, error } = await sb.functions.invoke('bright-task', { body: { accion: 'ticket', archivos: cmp.tkFotos.map(a=> ({ archivo: a.base64, tipo: a.tipo })),
       insumos: cmp.insumos.map(i=> ({ id: i.id, nombre: i.nombre, unidad: i.unidad })), tiendas: cmp.tiendas.map(t=> t.nombre) } });
     if(error || !data || data.error || !data.lectura) throw new Error((data && data.error) || (error && error.message) || 'no se pudo leer');
     const L = data.lectura;
     if(L.es_ticket === false) throw new Error('eso no parece un ticket de compra');
-    cmp.tk = armarTicket(L, a);
+    cmp.tk = armarTicket(L, cmp.tkFotos);
+    cmp.tkFotos = [];
     cmpRevisarDuplicado();
   } catch(e){ cmpMsg('No se pudo leer el ticket: ' + (e.message || e) + '. Intenta con una foto más clara.', 'err'); }
   cmp.tkLeyendo = false;
   pintarCompras();
   window.scrollTo(0, 0);
 }
-function armarTicket(L, archivo){
+function armarTicket(L, archivos){
   const nt = cmpClave(L.tienda || '');
   const tienda = nt ? cmp.tiendas.find(t=>{ const c = cmpClave(t.nombre); return c && (nt.includes(c) || c.includes(nt)); }) : null;
   const items = (Array.isArray(L.productos) ? L.productos : []).map(p=>{
@@ -499,7 +518,7 @@ function armarTicket(L, archivo){
       insumo_id: eq ? eq.insumo_id : idIA, contenido: eq ? (eq.contenido != null ? Number(eq.contenido) : null) : (cmpNum(p.contenido) > 0 ? cmpNum(p.contenido) : null),
       origen: eq ? 'recordado' : idIA ? 'ia' : '' };
   });
-  return { archivo, lectura: L, tienda_id: tienda ? tienda.id : (L.tienda ? 'nueva' : ''), tienda_nombre: String(L.tienda || '').trim(),
+  return { archivos, lectura: L, tienda_id: tienda ? tienda.id : (L.tienda ? 'nueva' : ''), tienda_nombre: String(L.tienda || '').trim(),
     fecha: /^\d{4}-\d{2}-\d{2}$/.test(L.fecha || '') ? L.fecha : fechaHoyStr(), hora: L.hora || null, folio: L.folio ? String(L.folio) : '',
     forma_pago: CMP_PAGOS.some(([v])=> v === L.forma_pago) ? L.forma_pago : '', total: cmpNum(L.total), items, dup: null };
 }
@@ -574,19 +593,21 @@ async function guardarTicketCompras(){
       if(error) throw new Error('no se pudo crear la tienda: ' + error.message);
       cmp.tiendas.push(data); tiendaId = data.id;
     }
-    // 2) Foto (si falla, el ticket se guarda igual)
-    let foto = null;
-    try {
-      const bin = atob(t.archivo.base64), arr = new Uint8Array(bin.length);
-      for(let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
-      const ruta = `${t.fecha.slice(0, 7)}/${t.fecha}-${Date.now()}.${/pdf/.test(t.archivo.tipo) ? 'pdf' : 'jpg'}`;
-      const { error } = await sb.storage.from('tickets').upload(ruta, new Blob([arr], { type: t.archivo.tipo }), { contentType: t.archivo.tipo });
-      if(!error) foto = ruta;
-    } catch(e){ /* sin foto */ }
+    // 2) Fotos (si alguna falla, el ticket se guarda igual)
+    const fotos = [], marca = Date.now();
+    for(const [k, a] of t.archivos.entries()){
+      try {
+        const bin = atob(a.base64), arr = new Uint8Array(bin.length);
+        for(let j = 0; j < bin.length; j++) arr[j] = bin.charCodeAt(j);
+        const ruta = `${t.fecha.slice(0, 7)}/${t.fecha}-${marca}-${k + 1}.${/pdf/.test(a.tipo) ? 'pdf' : 'jpg'}`;
+        const { error } = await sb.storage.from('tickets').upload(ruta, new Blob([arr], { type: a.tipo }), { contentType: a.tipo });
+        if(!error) fotos.push(ruta);
+      } catch(e){ /* sin esa foto */ }
+    }
     // 3) Ticket y productos
     const tienda = cmpTienda(tiendaId);
     const { data: tk, error: e1 } = await sb.from('compras_tickets').insert([{ tienda_id: tiendaId, tienda_nombre: tienda ? tienda.nombre : t.tienda_nombre, fecha: t.fecha, hora: t.hora,
-      folio: t.folio || null, forma_pago: t.forma_pago || null, total: t.total, foto, lectura: t.lectura }]).select().single();
+      folio: t.folio || null, forma_pago: t.forma_pago || null, total: t.total, foto: fotos[0] || null, fotos, lectura: t.lectura }]).select().single();
     if(e1) throw new Error(e1.message);
     const filas = t.items.map(x=> ({ ticket_id: tk.id, fecha: t.fecha, descripcion: x.descripcion, cantidad: x.cantidad > 0 ? x.cantidad : null, importe: x.importe, insumo_id: x.insumo_id || null, contenido: x.insumo_id ? x.contenido : null }));
     if(filas.length){ const { error: e2 } = await sb.from('compras_ticket_items').insert(filas); if(e2) throw new Error(e2.message); }
@@ -625,7 +646,7 @@ async function cargarTicketsMes(){
   if(!cmp.tkMes) cmp.tkMes = cmpMesActual();
   const [a, m] = cmp.tkMes.split('-').map(Number);
   const fin = new Date(a, m, 1);
-  const { data, error } = await sb.from('compras_tickets').select('id,fecha,hora,tienda_id,tienda_nombre,folio,forma_pago,total,foto').gte('fecha', cmp.tkMes + '-01').lt('fecha', fechaStrDesdeDate(fin)).order('fecha', { ascending: false });
+  const { data, error } = await sb.from('compras_tickets').select('id,fecha,hora,tienda_id,tienda_nombre,folio,forma_pago,total,foto,fotos').gte('fecha', cmp.tkMes + '-01').lt('fecha', fechaStrDesdeDate(fin)).order('fecha', { ascending: false });
   if(error){ cmpMsg('No se pudieron cargar los tickets: ' + error.message + '. ¿Ya se corrió el SQL 043?', 'err'); return; }
   cmp.tickets = data || [];
   if(cmp.vista === 'tickets') pintarCompras();
@@ -647,7 +668,7 @@ function filaTicketMes(t){
   if(ab){
     det = !ab.items ? '<div class="loading">Cargando…</div>' : `<div class="cmp-tk-det">${ab.items.map(x=>{ const i = x.insumo_id ? cmpInsumo(x.insumo_id) : null;
       return `<div class="cmp-tk-linea"><div>${escHtml(x.descripcion || '')}<div class="cmp-sub">${i ? escHtml(i.nombre) + (x.contenido && x.cantidad && x.importe != null ? ' · ' + cmpComparar(x.importe / x.cantidad / x.contenido, i, { ticket: t.id, fecha: t.fecha }) : '') : 'No es insumo'}</div></div><div class="n">${cmpFmt(x.cantidad)} · ${fmtDinero(x.importe)}</div></div>`; }).join('') || '<div class="hint">Sin productos.</div>'}
-      <div class="botones-fila" style="margin-top:10px;">${ab.url ? `<a class="btn-secundario cmp-ver-foto" href="${escHtml(ab.url)}" target="_blank" rel="noopener">Ver foto</a>` : ''}<button type="button" class="btn-borrar" onclick="borrarTicketCompras(${t.id})">Borrar ticket</button></div></div>`;
+      <div class="botones-fila" style="margin-top:10px; flex-wrap:wrap;">${(ab.urls || []).map((u, k, arr)=> `<a class="btn-secundario cmp-ver-foto" href="${escHtml(u)}" target="_blank" rel="noopener">Ver foto${arr.length > 1 ? ' ' + (k + 1) : ''}</a>`).join('')}<button type="button" class="btn-borrar" onclick="borrarTicketCompras(${t.id})">Borrar ticket</button></div></div>`;
   }
   return `<div class="cmp-item${ab ? ' on' : ''}"><div class="cmp-item-top" onclick="abrirTicketMes(${t.id})" style="cursor:pointer;">
     <div><b>${escHtml(nombre)}</b><div class="cmp-sub">${escHtml(cmpFechaCorta(t.fecha))}${t.folio ? ' · folio ' + escHtml(t.folio) : ''}${pago ? ' · ' + pago : ''}</div></div>
@@ -657,13 +678,14 @@ async function abrirTicketMes(id){
   if(cmp.tkAbierto && cmp.tkAbierto.id === id){ cmp.tkAbierto = null; pintarCompras(); return; }
   const t = cmp.tickets.find(x=> x.id === id);
   cmp.tkAbierto = { id }; pintarCompras();
-  const [a, b] = await Promise.all([
+  const rutas = cmpFotosDe(t);
+  const [a, ...b] = await Promise.all([
     sb.from('compras_ticket_items').select('*').eq('ticket_id', id).order('id'),
-    t.foto ? sb.storage.from('tickets').createSignedUrl(t.foto, 3600) : Promise.resolve({ data: null })
+    ...rutas.map(r=> sb.storage.from('tickets').createSignedUrl(r, 3600))
   ]);
   if(!cmp.tkAbierto || cmp.tkAbierto.id !== id) return;
   cmp.tkAbierto.items = a.data || [];
-  cmp.tkAbierto.url = b && b.data ? b.data.signedUrl : null;
+  cmp.tkAbierto.urls = b.map(x=> x && x.data ? x.data.signedUrl : null).filter(Boolean);
   pintarCompras();
 }
 async function borrarTicketCompras(id){
@@ -671,7 +693,7 @@ async function borrarTicketCompras(id){
   if(!confirm(`¿Borrar el ticket de ${fmtDinero(t.total)}? El precio que ya se actualizó en Finanzas no cambia.`)) return;
   const { error } = await sb.from('compras_tickets').delete().eq('id', id);
   if(error){ cmpMsg('No se pudo borrar: ' + error.message, 'err'); return; }
-  if(t.foto) await sb.storage.from('tickets').remove([t.foto]);
+  const rutas = cmpFotosDe(t); if(rutas.length) await sb.storage.from('tickets').remove(rutas);
   cmp.hist = cmp.hist.filter(h=> h.ticket_id !== id);
   cmp.tkAbierto = null;
   await cargarTicketsMes();

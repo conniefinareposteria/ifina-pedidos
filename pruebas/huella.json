@@ -1628,7 +1628,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "264",
-        "grupo": "113c8dd9-24c6-4887-a3db-e55719b84d5c",
+        "grupo": "faaff1a4-c3e4-4d41-bdd0-b3685e82b8db",
         "grupo_parte": 1,
         "grupo_total": 2,
         "folio": 101
@@ -1656,7 +1656,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "36",
-        "grupo": "113c8dd9-24c6-4887-a3db-e55719b84d5c",
+        "grupo": "faaff1a4-c3e4-4d41-bdd0-b3685e82b8db",
         "grupo_parte": 2,
         "grupo_total": 2,
         "folio": 101
@@ -4124,8 +4124,8 @@
       "bright-task",
       {
        "accion": "ticket",
-       "tipo": "image/jpeg",
-       "tam": true
+       "tam": false,
+       "fotos": 2
       }
      ]
     ],
@@ -4173,7 +4173,15 @@
       "subir",
       "tickets",
       {
-       "ruta": "2026-10/2026-10-27-1793215800000.jpg",
+       "ruta": "2026-10/2026-10-27-X.jpg",
+       "tipo": "image/jpeg"
+      }
+     ],
+     [
+      "subir",
+      "tickets",
+      {
+       "ruta": "2026-10/2026-10-27-X.jpg",
        "tipo": "image/jpeg"
       }
      ],
@@ -4189,7 +4197,11 @@
         "folio": "B74185",
         "forma_pago": "efectivo",
         "total": 6038,
-        "foto": "2026-10/2026-10-27-1793215800000.jpg",
+        "foto": "2026-10/2026-10-27-1793215800000-1.jpg",
+        "fotos": [
+         "2026-10/2026-10-27-1793215800000-1.jpg",
+         "2026-10/2026-10-27-1793215800000-2.jpg"
+        ],
         "lectura": {
          "es_ticket": true,
          "tienda": "COMERCIAL LIZARRAGA",
@@ -4323,7 +4335,7 @@
    {
     "paso": "compras ticket ver",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · Sin precio anterior para comparar.\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto\nBorrar ticket",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · Sin precio anterior para comparar.\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto 1\nVer foto 2\nBorrar ticket",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -4351,8 +4363,8 @@
       "bright-task",
       {
        "accion": "ticket",
-       "tipo": "image/jpeg",
-       "tam": true
+       "tam": false,
+       "fotos": 1
       }
      ]
     ],
@@ -4373,14 +4385,14 @@
    {
     "paso": "compras ticket segundo guardar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $1,300 en Lizárraga.\nSe actualizó el precio de 1 insumo en Finanzas.\nLechera: ▲ Subió 2.2% · $72.22/kg · precio más alto de octubre: $70.67/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$7,338\n2 tickets\nPOR TIENDA\nLizárraga $7,338\nLizárraga\nmié 28 de oct\n$1,300\nVer\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · ▼ Bajó 2.2% · $70.67/kg · precio más alto de octubre: $72.22/kg\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto\nBorrar ticket",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $1,300 en Lizárraga.\nSe actualizó el precio de 1 insumo en Finanzas.\nLechera: ▲ Subió 2.2% · $72.22/kg · precio más alto de octubre: $70.67/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$7,338\n2 tickets\nPOR TIENDA\nLizárraga $7,338\nLizárraga\nmié 28 de oct\n$1,300\nVer\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · ▼ Bajó 2.2% · $70.67/kg · precio más alto de octubre: $72.22/kg\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto 1\nVer foto 2\nBorrar ticket",
     "modales": [],
     "log": [
      [
       "subir",
       "tickets",
       {
-       "ruta": "2026-10/2026-10-28-1793215800000.jpg",
+       "ruta": "2026-10/2026-10-28-X.jpg",
        "tipo": "image/jpeg"
       }
      ],
@@ -4396,7 +4408,10 @@
         "folio": null,
         "forma_pago": null,
         "total": 1300,
-        "foto": "2026-10/2026-10-28-1793215800000.jpg",
+        "foto": "2026-10/2026-10-28-1793215800000-1.jpg",
+        "fotos": [
+         "2026-10/2026-10-28-1793215800000-1.jpg"
+        ],
         "lectura": {
          "es_ticket": true,
          "tienda": "Lizarraga",
@@ -4519,10 +4534,10 @@
         "tabla": "pagina",
         "producto": "portada",
         "orden": 0,
-        "ruta": "pagina/portada/1793215800000-a9jjw.jpg",
-        "url": "https://fotos.prueba/pagina/portada/1793215800000-a9jjw.jpg",
-        "ruta_original": "pagina/portada/1793215800000-a9jjw-original.png",
-        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-a9jjw-original.png"
+        "ruta": "pagina/portada/1793215800000-f37en.jpg",
+        "url": "https://fotos.prueba/pagina/portada/1793215800000-f37en.jpg",
+        "ruta_original": "pagina/portada/1793215800000-f37en-original.png",
+        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-f37en-original.png"
        }
       ]
      ]
@@ -4850,10 +4865,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 0,
-        "ruta": "sabores_cupcakes/limon/1793215800000-a7cu8.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-a7cu8.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-a7cu8-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-a7cu8-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-1cb4b.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-1cb4b.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-1cb4b-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-1cb4b-original.png"
        }
       ]
      ],
@@ -4881,10 +4896,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 1,
-        "ruta": "sabores_cupcakes/limon/1793215800000-bxvs2.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-bxvs2.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-bxvs2-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-bxvs2-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-rkwir.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-rkwir.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-rkwir-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-rkwir-original.png"
        }
       ]
      ]

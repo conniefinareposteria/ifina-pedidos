@@ -234,12 +234,15 @@ async function paso(page, huella, nombre, fn){
                     { descripcion:'LECHERA 48/375GR', cantidad:4, importe:5088, insumo_id: cmp.insumos.find(i=> i.nombre === 'Lechera').id, contenido:18000 },
                     { descripcion:'BOLSAS CAMISETA', cantidad:1, importe:335, insumo_id:null, contenido:null } ] }; });
       await page.click('.cf-chips .chip:has-text("Tickets")'); await page.waitForTimeout(200);
-      await page.setInputFiles('.cmp-subir input[type=file]', { name:'ticket.png', mimeType:'image/png', buffer: PNG }); await page.waitForTimeout(700); });
+      await page.setInputFiles('.cmp-subir input[type=file]', { name:'ticket.png', mimeType:'image/png', buffer: PNG }); await page.waitForTimeout(300);
+      await page.setInputFiles('.cmp-agregar-foto input[type=file]', { name:'ticket-b.png', mimeType:'image/png', buffer: PNG }); await page.waitForTimeout(300);
+      await page.click('#compras-contenido .botones-fila .primary:has-text("Leer ticket")'); await page.waitForTimeout(700); });
     await paso(page, huella, 'compras ticket corregir', async()=>{ await page.fill('[data-k="tki-t-0"]','10'); await page.press('[data-k="tki-t-0"]','Tab'); await page.waitForTimeout(250); });
     await paso(page, huella, 'compras ticket guardar', async()=>{ await page.click('#compras-contenido .botones-fila .primary'); await page.waitForTimeout(700); });
     await paso(page, huella, 'compras ticket ver', async()=>{ await page.click('.cmp-item-top[onclick^="abrirTicketMes"]'); await page.waitForTimeout(400); });
     await paso(page, huella, 'compras ticket segundo recordado', async()=>{ await ev(()=>{ window.__TICKET = { es_ticket:true, tienda:'Lizarraga', fecha:'2026-10-28', total:1300, productos:[ { descripcion:'LECHERA 48/375GR', cantidad:1, importe:1300, insumo_id:null, contenido:null } ] }; });
-      await page.setInputFiles('.cmp-subir input[type=file]', { name:'ticket2.png', mimeType:'image/png', buffer: PNG }); await page.waitForTimeout(700); });
+      await page.setInputFiles('.cmp-subir input[type=file]', { name:'ticket2.png', mimeType:'image/png', buffer: PNG }); await page.waitForTimeout(300);
+      await page.click('#compras-contenido .botones-fila .primary:has-text("Leer ticket")'); await page.waitForTimeout(700); });
     await paso(page, huella, 'compras ticket segundo guardar', async()=>{ await page.click('#compras-contenido .botones-fila .primary'); await page.waitForTimeout(700); });
     await paso(page, huella, 'catalogo fotos', ()=> ev(()=> abrirCatalogo()));
     await paso(page, huella, 'catalogo portada agregar foto', async()=>{

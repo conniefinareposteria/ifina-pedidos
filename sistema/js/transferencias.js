@@ -43,7 +43,7 @@ function crearComprobante(contId, montoEsperado){
   async function llamar(body){
     c.leyendo = true; pintar();
     try{
-      const { data, error } = await sb.functions.invoke('validar-transferencia', { body });
+      const { data, error } = await sb.functions.invoke('bright-task', { body });
       if(error){
         let m = error.message || 'Error';
         try{ const j = await error.context.json(); if(j && j.error) m = j.error; }catch(_){}
@@ -133,7 +133,7 @@ async function cargarTransferencias(){
 async function revisarTransferenciasMes(){
   const btn = document.getElementById('tr-revisar'), msg = document.getElementById('tr-msg');
   btn.disabled = true; btn.textContent = 'Revisando con Banxico…'; msg.className = 'msg';
-  const { data, error } = await sb.functions.invoke('validar-transferencia', { body:{ accion:'revisar' } });
+  const { data, error } = await sb.functions.invoke('bright-task', { body:{ accion:'revisar' } });
   btn.disabled = false; btn.textContent = 'Revisar transferencias del mes';
   if(error){ msg.className = 'msg err'; msg.textContent = 'No se pudo revisar: ' + (error.message || ''); return; }
   const n = (data && data.cambios || []).length;

@@ -27,6 +27,7 @@
              {tipo:'cheesecake', nombre:'cc_frutos_rojos', cantidad:1, precio:280, tamano:'cheesecake', corona:null}]},
       {id:8, created_at:'2026-10-28T09:00:00Z', nombre:'Luis', telefono:'6670000000', fecha_deseada:'2026-11-02', entrega:'recoger', total:450, estado:'nueva', items:[{tipo:'pastel', nombre:'chocolate', cantidad:1, precio:450, tamano:'mini', corona:null, base:'dorada'}]}],
     insumos: (window.__FIN || {}).insumos || [],
+    insumos_historial: [], compras_tiendas: [], compras_articulos: [], compras_presentaciones: [], compras_listas: [], compras_lista_items: [], compras_movimientos: [],
     fin_recetas: (window.__FIN || {}).fin_recetas || [],
     fin_receta_partes: (window.__FIN || {}).fin_receta_partes || [],
     fin_costos_fijos: (window.__FIN || {}).fin_costos_fijos || [],
@@ -95,14 +96,17 @@
         if(accion === 'delete'){ log('delete', tabla, r.map(x=>x.id)); }
         if(accion === 'insert'){ r = Array.isArray(datos) ? datos : [datos];
           if(tabla === 'fotos_catalogo'){ r = r.map(x=> ({ id: 100 + tablas.fotos_catalogo.length, ...x })); tablas.fotos_catalogo.push(...r); } }
-        const generica = tabla === 'insumos' || tabla.startsWith('fin_');
+        const generica = tabla === 'insumos' || tabla.startsWith('fin_') || tabla.startsWith('compras_');
         if(accion === 'insert' && generica){ r = r.map((x, k)=> ({ ...x, id: 1000 + tablas[tabla].length + k })); tablas[tabla].push(...r); }
         if(accion === 'delete' && generica){ tablas[tabla] = tablas[tabla].filter(x=> !r.includes(x)); }
         if(accion === 'upsert' && tabla === 'fin_config'){ (Array.isArray(datos) ? datos : [datos]).forEach(x=>{ const y = tablas.fin_config.find(c=> c.clave === x.clave); if(y) Object.assign(y, x); else tablas.fin_config.push({ ...x }); }); }
         if(accion === 'insert' && tabla === 'productos_ocultos') tablas.productos_ocultos.push(...r);
         if(accion === 'delete' && tabla === 'productos_ocultos'){ tablas.productos_ocultos = tablas.productos_ocultos.filter(x=> !r.includes(x)); }
         if(accion === 'delete' && tabla === 'fotos_catalogo'){ tablas.fotos_catalogo = tablas.fotos_catalogo.filter(x=> !r.includes(x)); }
-        if(accion === 'upsert'){ r = Array.isArray(datos) ? datos : [datos]; }
+        // Compras: upsert por su llave (insumo_id, o lista_id + insumo_id)
+        if(accion === 'upsert' && (tabla === 'compras_articulos' || tabla === 'compras_lista_items')){ const llave = x=> tabla === 'compras_articulos' ? String(x.insumo_id) : x.lista_id + '-' + x.insumo_id;
+          r = (Array.isArray(datos) ? datos : [datos]).map(x=>{ const y = tablas[tabla].find(c=> llave(c) === llave(x)); if(y){ Object.assign(y, x); return y; } const n = { id: 2000 + tablas[tabla].length, ...x }; tablas[tabla].push(n); return n; }); }
+        else if(accion === 'upsert'){ r = Array.isArray(datos) ? datos : [datos]; }
         if(orden) r = r.slice().sort((a,b)=> (a[orden] > b[orden] ? 1 : a[orden] < b[orden] ? -1 : 0) * (desc ? -1 : 1));
         if(limite) r = r.slice(0, limite);
         let data = uno ? (r[0] || null) : r;

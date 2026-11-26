@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link rel="stylesheet" href="css/base.css?v=20261125a">
-<link rel="stylesheet" href="css/tema.css?v=20261125a">
+<link rel="stylesheet" href="css/base.css?v=20261125b">
+<link rel="stylesheet" href="css/tema.css?v=20261125b">
 </head>
 <body>
 
@@ -79,6 +79,7 @@
   <button id="tab-porhacer" onclick="abrirPorHacer()" style="display:none;">Por hacer</button>
   <button id="tab-catalogo" onclick="abrirCatalogo()" style="display:none;">Catálogo</button>
   <button id="tab-finanzas" onclick="abrirFinanzas()" style="display:none;">Finanzas</button>
+  <button id="tab-compras" onclick="abrirCompras()" style="display:none;">Compras</button>
 </nav>
 <div id="debug-banner" style="display:none; background:#F7E4E8; color:#8F2E44; padding:12px 18px; font-size:13px; font-weight:600; border-bottom:1px solid #E0A8B5;"></div>
 
@@ -482,6 +483,11 @@
     <div id="insumos-contenido" class="loading">Cargando...</div>
   </section>
 
+  <!-- VISTA: COMPRAS (solo directora) -->
+  <section id="view-compras" class="view">
+    <div id="compras-contenido" class="loading">Cargando...</div>
+  </section>
+
   <!-- VISTA: CATÁLOGO (FOTOS PARA LA PÁGINA) -->
   <section id="view-catalogo" class="view">
     <div class="hint" style="margin:0 0 16px;">Fotos de cada producto para conniereposteria.com. La primera es la principal; se guarda la original sin perder calidad.</div>
@@ -703,25 +709,26 @@
   <div class="ep-acc"><button type="button" class="btn-cerrar-ep" onclick="cerrarPreguntaCorona()">Cancelar</button></div>
 </div>
 <!-- ?v= obliga al navegador (iPad) a bajar la versión nueva: cambiarlo en cada publicación -->
-<script src="js/nucleo.js?v=20261125a"></script>
-<script src="js/catalogos.js?v=20261125a"></script>
-<script src="js/cuentas.js?v=20261125a"></script>
-<script src="js/inventario.js?v=20261125a"></script>
-<script src="js/sesion.js?v=20261125a"></script>
-<script src="js/transferencias.js?v=20261125a"></script>
-<script src="js/nuevo-pedido.js?v=20261125a"></script>
-<script src="js/pedidos.js?v=20261125a"></script>
-<script src="js/solicitudes.js?v=20261125a"></script>
-<script src="js/clientes.js?v=20261125a"></script>
-<script src="js/productos-dia.js?v=20261125a"></script>
-<script src="js/resumen.js?v=20261125a"></script>
-<script src="js/tickets.js?v=20261125a"></script>
-<script src="js/punto-venta.js?v=20261125a"></script>
-<script src="js/produccion.js?v=20261125a"></script>
-<script src="js/catalogo-fotos.js?v=20261125a"></script>
-<script src="js/finanzas.js?v=20261125a"></script>
-<script src="js/interfaz.js?v=20261125a"></script>
-<script src="js/inicio.js?v=20261125a"></script>
+<script src="js/nucleo.js?v=20261125b"></script>
+<script src="js/catalogos.js?v=20261125b"></script>
+<script src="js/cuentas.js?v=20261125b"></script>
+<script src="js/inventario.js?v=20261125b"></script>
+<script src="js/sesion.js?v=20261125b"></script>
+<script src="js/transferencias.js?v=20261125b"></script>
+<script src="js/nuevo-pedido.js?v=20261125b"></script>
+<script src="js/pedidos.js?v=20261125b"></script>
+<script src="js/solicitudes.js?v=20261125b"></script>
+<script src="js/clientes.js?v=20261125b"></script>
+<script src="js/productos-dia.js?v=20261125b"></script>
+<script src="js/resumen.js?v=20261125b"></script>
+<script src="js/tickets.js?v=20261125b"></script>
+<script src="js/punto-venta.js?v=20261125b"></script>
+<script src="js/produccion.js?v=20261125b"></script>
+<script src="js/catalogo-fotos.js?v=20261125b"></script>
+<script src="js/finanzas.js?v=20261125b"></script>
+<script src="js/compras.js?v=20261125b"></script>
+<script src="js/interfaz.js?v=20261125b"></script>
+<script src="js/inicio.js?v=20261125b"></script>
 
 </body>
 </html>

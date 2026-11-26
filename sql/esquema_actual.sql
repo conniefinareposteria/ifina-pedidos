@@ -1262,3 +1262,11 @@ create policy "tickets subir director" on storage.objects for insert to authenti
   bucket_id = 'tickets' and exists (select 1 from public.perfiles where user_id = auth.uid() and rol = 'director'));
 create policy "tickets borrar director" on storage.objects for delete to authenticated using (
   bucket_id = 'tickets' and exists (select 1 from public.perfiles where user_id = auth.uid() and rol = 'director'));
+
+
+-- ===== 044_ticket_varias_fotos.sql =====
+-- ===== 044 Compras: un ticket puede tener varias fotos (ticket largo en 2 o más partes) =====
+-- Se puede volver a correr sin riesgo.
+alter table compras_tickets add column if not exists fotos text[] not null default '{}';
+-- Los tickets que ya tenían una foto la pasan a la lista
+update compras_tickets set fotos = array[foto] where foto is not null and fotos = '{}';

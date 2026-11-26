@@ -1628,7 +1628,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "264",
-        "grupo": "80e3f48d-c984-4c98-a2cc-2f965425f3fc",
+        "grupo": "113c8dd9-24c6-4887-a3db-e55719b84d5c",
         "grupo_parte": 1,
         "grupo_total": 2,
         "folio": 101
@@ -1656,7 +1656,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "36",
-        "grupo": "80e3f48d-c984-4c98-a2cc-2f965425f3fc",
+        "grupo": "113c8dd9-24c6-4887-a3db-e55719b84d5c",
         "grupo_parte": 2,
         "grupo_total": 2,
         "folio": 101
@@ -3517,7 +3517,7 @@
    {
     "paso": "compras ajustes",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nTiendas\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nTiendas\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -3537,7 +3537,7 @@
    {
     "paso": "compras tiendas",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nTiendas\n×\n×\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nTiendas\n×\n×\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
     "modales": [],
     "log": [
      [
@@ -3578,7 +3578,7 @@
    {
     "paso": "compras configurar azucar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nTiendas\n×\n×\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\n\nLo compro en:\n✓ Lizárraga\n✓ Sams\n\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nTiendas\n×\n×\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\n\nLo compro en:\n✓ Lizárraga\n✓ Sams\n\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
     "modales": [],
     "log": [
      [
@@ -3663,7 +3663,7 @@
    {
     "paso": "compras configurar huevo",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nTiendas\n×\n×\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\n\nLo compro en:\n✓ Lizárraga\n✓ Sams\n\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\n\nLo compro en:\nLizárraga\n✓ Sams\n\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nTiendas\n×\n×\nAgregar\nInsumos\nMarca los que compras seguido (salen en el inventario). \"Lo cuento en\" es cómo lo cuentas en la bodega (costal, caja, cartera…), \"Trae\" cuánto viene en cada uno, y \"Quiero tener\" cuántos quieres tener al hacer la compra. Al marcarlo, eliges en qué tiendas lo compras. Salen de los insumos de Finanzas.\nINGREDIENTES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nAceite\t\t\t\nkg\n\t\nAceite en aerosol\t\t\t\nkg\n\t\nAgua purificada\t\t\t\nkg\n\t\nAzúcar glass\t\t\t\nkg\n\t\nAzúcar morena\t\t\t\nkg\n\t\n\nLo compro en:\n✓ Lizárraga\n✓ Sams\n\nAzúcar refinada\t\t\t\nkg\n\t\nBicarbonato\t\t\t\nkg\n\t\nBlueberries frescos\t\t\t\nkg\n\t\nCajeta\t\t\t\nkg\n\t\nCanela en polvo\t\t\t\nkg\n\t\nCanela entera\t\t\t\nkg\n\t\nChantilly en polvo\t\t\t\nkg\n\t\nClavel\t\t\t\nkg\n\t\nCoco americano suave\t\t\t\nkg\n\t\nCocoa\t\t\t\nkg\n\t\nCremor tartaro\t\t\t\nkg\n\t\nDátil\t\t\t\nkg\n\t\nFresa congelada\t\t\t\nkg\n\t\nFresa fresca\t\t\t\nkg\n\t\nFrutos rojos congelados\t\t\t\nkg\n\t\nGalleta maravilla\t\t\t\nkg\n\t\nGlucosa de maíz\t\t\t\nkg\n\t\nHarina\t\t\t\nkg\n\t\nHarina (costal 22 kg)\t\t\t\nkg\n\t\nHuevo\t\t\t\nkg\n\t\n\nLo compro en:\nLizárraga\n✓ Sams\n\nIsomalt\t\t\t\nkg\n\t\nLechera\t\t\t\nkg\n\t\nLimón\t\t\t\nkg\n\t\nLimón amarillo\t\t\t\nkg\n\t\nMaízena\t\t\t\nkg\n\t\nMantequilla sin sal\t\t\t\nkg\n\t\nMatizador dorado\t\t\t\nkg\n\t\nMayonesa\t\t\t\nkg\n\t\nMedia crema\t\t\t\nkg\n\t\nMermelada aly\t\t\t\nkg\n\t\nMiel caro bb\t\t\t\nkg\n\t\nNaranja\t\t\t\nkg\n\t\nNuez granillo\t\t\t\nkg\n\t\nNuez pedazo\t\t\t\nkg\n\t\nObleas coronado\t\t\t\npzas\n\t\nPalomitas caramelizadas barcel\t\t\t\nkg\n\t\nPapel estrella\t\t\t\npzas\n\t\nPerlas\t\t\t\nkg\n\t\nPerlas doradas\t\t\t\nkg\n\t\nPiña en almíbar\t\t\t\nkg\n\t\nPistache pelado\t\t\t\nkg\n\t\nPlátano\t\t\t\nkg\n\t\nQueso crema\t\t\t\nkg\n\t\nRoyal\t\t\t\nkg\n\t\nSal de cocina\t\t\t\nkg\n\t\nVainilla\t\t\t\nkg\n\t\nVinagre blanco\t\t\t\nkg\n\t\nVino blanco\t\t\t\nkg\n\t\nZanahoria\t\t\t\nkg\n\t\nEMPAQUES\nINSUMO\tLO COMPRO SEGUIDO\tLO CUENTO EN\tTRAE\tQUIERO TENER\nBase chica 12 pulgadas\t\t\t\npzas\n\t\nBase grande 16 pulgadas\t\t\t\npzas\n\t\nBase mediana 14 pulgadas\t\t\t\npzas\n\t\nBolsa plastico\t\t\t\npzas\n\t\nCaja chica 12 pulgadas\t\t\t\npzas\n\t\nCaja grande 16 pulgadas\t\t\t\npzas\n\t\nCaja mediana 14 pulgadas\t\t\t\npzas\n\t\nCaja tres leches\t\t\t\npzas\n\t",
     "modales": [],
     "log": [
      [
@@ -3745,7 +3745,7 @@
    {
     "paso": "compras empezar conteo",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\n¿Hay algo que no está en la lista? Agrégalo aquí",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\n¿Hay algo que no está en la lista? Agrégalo aquí",
     "modales": [],
     "log": [
      [
@@ -3775,7 +3775,7 @@
    {
     "paso": "compras contar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\n¿Hay algo que no está en la lista? Agrégalo aquí\nIr a comprar",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\n¿Hay algo que no está en la lista? Agrégalo aquí\nIr a comprar",
     "modales": [],
     "log": [
      [
@@ -3820,7 +3820,7 @@
    {
     "paso": "compras subir a mano",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\na mano · volver a 1\n¿Hay algo que no está en la lista? Agrégalo aquí\nIr a comprar",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\na mano · volver a 1\n¿Hay algo que no está en la lista? Agrégalo aquí\nIr a comprar",
     "modales": [],
     "log": [
      [
@@ -3853,7 +3853,7 @@
    {
     "paso": "compras agregar otro",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nAgregado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano. 1 insumo no tiene \"quiero tener\": ponlo en Ajustes o escribe a mano cuánto comprar.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nFresa congelada IQF\nen kg · solo esta vez\n\t\nkg\n\tsin dato\t\nkg\na mano\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\na mano · volver a 1\n¿Hay algo que no está en la lista? Agrégalo aquí\nIr a comprar",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nAgregado\nConteo del miércoles, 28 de octubre\nPon cuánto tienes. \"Comprar\" se calcula solo; si viene temporada o quieres más, cámbialo a mano. 1 insumo no tiene \"quiero tener\": ponlo en Ajustes o escribe a mano cuánto comprar.\nINGREDIENTES\nINSUMO\tTENGO\tQUIERO TENER\tCOMPRAR\nAzúcar morena\ncostal de 10 kg\n\t\ncostales\n\t4 costales\t\ncostales\n\nFresa congelada IQF\nen kg · solo esta vez\n\t\nkg\n\tsin dato\t\nkg\na mano\n\nHuevo\ncaja de 360 kg\n\t\ncajas\n\t2 cajas\t\ncajas\na mano · volver a 1\n¿Hay algo que no está en la lista? Agrégalo aquí\nIr a comprar",
     "modales": [],
     "log": [
      [
@@ -3898,7 +3898,7 @@
    {
     "paso": "compras ruta",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nAgregado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nGastado en esta compra\n$0\nTerminar compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nAgregado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nGastado en esta compra\n$0\nTerminar compras",
     "modales": [],
     "log": [
      [
@@ -3948,7 +3948,7 @@
    {
     "paso": "compras azucar parcial otra presentacion",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nAgregado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n¿QUÉ PRESENTACIÓN HABÍA?\ncostal de 10 kg\nOtra presentación…\nNOMBRE\nTRAE (KG)\n¿CUÁNTAS COMPRASTE?\nPRECIO DE CADA UNA (OPCIONAL)\nSon 20 kg · faltarían 10 kg\nTotal $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nGuardar\nCancelar\n2. SAMS\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nGastado en esta compra\n$0\nTerminar compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nAgregado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n¿QUÉ PRESENTACIÓN HABÍA?\ncostal de 10 kg\nOtra presentación…\nNOMBRE\nTRAE (KG)\n¿CUÁNTAS COMPRASTE?\nPRECIO DE CADA UNA (OPCIONAL)\nSon 20 kg · faltarían 10 kg\nTotal $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nGuardar\nCancelar\n2. SAMS\nAzúcar morena\nFalta 3 costales (30 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nGastado en esta compra\n$0\nTerminar compras",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -3968,7 +3968,7 @@
    {
     "paso": "compras azucar guardar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nYA COMPRADO Y NO HABÍA\nAzúcar morena en Lizárraga\n✓ 1 bulto de 20 kg · $800 c/u · total $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nDeshacer\nGastado en esta compra\n$800\nTerminar compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nYA COMPRADO Y NO HABÍA\nAzúcar morena en Lizárraga\n✓ 1 bulto de 20 kg · $800 c/u · total $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nDeshacer\nGastado en esta compra\n$800\nTerminar compras",
     "modales": [],
     "log": [
      [
@@ -4016,7 +4016,7 @@
    {
     "paso": "compras huevo no habia",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nHuevo\nFalta 2 cajas (720 kg) · no había en Sams\nPrecio de Finanzas: $61.11/kg\n✓ Compré\nYA COMPRADO Y NO HABÍA\nHuevo en Sams\n✕ No había\nDeshacer\nAzúcar morena en Lizárraga\n✓ 1 bulto de 20 kg · $800 c/u · total $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nDeshacer\nGastado en esta compra\n$800\nTerminar compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nHuevo\nFalta 2 cajas (720 kg) · no había en Sams\nPrecio de Finanzas: $61.11/kg\n✓ Compré\nYA COMPRADO Y NO HABÍA\nHuevo en Sams\n✕ No había\nDeshacer\nAzúcar morena en Lizárraga\n✓ 1 bulto de 20 kg · $800 c/u · total $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nDeshacer\nGastado en esta compra\n$800\nTerminar compras",
     "modales": [],
     "log": [
      [
@@ -4049,7 +4049,7 @@
    {
     "paso": "compras deshacer",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nGuardado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nYA COMPRADO Y NO HABÍA\nAzúcar morena en Lizárraga\n✓ 1 bulto de 20 kg · $800 c/u · total $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nDeshacer\nGastado en esta compra\n$800\nTerminar compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nGuardado\nTu ruta de hoy\nToca las tiendas en el orden en que vas a ir. Lo que ya compraste se quita de las demás.\n1 · Lizárraga\n2 · Sams\n1. LIZÁRRAGA\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\n2. SAMS\nAzúcar morena\nFalta 1 costal (10 kg)\nPrecio de Finanzas: $38.36/kg\n✓ Compré\n✕ No había\nHuevo\nFalta 2 cajas (720 kg)\nPrecio de Finanzas: $61.11/kg\n✓ Compré\n✕ No había\nFALTA Y NO ESTÁ EN TU RUTA\nFresa congelada IQF\nFalta 3 kg\nSin precio anterior para comparar.\n✓ Compré\nYA COMPRADO Y NO HABÍA\nAzúcar morena en Lizárraga\n✓ 1 bulto de 20 kg · $800 c/u · total $800\n▲ Subió 4.3% · $40.00/kg · precio de Finanzas: $38.36/kg\nDeshacer\nGastado en esta compra\n$800\nTerminar compras",
     "modales": [],
     "log": [
      [
@@ -4077,7 +4077,7 @@
    {
     "paso": "compras terminar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nAjustes\nCompra terminada\nCuenta lo que tienes de cada insumo; el sistema calcula cuánto comprar con la cantidad que quieres tener (se pone una vez en Ajustes).\nEmpezar conteo",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nCuenta lo que tienes de cada insumo; el sistema calcula cuánto comprar con la cantidad que quieres tener (se pone una vez en Ajustes).\nEmpezar conteo",
     "modales": [],
     "log": [
      [
@@ -4100,6 +4100,362 @@
       "Quedan 3 insumos sin comprar. ¿Terminar de todos modos?"
      ]
     ],
+    "impresiones": [],
+    "nav": [
+     "Nuevo pedido",
+     "Pedidos",
+     "Historial",
+     "Resumen",
+     "Clientes",
+     "Por hacer",
+     "Catálogo",
+     "Finanzas",
+     "Compras"
+    ]
+   },
+   {
+    "paso": "compras ticket leer",
+    "vista": "view-compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nRevisa el ticket\nCorrige lo que se haya leído mal. En cada producto elige qué insumo es y cuánto trae cada pieza; la próxima vez se acuerda solo.\nTIENDA\nElige…\nLizárraga\nSams\nNueva: COMERCIAL LIZARRAGA\nFECHA\nFOLIO\nFORMA DE PAGO\n—\nEfectivo\nTarjeta\nTransferencia\nOtro\nTOTAL PAGADO\nPRODUCTOS (3)\nAZUCAR ZULKA 10/KG\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nTRAE CADA PIEZA (KG)\n$205 c/u · ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLECHERA 48/375GR\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nTRAE CADA PIEZA (KG)\n$1,272 c/u · ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nBOLSAS CAMISETA\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nGuardar ticket\nDescartar",
+    "modales": [],
+    "log": [
+     [
+      "funcion",
+      "bright-task",
+      {
+       "accion": "ticket",
+       "tipo": "image/jpeg",
+       "tam": true
+      }
+     ]
+    ],
+    "dialogos": [],
+    "impresiones": [],
+    "nav": [
+     "Nuevo pedido",
+     "Pedidos",
+     "Historial",
+     "Resumen",
+     "Clientes",
+     "Por hacer",
+     "Catálogo",
+     "Finanzas",
+     "Compras"
+    ]
+   },
+   {
+    "paso": "compras ticket corregir",
+    "vista": "view-compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nRevisa el ticket\nCorrige lo que se haya leído mal. En cada producto elige qué insumo es y cuánto trae cada pieza; la próxima vez se acuerda solo.\nTIENDA\nElige…\nLizárraga\nSams\nNueva: COMERCIAL LIZARRAGA\nFECHA\nFOLIO\nFORMA DE PAGO\n—\nEfectivo\nTarjeta\nTransferencia\nOtro\nTOTAL PAGADO\nPRODUCTOS (3)\nAZUCAR ZULKA 10/KG\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nTRAE CADA PIEZA (KG)\n$205 c/u · ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLECHERA 48/375GR\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nTRAE CADA PIEZA (KG)\n$1,272 c/u · ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nBOLSAS CAMISETA\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nGuardar ticket\nDescartar",
+    "modales": [],
+    "log": [],
+    "dialogos": [],
+    "impresiones": [],
+    "nav": [
+     "Nuevo pedido",
+     "Pedidos",
+     "Historial",
+     "Resumen",
+     "Clientes",
+     "Por hacer",
+     "Catálogo",
+     "Finanzas",
+     "Compras"
+    ]
+   },
+   {
+    "paso": "compras ticket guardar",
+    "vista": "view-compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nVer",
+    "modales": [],
+    "log": [
+     [
+      "subir",
+      "tickets",
+      {
+       "ruta": "2026-10/2026-10-27-1793215800000.jpg",
+       "tipo": "image/jpeg"
+      }
+     ],
+     [
+      "insert",
+      "compras_tickets",
+      [
+       {
+        "tienda_id": 1000,
+        "tienda_nombre": "Lizárraga",
+        "fecha": "2026-10-27",
+        "hora": "12:12",
+        "folio": "B74185",
+        "forma_pago": "efectivo",
+        "total": 6038,
+        "foto": "2026-10/2026-10-27-1793215800000.jpg",
+        "lectura": {
+         "es_ticket": true,
+         "tienda": "COMERCIAL LIZARRAGA",
+         "fecha": "2026-10-27",
+         "hora": "12:12",
+         "folio": "B74185",
+         "forma_pago": "efectivo",
+         "total": 6038,
+         "productos": [
+          {
+           "descripcion": "AZUCAR ZULKA 10/KG",
+           "cantidad": 3,
+           "importe": 615,
+           "insumo_id": 5,
+           "contenido": 10000
+          },
+          {
+           "descripcion": "LECHERA 48/375GR",
+           "cantidad": 4,
+           "importe": 5088,
+           "insumo_id": 26,
+           "contenido": 18000
+          },
+          {
+           "descripcion": "BOLSAS CAMISETA",
+           "cantidad": 1,
+           "importe": 335,
+           "insumo_id": null,
+           "contenido": null
+          }
+         ]
+        }
+       }
+      ]
+     ],
+     [
+      "insert",
+      "compras_ticket_items",
+      [
+       {
+        "ticket_id": 1000,
+        "fecha": "2026-10-27",
+        "descripcion": "AZUCAR ZULKA 10/KG",
+        "cantidad": 3,
+        "importe": 615,
+        "insumo_id": 5,
+        "contenido": 10000
+       },
+       {
+        "ticket_id": 1000,
+        "fecha": "2026-10-27",
+        "descripcion": "LECHERA 48/375GR",
+        "cantidad": 4,
+        "importe": 5088,
+        "insumo_id": 26,
+        "contenido": 18000
+       },
+       {
+        "ticket_id": 1000,
+        "fecha": "2026-10-27",
+        "descripcion": "BOLSAS CAMISETA",
+        "cantidad": 1,
+        "importe": 335,
+        "insumo_id": null,
+        "contenido": null
+       }
+      ]
+     ],
+     [
+      "upsert",
+      "compras_equivalencias",
+      [
+       {
+        "clave": "azucar zulka 10 kg",
+        "insumo_id": 5,
+        "contenido": 10000
+       },
+       {
+        "clave": "lechera 48 375gr",
+        "insumo_id": 26,
+        "contenido": 18000
+       },
+       {
+        "clave": "bolsas camiseta",
+        "insumo_id": null,
+        "contenido": null
+       }
+      ]
+     ],
+     [
+      "update",
+      "insumos",
+      {
+       "datos": {
+        "cantidad": 10000,
+        "precio": 205
+       },
+       "filas": [
+        5
+       ]
+      }
+     ],
+     [
+      "update",
+      "insumos",
+      {
+       "datos": {
+        "cantidad": 18000,
+        "precio": 1272
+       },
+       "filas": [
+        26
+       ]
+      }
+     ]
+    ],
+    "dialogos": [],
+    "impresiones": [],
+    "nav": [
+     "Nuevo pedido",
+     "Pedidos",
+     "Historial",
+     "Resumen",
+     "Clientes",
+     "Por hacer",
+     "Catálogo",
+     "Finanzas",
+     "Compras"
+    ]
+   },
+   {
+    "paso": "compras ticket ver",
+    "vista": "view-compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · Sin precio anterior para comparar.\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto\nBorrar ticket",
+    "modales": [],
+    "log": [],
+    "dialogos": [],
+    "impresiones": [],
+    "nav": [
+     "Nuevo pedido",
+     "Pedidos",
+     "Historial",
+     "Resumen",
+     "Clientes",
+     "Por hacer",
+     "Catálogo",
+     "Finanzas",
+     "Compras"
+    ]
+   },
+   {
+    "paso": "compras ticket segundo recordado",
+    "vista": "view-compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nRevisa el ticket\nCorrige lo que se haya leído mal. En cada producto elige qué insumo es y cuánto trae cada pieza; la próxima vez se acuerda solo.\nTIENDA\nElige…\nLizárraga\nSams\nFECHA\nFOLIO\nFORMA DE PAGO\n—\nEfectivo\nTarjeta\nTransferencia\nOtro\nTOTAL PAGADO\nPRODUCTOS (1)\nLECHERA 48/375GR · recordado\nCANTIDAD\nIMPORTE\nINSUMO\nNo es insumo (otro gasto)\nAceite\nAceite en aerosol\nAgua purificada\nAzúcar glass\nAzúcar morena\nAzúcar refinada\nBase chica 12 pulgadas\nBase grande 16 pulgadas\nBase mediana 14 pulgadas\nBicarbonato\nBlueberries frescos\nBolsa plastico\nCaja chica 12 pulgadas\nCaja grande 16 pulgadas\nCaja mediana 14 pulgadas\nCaja tres leches\nCajeta\nCanela en polvo\nCanela entera\nChantilly en polvo\nClavel\nCoco americano suave\nCocoa\nCremor tartaro\nDátil\nFresa congelada\nFresa congelada IQF\nFresa fresca\nFrutos rojos congelados\nGalleta maravilla\nGlucosa de maíz\nHarina\nHarina (costal 22 kg)\nHuevo\nIsomalt\nLechera\nLimón\nLimón amarillo\nMaízena\nMantequilla sin sal\nMatizador dorado\nMayonesa\nMedia crema\nMermelada aly\nMiel caro bb\nNaranja\nNuez granillo\nNuez pedazo\nObleas coronado\nPalomitas caramelizadas barcel\nPapel estrella\nPerlas\nPerlas doradas\nPiña en almíbar\nPistache pelado\nPlátano\nQueso crema\nRoyal\nSal de cocina\nVainilla\nVinagre blanco\nVino blanco\nZanahoria\nTRAE CADA PIEZA (KG)\n$1,300 c/u · ▲ Subió 2.2% · $72.22/kg · precio más alto de octubre: $70.67/kg\nGuardar ticket\nDescartar",
+    "modales": [],
+    "log": [
+     [
+      "funcion",
+      "bright-task",
+      {
+       "accion": "ticket",
+       "tipo": "image/jpeg",
+       "tam": true
+      }
+     ]
+    ],
+    "dialogos": [],
+    "impresiones": [],
+    "nav": [
+     "Nuevo pedido",
+     "Pedidos",
+     "Historial",
+     "Resumen",
+     "Clientes",
+     "Por hacer",
+     "Catálogo",
+     "Finanzas",
+     "Compras"
+    ]
+   },
+   {
+    "paso": "compras ticket segundo guardar",
+    "vista": "view-compras",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $1,300 en Lizárraga.\nSe actualizó el precio de 1 insumo en Finanzas.\nLechera: ▲ Subió 2.2% · $72.22/kg · precio más alto de octubre: $70.67/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$7,338\n2 tickets\nPOR TIENDA\nLizárraga $7,338\nLizárraga\nmié 28 de oct\n$1,300\nVer\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · ▼ Bajó 2.2% · $70.67/kg · precio más alto de octubre: $72.22/kg\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto\nBorrar ticket",
+    "modales": [],
+    "log": [
+     [
+      "subir",
+      "tickets",
+      {
+       "ruta": "2026-10/2026-10-28-1793215800000.jpg",
+       "tipo": "image/jpeg"
+      }
+     ],
+     [
+      "insert",
+      "compras_tickets",
+      [
+       {
+        "tienda_id": 1000,
+        "tienda_nombre": "Lizárraga",
+        "fecha": "2026-10-28",
+        "hora": null,
+        "folio": null,
+        "forma_pago": null,
+        "total": 1300,
+        "foto": "2026-10/2026-10-28-1793215800000.jpg",
+        "lectura": {
+         "es_ticket": true,
+         "tienda": "Lizarraga",
+         "fecha": "2026-10-28",
+         "total": 1300,
+         "productos": [
+          {
+           "descripcion": "LECHERA 48/375GR",
+           "cantidad": 1,
+           "importe": 1300,
+           "insumo_id": null,
+           "contenido": null
+          }
+         ]
+        }
+       }
+      ]
+     ],
+     [
+      "insert",
+      "compras_ticket_items",
+      [
+       {
+        "ticket_id": 1001,
+        "fecha": "2026-10-28",
+        "descripcion": "LECHERA 48/375GR",
+        "cantidad": 1,
+        "importe": 1300,
+        "insumo_id": 26,
+        "contenido": 18000
+       }
+      ]
+     ],
+     [
+      "upsert",
+      "compras_equivalencias",
+      [
+       {
+        "clave": "lechera 48 375gr",
+        "insumo_id": 26,
+        "contenido": 18000
+       }
+      ]
+     ],
+     [
+      "update",
+      "insumos",
+      {
+       "datos": {
+        "cantidad": 18000,
+        "precio": 1300
+       },
+       "filas": [
+        26
+       ]
+      }
+     ]
+    ],
+    "dialogos": [],
     "impresiones": [],
     "nav": [
      "Nuevo pedido",
@@ -4163,10 +4519,10 @@
         "tabla": "pagina",
         "producto": "portada",
         "orden": 0,
-        "ruta": "pagina/portada/1793215800000-jg30b.jpg",
-        "url": "https://fotos.prueba/pagina/portada/1793215800000-jg30b.jpg",
-        "ruta_original": "pagina/portada/1793215800000-jg30b-original.png",
-        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-jg30b-original.png"
+        "ruta": "pagina/portada/1793215800000-a9jjw.jpg",
+        "url": "https://fotos.prueba/pagina/portada/1793215800000-a9jjw.jpg",
+        "ruta_original": "pagina/portada/1793215800000-a9jjw-original.png",
+        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-a9jjw-original.png"
        }
       ]
      ]
@@ -4494,10 +4850,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 0,
-        "ruta": "sabores_cupcakes/limon/1793215800000-29gh5.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-29gh5.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-29gh5-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-29gh5-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-a7cu8.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-a7cu8.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-a7cu8-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-a7cu8-original.png"
        }
       ]
      ],
@@ -4525,10 +4881,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 1,
-        "ruta": "sabores_cupcakes/limon/1793215800000-ol2sv.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-ol2sv.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-ol2sv-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-ol2sv-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-bxvs2.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-bxvs2.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-bxvs2-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-bxvs2-original.png"
        }
       ]
      ]

@@ -27,7 +27,7 @@
              {tipo:'cheesecake', nombre:'cc_frutos_rojos', cantidad:1, precio:280, tamano:'cheesecake', corona:null}]},
       {id:8, created_at:'2026-10-28T09:00:00Z', nombre:'Luis', telefono:'6670000000', fecha_deseada:'2026-11-02', entrega:'recoger', total:450, estado:'nueva', items:[{tipo:'pastel', nombre:'chocolate', cantidad:1, precio:450, tamano:'mini', corona:null, base:'dorada'}]}],
     insumos: (window.__FIN || {}).insumos || [],
-    insumos_historial: [], compras_tiendas: [], compras_articulos: [], compras_presentaciones: [], compras_listas: [], compras_lista_items: [], compras_movimientos: [],
+    insumos_historial: [], compras_tiendas: [], compras_articulos: [], compras_presentaciones: [], compras_listas: [], compras_lista_items: [], compras_movimientos: [], compras_tickets: [], compras_ticket_items: [], compras_equivalencias: [],
     fin_recetas: (window.__FIN || {}).fin_recetas || [],
     fin_receta_partes: (window.__FIN || {}).fin_receta_partes || [],
     fin_costos_fijos: (window.__FIN || {}).fin_costos_fijos || [],
@@ -104,7 +104,7 @@
         if(accion === 'delete' && tabla === 'productos_ocultos'){ tablas.productos_ocultos = tablas.productos_ocultos.filter(x=> !r.includes(x)); }
         if(accion === 'delete' && tabla === 'fotos_catalogo'){ tablas.fotos_catalogo = tablas.fotos_catalogo.filter(x=> !r.includes(x)); }
         // Compras: upsert por su llave (insumo_id, o lista_id + insumo_id)
-        if(accion === 'upsert' && (tabla === 'compras_articulos' || tabla === 'compras_lista_items')){ const llave = x=> tabla === 'compras_articulos' ? String(x.insumo_id) : x.lista_id + '-' + x.insumo_id;
+        if(accion === 'upsert' && (tabla === 'compras_articulos' || tabla === 'compras_lista_items' || tabla === 'compras_equivalencias')){ const llave = x=> tabla === 'compras_articulos' ? String(x.insumo_id) : tabla === 'compras_equivalencias' ? x.clave : x.lista_id + '-' + x.insumo_id;
           r = (Array.isArray(datos) ? datos : [datos]).map(x=>{ const y = tablas[tabla].find(c=> llave(c) === llave(x)); if(y){ Object.assign(y, x); return y; } const n = { id: 2000 + tablas[tabla].length, ...x }; tablas[tabla].push(n); return n; }); }
         else if(accion === 'upsert'){ r = Array.isArray(datos) ? datos : [datos]; }
         if(orden) r = r.slice().sort((a,b)=> (a[orden] > b[orden] ? 1 : a[orden] < b[orden] ? -1 : 0) * (desc ? -1 : 1));
@@ -124,6 +124,7 @@
     from: consulta,
     // Función validar-transferencia: respuesta fija según window.__TR (por defecto, "sí llegó")
     functions: { invoke(nombre, o){ const body = (o||{}).body || {}; log('funcion', nombre, { accion: body.accion, tipo: body.tipo, tam: (body.archivo||'').length > 0 });
+      if(body.accion === 'ticket') return new Promise(res=> setTimeout(()=> res({ data: { lectura: JSON.parse(JSON.stringify(window.__TICKET || {})) }, error: null }), 30));
       const r = Object.assign({ id: 77, estado:'liquidada', monto: 450, ordenante:'ANA LOPEZ', banco_emisor_nombre:'BBVA', clave_rastreo:'MBAN01TEST', detalle:'Banxico confirma que sí llegó.' }, window.__TR || {});
       return new Promise(res=> setTimeout(()=> res({ data: r, error: null }), 30)); } },
     rpc(nombre, args){ log('rpc', nombre, args); const f = rpcs[nombre]; return Promise.resolve({ data: f ? JSON.parse(JSON.stringify(f(args||{}))) : null, error: null }); },
@@ -131,6 +132,7 @@
     storage: { from: (bucket) => ({
       upload(ruta, archivo, o){ log('subir', bucket, { ruta: ruta.replace(/\d{13}-[a-z0-9]+/, 'X'), tipo: o && o.contentType }); return Promise.resolve({ data:{ path: ruta }, error:null }); },
       getPublicUrl(ruta){ return { data:{ publicUrl: 'https://fotos.prueba/' + ruta } }; },
+      createSignedUrl(ruta){ return Promise.resolve({ data:{ signedUrl: 'https://fotos.prueba/firmada/' + ruta }, error:null }); },
       remove(rutas){ log('borrar', bucket, rutas); return Promise.resolve({ data:[], error:null }); }
     }) },
     auth: {

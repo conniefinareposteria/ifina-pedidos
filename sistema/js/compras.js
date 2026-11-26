@@ -4,9 +4,10 @@
 // Cantidades: el inventario se cuenta en la "unidad de conteo" de cada insumo (costal, caja...),
 // y por dentro todo se convierte a g / ml / piezas para comparar presentaciones y precios.
 
-let cmp = { tiendas: [], insumos: [], arts: {}, pres: [], lista: null, items: {}, movs: [], hist: [], vista: 'inventario', abierto: null, buscar: '', cargado: false };
+let cmp = { tiendas: [], insumos: [], arts: {}, pres: [], lista: null, items: {}, movs: [], hist: [], equiv: {}, vista: 'inventario', abierto: null, buscar: '', cargado: false,
+  tk: null, tkLeyendo: false, tkMes: null, tickets: [], tkAbierto: null, tkResultado: null };
 
-const CMP_VISTAS = [ { id:'inventario', titulo:'Inventario' }, { id:'comprar', titulo:'Comprar' }, { id:'ajustes', titulo:'Ajustes' } ];
+const CMP_VISTAS = [ { id:'inventario', titulo:'Inventario' }, { id:'comprar', titulo:'Comprar' }, { id:'tickets', titulo:'Tickets y gastos' }, { id:'ajustes', titulo:'Ajustes' } ];
 
 // ---------- Utilidades ----------
 const cmpNum = v => { if(v == null) return null; const s = String(v).trim().replace(',', '.'); return s === '' || isNaN(Number(s)) ? null : Number(s); };
@@ -47,14 +48,16 @@ async function cargarCompras(){
   if(!cmp.cargado){ cont.className = 'loading'; cont.textContent = 'Cargando...'; }
   const ini = new Date(); ini.setMonth(ini.getMonth() - 1, 1);
   const desde = fechaStrDesdeDate(ini);
-  const [ri, rt, ra, rp, rl, rh, rm] = await Promise.all([
+  const [ri, rt, ra, rp, rl, rh, rm, re, rti] = await Promise.all([
     sb.from('insumos').select('*').order('nombre'),
     sb.from('compras_tiendas').select('*').order('id'),
     sb.from('compras_articulos').select('*'),
     sb.from('compras_presentaciones').select('*').order('id'),
     sb.from('compras_listas').select('*').eq('cerrada', false).order('id', { ascending: false }).limit(1),
     sb.from('insumos_historial').select('*').gte('fecha', desde),
-    sb.from('compras_movimientos').select('*').eq('estado', 'comprado').gte('created_at', desde)
+    sb.from('compras_movimientos').select('*').eq('estado', 'comprado').gte('created_at', desde),
+    sb.from('compras_equivalencias').select('*'),
+    sb.from('compras_ticket_items').select('*').gte('fecha', desde)
   ]);
   const err = [ri, rt, ra, rp, rl].find(x=> x.error);
   if(err){ cont.className = 'empty'; cont.textContent = 'No se pudo cargar Compras: ' + err.error.message + '. ¿Ya se corrió el SQL 042?'; return; }
@@ -66,6 +69,8 @@ async function cargarCompras(){
   cmp.hist = [];
   (rh.data || []).forEach(h=>{ const i = cmpInsumo(h.insumo_id); const c = Number(h.cantidad) * (h.unidad === 'kg' ? 1000 : 1); if(i && c > 0 && h.precio != null) cmp.hist.push({ insumo_id: h.insumo_id, fecha: new Date(h.fecha), pu: Number(h.precio) / c, lista_id: null }); });
   (rm.data || []).forEach(m=>{ if(m.precio != null && Number(m.contenido) > 0) cmp.hist.push({ insumo_id: m.insumo_id, fecha: new Date(m.created_at), pu: Number(m.precio) / Number(m.contenido), lista_id: m.lista_id }); });
+  (rti.data || []).forEach(cmpHistTicket);
+  cmp.equiv = {}; (re.data || []).forEach(e=> cmp.equiv[e.clave] = e);
   await cargarListaCompras();
   cmp.cargado = true;
   pintarCompras();
@@ -90,14 +95,14 @@ function pintarCompras(){
   const msgPrev = msg ? [msg.className, msg.textContent] : null;
   cont.className = '';
   const chips = `<div class="chip-group cf-chips">${CMP_VISTAS.map(v=> `<div class="chip${v.id === cmp.vista ? ' selected' : ''}" onclick="elegirVistaCompras('${v.id}')">${v.titulo}</div>`).join('')}</div>`;
-  const cuerpo = ({ inventario: vistaInventarioCompras, comprar: vistaComprar, ajustes: vistaAjustesCompras })[cmp.vista]();
+  const cuerpo = ({ inventario: vistaInventarioCompras, comprar: vistaComprar, tickets: vistaTicketsCompras, ajustes: vistaAjustesCompras })[cmp.vista]();
   cont.innerHTML = chips + '<div class="msg" id="cmp-msg"></div>' + cuerpo;
   if(msgPrev){ const m = document.getElementById('cmp-msg'); m.className = msgPrev[0]; m.textContent = msgPrev[1]; }
   if(k){ const el = cont.querySelector(`[data-k="${CSS.escape(k)}"]`); if(el){ el.focus(); if(el.select && el.dataset.sel) el.select(); } }
   if(cmp.abierto) cmpCalcularCompra();
 }
 function cmpRepintar(){ setTimeout(pintarCompras, 0); }
-function elegirVistaCompras(v){ cmp.vista = v; cmp.abierto = null; cmp.buscar = ''; pintarCompras(); window.scrollTo(0, 0); }
+function elegirVistaCompras(v){ cmp.vista = v; cmp.abierto = null; cmp.buscar = ''; pintarCompras(); window.scrollTo(0, 0); if(v === 'tickets') cargarTicketsMes(); }
 function cmpFiltrar(v){ cmp.buscar = v; const q = finQ(v); document.querySelectorAll('#compras-contenido [data-nombre]').forEach(tr=> tr.style.display = !q || finQ(tr.dataset.nombre).includes(q) ? '' : 'none'); }
 function cmpBuscador(){ return `<input type="text" class="fin-buscar" placeholder="Buscar insumo" value="${escHtml(cmp.buscar)}" oninput="cmpFiltrar(this.value)">`; }
 const cmpOculta = i => cmp.buscar && !finQ(i.nombre).includes(finQ(cmp.buscar)) ? ' style="display:none"' : '';
@@ -200,19 +205,23 @@ function cmpComprado(id){ return cmp.movs.filter(m=> m.insumo_id === id && m.est
 function cmpFalta(i){ const c = cmpComprar(i); if(!(c > 0)) return 0; return Math.max(0, c * cmpContenido(i) - cmpComprado(i.id)); }   // en g / ml / pzas
 function cmpNoHabia(id, tienda){ return cmp.movs.some(m=> m.insumo_id === id && m.estado === 'no_habia' && m.tienda_id === tienda); }
 // Precio de referencia: el más alto del mes; si este mes no hay, el más alto del mes pasado; si no, el de Finanzas
-function cmpReferencia(i){
-  const hoy = new Date(), mesA = hoy.getFullYear() * 12 + hoy.getMonth();
+function cmpReferencia(i, ex){
+  const hoy = ex && ex.fecha ? new Date(ex.fecha + 'T12:00:00') : new Date(), mesA = hoy.getFullYear() * 12 + hoy.getMonth();
   const mesDe = d=> d.getFullYear() * 12 + d.getMonth();
-  const h = cmp.hist.filter(x=> x.insumo_id === i.id && x.lista_id !== (cmp.lista && cmp.lista.id));
+  // Al ver un ticket guardado no se compara contra sí mismo (ni contra el cambio de precio en Finanzas que hizo ese ticket)
+  const propios = ex && ex.ticket ? cmp.hist.filter(x=> x.insumo_id === i.id && x.ticket_id === ex.ticket).map(x=> x.pu) : [];
+  const h = cmp.hist.filter(x=> x.insumo_id === i.id && !(x.lista_id && cmp.lista && x.lista_id === cmp.lista.id) && !(ex && ex.ticket && x.ticket_id === ex.ticket)
+    && !(x.ticket_id == null && x.lista_id == null && propios.some(p=> Math.abs(p - x.pu) <= p * 0.0001)));
   for(const [m, txt] of [[mesA, 'más alto de ' + cmpMes(hoy)], [mesA - 1, 'más alto de ' + cmpMes(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1))]]){
     const v = h.filter(x=> mesDe(x.fecha) === m).map(x=> x.pu);
     if(v.length) return { pu: Math.max(...v), txt };
   }
+  if(ex && ex.ticket) return null;
   const c = cmpContFinanzas(i);
   return c && i.precio != null ? { pu: Number(i.precio) / c, txt: 'de Finanzas' } : null;
 }
-function cmpComparar(pu, i){
-  const r = cmpReferencia(i);
+function cmpComparar(pu, i, ex){
+  const r = cmpReferencia(i, ex);
   if(pu == null || !r) return r ? `Precio ${r.txt}: ${cmpFmtPU(r.pu, i)}` : 'Sin precio anterior para comparar.';
   const d = pu / r.pu - 1;
   const txt = `${cmpFmtPU(pu, i)} · precio ${r.txt}: ${cmpFmtPU(r.pu, i)}`;
@@ -438,4 +447,232 @@ async function quitarTiendaCompras(id){
   // Los insumos que la tenían se actualizan (sin tienda borrada)
   for(const a of Object.values(cmp.arts).filter(a=> (a.tiendas || []).includes(id))) await guardarArtCompras(a.insumo_id, { tiendas: a.tiendas.filter(x=> x !== id) });
   pintarCompras();
+}
+
+// ---------- Tickets y gastos ----------
+// Foto del ticket → la IA lo lee (función bright-task, acción 'ticket') → se revisa → se guarda como gasto.
+// Cada producto se liga a un insumo con lo que trae cada pieza; el sistema se acuerda para el siguiente ticket.
+// Al guardar, el precio del insumo en Finanzas se actualiza (si no hay un ticket más reciente de ese insumo).
+const cmpClave = s=> finQ(s).replace(/[^a-z0-9]+/g, ' ').trim();
+function cmpHistTicket(t){ const i = cmpInsumo(t.insumo_id); if(i && Number(t.contenido) > 0 && Number(t.cantidad) > 0 && t.importe != null) cmp.hist.push({ insumo_id: t.insumo_id, fecha: new Date(t.fecha + 'T12:00:00'), pu: Number(t.importe) / Number(t.cantidad) / Number(t.contenido), ticket_id: t.ticket_id }); }
+const CMP_PAGOS = [ ['efectivo','Efectivo'], ['tarjeta','Tarjeta'], ['transferencia','Transferencia'], ['otro','Otro'] ];
+function cmpMesActual(){ return fechaHoyStr().slice(0, 7); }
+function cmpFechaCorta(f){ return new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'short', day:'numeric', month:'short' }); }
+
+function vistaTicketsCompras(){
+  let html = '';
+  if(cmp.tkResultado) html += `<div class="cmp-resultado">${cmp.tkResultado}<a href="#" onclick="cmp.tkResultado = null; pintarCompras(); return false;">Cerrar</a></div>`;
+  if(cmp.tk) return html + revisionTicket();
+  html += `<div class="fin-titulo"><h3>Subir ticket</h3></div>
+    <div class="hint fin-nota">Toma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.</div>
+    ${cmp.tkLeyendo ? '<div class="loading" style="margin:0 0 18px;">Leyendo el ticket…</div>'
+      : `<label class="primary cmp-subir">Tomar foto o elegir archivo<input type="file" accept="image/*,application/pdf" style="display:none;" onchange="subirTicketCompras(this)"></label>`}`;
+  html += listaTicketsMes();
+  return html;
+}
+
+async function subirTicketCompras(input){
+  const f = input.files && input.files[0]; input.value = '';
+  if(!f) return;
+  cmp.tkLeyendo = true; cmp.tkResultado = null; pintarCompras();
+  try {
+    const a = await archivoABase64(f);
+    const { data, error } = await sb.functions.invoke('bright-task', { body: { accion: 'ticket', archivo: a.base64, tipo: a.tipo,
+      insumos: cmp.insumos.map(i=> ({ id: i.id, nombre: i.nombre, unidad: i.unidad })), tiendas: cmp.tiendas.map(t=> t.nombre) } });
+    if(error || !data || data.error || !data.lectura) throw new Error((data && data.error) || (error && error.message) || 'no se pudo leer');
+    const L = data.lectura;
+    if(L.es_ticket === false) throw new Error('eso no parece un ticket de compra');
+    cmp.tk = armarTicket(L, a);
+    cmpRevisarDuplicado();
+  } catch(e){ cmpMsg('No se pudo leer el ticket: ' + (e.message || e) + '. Intenta con una foto más clara.', 'err'); }
+  cmp.tkLeyendo = false;
+  pintarCompras();
+  window.scrollTo(0, 0);
+}
+function armarTicket(L, archivo){
+  const nt = cmpClave(L.tienda || '');
+  const tienda = nt ? cmp.tiendas.find(t=>{ const c = cmpClave(t.nombre); return c && (nt.includes(c) || c.includes(nt)); }) : null;
+  const items = (Array.isArray(L.productos) ? L.productos : []).map(p=>{
+    const eq = cmp.equiv[cmpClave(p.descripcion)];
+    const idIA = cmpInsumo(Number(p.insumo_id)) ? Number(p.insumo_id) : null;
+    return { descripcion: String(p.descripcion || '').trim(), cantidad: cmpNum(p.cantidad), importe: cmpNum(p.importe),
+      insumo_id: eq ? eq.insumo_id : idIA, contenido: eq ? (eq.contenido != null ? Number(eq.contenido) : null) : (cmpNum(p.contenido) > 0 ? cmpNum(p.contenido) : null),
+      origen: eq ? 'recordado' : idIA ? 'ia' : '' };
+  });
+  return { archivo, lectura: L, tienda_id: tienda ? tienda.id : (L.tienda ? 'nueva' : ''), tienda_nombre: String(L.tienda || '').trim(),
+    fecha: /^\d{4}-\d{2}-\d{2}$/.test(L.fecha || '') ? L.fecha : fechaHoyStr(), hora: L.hora || null, folio: L.folio ? String(L.folio) : '',
+    forma_pago: CMP_PAGOS.some(([v])=> v === L.forma_pago) ? L.forma_pago : '', total: cmpNum(L.total), items, dup: null };
+}
+async function cmpRevisarDuplicado(){
+  const t = cmp.tk; if(!t || !t.fecha || t.total == null) return;
+  const { data } = await sb.from('compras_tickets').select('id,folio,total,tienda_nombre').eq('fecha', t.fecha).eq('total', t.total);
+  if(cmp.tk !== t) return;
+  t.dup = (data || []).length ? data[0] : null;
+  if(t.dup && cmp.vista === 'tickets') pintarCompras();
+}
+function revisionTicket(){
+  const t = cmp.tk;
+  const suma = t.items.reduce((s, x)=> s + (Number(x.importe) || 0), 0);
+  const avisos = [];
+  if(t.dup) avisos.push(`Ya hay un ticket guardado del mismo día y por el mismo total (${fmtDinero(t.dup.total)}${t.dup.tienda_nombre ? ', ' + escHtml(t.dup.tienda_nombre) : ''}). Revisa que no sea el mismo.`);
+  if(t.total != null && t.items.length && Math.abs(suma - t.total) > 1) avisos.push(`Los productos suman ${fmtDinero(suma)} y el total dice ${fmtDinero(t.total)}. Revisa si falta o sobra algún renglón (o si hay impuestos o descuentos aparte).`);
+  const opsTienda = cmp.tiendas.map(x=> `<option value="${x.id}"${t.tienda_id === x.id ? ' selected' : ''}>${escHtml(x.nombre)}</option>`).join('')
+    + (t.tienda_nombre && !cmp.tiendas.some(x=> cmpClave(x.nombre) === cmpClave(t.tienda_nombre)) ? `<option value="nueva"${t.tienda_id === 'nueva' ? ' selected' : ''}>Nueva: ${escHtml(t.tienda_nombre)}</option>` : '');
+  return `<div class="fin-titulo"><h3>Revisa el ticket</h3></div>
+    <div class="hint fin-nota">Corrige lo que se haya leído mal. En cada producto elige qué insumo es y cuánto trae cada pieza; la próxima vez se acuerda solo.</div>
+    ${avisos.map(a=> `<div class="cmp-aviso"><b>Ojo:</b> ${a}</div>`).join('')}
+    <div class="cmp-tk-datos">
+      <div class="field"><label for="tk-tienda">Tienda</label><select id="tk-tienda" data-k="tk-tienda" onchange="cmp.tk.tienda_id = this.value === 'nueva' || this.value === '' ? this.value : Number(this.value)"><option value="">Elige…</option>${opsTienda}</select></div>
+      <div class="field"><label for="tk-fecha">Fecha</label><input type="date" id="tk-fecha" data-k="tk-fecha" value="${escHtml(t.fecha)}" onchange="cmp.tk.fecha = this.value; cmpRevisarDuplicado(); pintarCompras()"></div>
+      <div class="field"><label for="tk-folio">Folio</label><input type="text" id="tk-folio" data-k="tk-folio" value="${escHtml(t.folio)}" onchange="cmp.tk.folio = this.value.trim()"></div>
+      <div class="field"><label for="tk-pago">Forma de pago</label><select id="tk-pago" data-k="tk-pago" onchange="cmp.tk.forma_pago = this.value"><option value="">—</option>${CMP_PAGOS.map(([v, n])=> `<option value="${v}"${t.forma_pago === v ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
+      <div class="field"><label for="tk-total">Total pagado</label><input type="text" inputmode="decimal" id="tk-total" data-k="tk-total" value="${escHtml(cmpFmt(t.total))}" onchange="cmp.tk.total = cmpNum(this.value); cmpRevisarDuplicado(); pintarCompras()"></div>
+    </div>
+    <div class="sub-titulo">Productos (${t.items.length})</div>
+    ${t.items.map(itemRevisionTicket).join('') || '<div class="hint">No se leyeron productos. Puedes guardarlo solo con el total.</div>'}
+    <div class="botones-fila" style="margin-top:14px;"><button type="button" class="primary" style="margin:0;" onclick="guardarTicketCompras()">Guardar ticket</button><button type="button" class="btn-secundario" onclick="if(confirm('¿Descartar este ticket?')){ cmp.tk = null; pintarCompras(); }">Descartar</button></div>`;
+}
+function itemRevisionTicket(x, n){
+  const i = x.insumo_id ? cmpInsumo(x.insumo_id) : null;
+  const ops = cmp.insumos.slice().sort((a, b)=> a.nombre.localeCompare(b.nombre, 'es')).map(o=> `<option value="${o.id}"${o.id === x.insumo_id ? ' selected' : ''}>${escHtml(o.nombre)}</option>`).join('');
+  let precio = '';
+  if(i && x.contenido > 0 && x.cantidad > 0 && x.importe != null){
+    const pu = x.importe / x.cantidad / x.contenido;
+    precio = `<div class="cmp-sub">${fmtDinero(Math.round(x.importe / x.cantidad * 100) / 100)} c/u · ${cmpComparar(pu, i, { fecha: cmp.tk.fecha })}</div>`;
+  } else if(i) precio = `<div class="cmp-sub"><span class="fin-falta">falta</span> cuánto trae cada pieza</div>`;
+  return `<div class="cmp-item">
+    <div><b>${escHtml(x.descripcion || 'Sin descripción')}</b>${x.origen === 'recordado' ? ' <span class="cmp-sub">· recordado</span>' : ''}</div>
+    <div class="cmp-tk-item">
+      <div class="field"><label>Cantidad</label><input type="text" inputmode="decimal" data-k="tki-c-${n}" value="${escHtml(cmpFmt(x.cantidad))}" onchange="cambiarItemTicket(${n}, 'cantidad', this.value)"></div>
+      <div class="field"><label>Importe</label><input type="text" inputmode="decimal" data-k="tki-i-${n}" value="${escHtml(cmpFmt(x.importe))}" onchange="cambiarItemTicket(${n}, 'importe', this.value)"></div>
+      <div class="field cmp-tk-ins"><label>Insumo</label><select data-k="tki-s-${n}" onchange="cambiarItemTicket(${n}, 'insumo_id', this.value)"><option value="">No es insumo (otro gasto)</option>${ops}</select></div>
+      ${i ? `<div class="field"><label>Trae cada pieza (${cmpUGrande(i)})</label><input type="text" inputmode="decimal" data-k="tki-t-${n}" value="${x.contenido ? escHtml(cmpFmt(x.contenido / cmpFactor(i))) : ''}" onchange="cambiarItemTicket(${n}, 'contenido', this.value)"></div>` : ''}
+    </div>${precio}</div>`;
+}
+function cambiarItemTicket(n, campo, valor){
+  const x = cmp.tk.items[n];
+  if(campo === 'insumo_id'){ const nuevo = valor ? Number(valor) : null; if(nuevo !== x.insumo_id){ x.insumo_id = nuevo; x.contenido = null; const a = nuevo ? cmp.arts[nuevo] : null; if(a && a.contenido) x.contenido = Number(a.contenido); x.origen = ''; } }
+  else if(campo === 'contenido'){ const v = cmpNum(valor); const i = cmpInsumo(x.insumo_id); x.contenido = v > 0 && i ? v * cmpFactor(i) : null; }
+  else { const v = cmpNum(valor); x[campo] = v != null && v >= 0 ? v : null; }
+  cmpRepintar();
+}
+
+async function guardarTicketCompras(){
+  const t = cmp.tk;
+  if(!t.fecha){ cmpMsg('Pon la fecha del ticket.', 'err'); return; }
+  if(t.total == null){ cmpMsg('Pon el total del ticket.', 'err'); return; }
+  if(!t.tienda_id){ cmpMsg('Elige la tienda.', 'err'); return; }
+  const malos = t.items.filter(x=> x.insumo_id && !(x.contenido > 0 && x.cantidad > 0 && x.importe != null));
+  if(malos.length){ cmpMsg('Completa cantidad, importe y cuánto trae en: ' + malos.map(x=> x.descripcion).join(', ') + '. O márcalos como "No es insumo".', 'err'); return; }
+  if(t.dup && !confirm('Ya hay un ticket del mismo día y total. ¿Guardarlo de todos modos?')) return;
+  const boton = document.querySelector('#compras-contenido .botones-fila .primary'); if(boton){ boton.disabled = true; boton.textContent = 'Guardando…'; }
+  try {
+    // 1) Tienda nueva
+    let tiendaId = t.tienda_id;
+    if(tiendaId === 'nueva'){
+      const { data, error } = await sb.from('compras_tiendas').insert([{ nombre: t.tienda_nombre, orden: cmp.tiendas.length }]).select().single();
+      if(error) throw new Error('no se pudo crear la tienda: ' + error.message);
+      cmp.tiendas.push(data); tiendaId = data.id;
+    }
+    // 2) Foto (si falla, el ticket se guarda igual)
+    let foto = null;
+    try {
+      const bin = atob(t.archivo.base64), arr = new Uint8Array(bin.length);
+      for(let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
+      const ruta = `${t.fecha.slice(0, 7)}/${t.fecha}-${Date.now()}.${/pdf/.test(t.archivo.tipo) ? 'pdf' : 'jpg'}`;
+      const { error } = await sb.storage.from('tickets').upload(ruta, new Blob([arr], { type: t.archivo.tipo }), { contentType: t.archivo.tipo });
+      if(!error) foto = ruta;
+    } catch(e){ /* sin foto */ }
+    // 3) Ticket y productos
+    const tienda = cmpTienda(tiendaId);
+    const { data: tk, error: e1 } = await sb.from('compras_tickets').insert([{ tienda_id: tiendaId, tienda_nombre: tienda ? tienda.nombre : t.tienda_nombre, fecha: t.fecha, hora: t.hora,
+      folio: t.folio || null, forma_pago: t.forma_pago || null, total: t.total, foto, lectura: t.lectura }]).select().single();
+    if(e1) throw new Error(e1.message);
+    const filas = t.items.map(x=> ({ ticket_id: tk.id, fecha: t.fecha, descripcion: x.descripcion, cantidad: x.cantidad > 0 ? x.cantidad : null, importe: x.importe, insumo_id: x.insumo_id || null, contenido: x.insumo_id ? x.contenido : null }));
+    if(filas.length){ const { error: e2 } = await sb.from('compras_ticket_items').insert(filas); if(e2) throw new Error(e2.message); }
+    // 4) Memoria: qué insumo es cada descripción
+    const eqs = {}; t.items.forEach(x=>{ const c = cmpClave(x.descripcion); if(c) eqs[c] = { clave: c, insumo_id: x.insumo_id || null, contenido: x.insumo_id ? x.contenido : null }; });
+    if(Object.keys(eqs).length){ const { data } = await sb.from('compras_equivalencias').upsert(Object.values(eqs), { onConflict: 'clave' }).select(); (data || Object.values(eqs)).forEach(e=> cmp.equiv[e.clave] = e); }
+    // 5) Comparación y precio en Finanzas (solo si no hay un ticket más reciente de ese insumo)
+    const conIns = t.items.filter(x=> x.insumo_id);
+    const lineas = conIns.map(x=>{ const i = cmpInsumo(x.insumo_id); return `<div><b>${escHtml(i.nombre)}</b>: ${cmpComparar(x.importe / x.cantidad / x.contenido, i, { fecha: t.fecha })}</div>`; });
+    let actualizados = 0;
+    if(conIns.length){
+      const ids = [...new Set(conIns.map(x=> x.insumo_id))];
+      const { data: nuevos } = await sb.from('compras_ticket_items').select('insumo_id,fecha').in('insumo_id', ids).gt('fecha', t.fecha);
+      const hayNuevo = new Set((nuevos || []).map(r=> r.insumo_id));
+      for(const id of ids.filter(id=> !hayNuevo.has(id))){
+        const x = conIns.filter(y=> y.insumo_id === id).pop(), i = cmpInsumo(id);
+        const upd = { cantidad: i.unidad === 'kg' ? x.contenido / 1000 : x.contenido, precio: Math.round(x.importe / x.cantidad * 100) / 100 };
+        const { error } = await sb.from('insumos').update(upd).eq('id', id);
+        if(!error){ Object.assign(i, upd); actualizados++; }
+      }
+      if(actualizados && typeof finCargado !== 'undefined') finCargado = false;
+    }
+    filas.forEach(cmpHistTicket);   // ya cuenta para el precio más alto del mes
+    cmp.tkResultado = `<b>Ticket guardado: ${fmtDinero(t.total)}${tienda ? ' en ' + escHtml(tienda.nombre) : ''}.</b>${actualizados ? `<div>Se actualizó el precio de ${actualizados} ${actualizados === 1 ? 'insumo' : 'insumos'} en Finanzas.</div>` : ''}${lineas.join('')}`;
+    cmp.tk = null;
+    cmp.tkMes = t.fecha.slice(0, 7);
+    await cargarTicketsMes();
+  } catch(e){
+    cmpMsg('No se guardó el ticket: ' + (e.message || e), 'err');
+    if(boton){ boton.disabled = false; boton.textContent = 'Guardar ticket'; }
+  }
+}
+
+// Gastos del mes
+async function cargarTicketsMes(){
+  if(!cmp.tkMes) cmp.tkMes = cmpMesActual();
+  const [a, m] = cmp.tkMes.split('-').map(Number);
+  const fin = new Date(a, m, 1);
+  const { data, error } = await sb.from('compras_tickets').select('id,fecha,hora,tienda_id,tienda_nombre,folio,forma_pago,total,foto').gte('fecha', cmp.tkMes + '-01').lt('fecha', fechaStrDesdeDate(fin)).order('fecha', { ascending: false });
+  if(error){ cmpMsg('No se pudieron cargar los tickets: ' + error.message + '. ¿Ya se corrió el SQL 043?', 'err'); return; }
+  cmp.tickets = data || [];
+  if(cmp.vista === 'tickets') pintarCompras();
+}
+function listaTicketsMes(){
+  const total = cmp.tickets.reduce((s, t)=> s + Number(t.total || 0), 0);
+  const porTienda = {}; cmp.tickets.forEach(t=>{ const n = (cmpTienda(t.tienda_id) || {}).nombre || t.tienda_nombre || 'Sin tienda'; porTienda[n] = (porTienda[n] || 0) + Number(t.total || 0); });
+  const mesTxt = cmp.tkMes ? new Date(cmp.tkMes + '-15T12:00:00').toLocaleDateString('es-MX', { month:'long', year:'numeric' }) : '';
+  return `<div class="fin-titulo" style="margin-top:26px;"><h3>Gastos de ${escHtml(mesTxt)}</h3><input type="month" class="cmp-mes" value="${escHtml(cmp.tkMes || '')}" onchange="if(this.value){ cmp.tkMes = this.value; cmp.tkAbierto = null; cargarTicketsMes(); }"></div>
+    <div class="totales-top" style="margin-bottom:14px;"><div class="total-box"><div class="tb-label">Total del mes</div><div class="tb-monto">${fmtDinero(total)}</div><div class="tb-sub">${cmp.tickets.length} ${cmp.tickets.length === 1 ? 'ticket' : 'tickets'}</div></div>
+      ${Object.keys(porTienda).length ? `<div class="total-box caramelo"><div class="tb-label">Por tienda</div><div class="tb-sub" style="font-size:13.5px; line-height:1.6;">${Object.entries(porTienda).sort((x, y)=> y[1] - x[1]).map(([n, v])=> escHtml(n) + ' ' + fmtDinero(v)).join('<br>')}</div></div>` : ''}</div>
+    ${cmp.tickets.map(filaTicketMes).join('') || '<div class="empty">No hay tickets en este mes.</div>'}`;
+}
+function filaTicketMes(t){
+  const ab = cmp.tkAbierto && cmp.tkAbierto.id === t.id ? cmp.tkAbierto : null;
+  const nombre = (cmpTienda(t.tienda_id) || {}).nombre || t.tienda_nombre || 'Sin tienda';
+  const pago = (CMP_PAGOS.find(([v])=> v === t.forma_pago) || [, ''])[1];
+  let det = '';
+  if(ab){
+    det = !ab.items ? '<div class="loading">Cargando…</div>' : `<div class="cmp-tk-det">${ab.items.map(x=>{ const i = x.insumo_id ? cmpInsumo(x.insumo_id) : null;
+      return `<div class="cmp-tk-linea"><div>${escHtml(x.descripcion || '')}<div class="cmp-sub">${i ? escHtml(i.nombre) + (x.contenido && x.cantidad && x.importe != null ? ' · ' + cmpComparar(x.importe / x.cantidad / x.contenido, i, { ticket: t.id, fecha: t.fecha }) : '') : 'No es insumo'}</div></div><div class="n">${cmpFmt(x.cantidad)} · ${fmtDinero(x.importe)}</div></div>`; }).join('') || '<div class="hint">Sin productos.</div>'}
+      <div class="botones-fila" style="margin-top:10px;">${ab.url ? `<a class="btn-secundario cmp-ver-foto" href="${escHtml(ab.url)}" target="_blank" rel="noopener">Ver foto</a>` : ''}<button type="button" class="btn-borrar" onclick="borrarTicketCompras(${t.id})">Borrar ticket</button></div></div>`;
+  }
+  return `<div class="cmp-item${ab ? ' on' : ''}"><div class="cmp-item-top" onclick="abrirTicketMes(${t.id})" style="cursor:pointer;">
+    <div><b>${escHtml(nombre)}</b><div class="cmp-sub">${escHtml(cmpFechaCorta(t.fecha))}${t.folio ? ' · folio ' + escHtml(t.folio) : ''}${pago ? ' · ' + pago : ''}</div></div>
+    <div class="cmp-tk-total">${fmtDinero(t.total)}<span class="cmp-sub">${ab ? 'Ocultar' : 'Ver'}</span></div></div>${det}</div>`;
+}
+async function abrirTicketMes(id){
+  if(cmp.tkAbierto && cmp.tkAbierto.id === id){ cmp.tkAbierto = null; pintarCompras(); return; }
+  const t = cmp.tickets.find(x=> x.id === id);
+  cmp.tkAbierto = { id }; pintarCompras();
+  const [a, b] = await Promise.all([
+    sb.from('compras_ticket_items').select('*').eq('ticket_id', id).order('id'),
+    t.foto ? sb.storage.from('tickets').createSignedUrl(t.foto, 3600) : Promise.resolve({ data: null })
+  ]);
+  if(!cmp.tkAbierto || cmp.tkAbierto.id !== id) return;
+  cmp.tkAbierto.items = a.data || [];
+  cmp.tkAbierto.url = b && b.data ? b.data.signedUrl : null;
+  pintarCompras();
+}
+async function borrarTicketCompras(id){
+  const t = cmp.tickets.find(x=> x.id === id);
+  if(!confirm(`¿Borrar el ticket de ${fmtDinero(t.total)}? El precio que ya se actualizó en Finanzas no cambia.`)) return;
+  const { error } = await sb.from('compras_tickets').delete().eq('id', id);
+  if(error){ cmpMsg('No se pudo borrar: ' + error.message, 'err'); return; }
+  if(t.foto) await sb.storage.from('tickets').remove([t.foto]);
+  cmp.hist = cmp.hist.filter(h=> h.ticket_id !== id);
+  cmp.tkAbierto = null;
+  await cargarTicketsMes();
 }

@@ -617,21 +617,24 @@ async function guardarTicketCompras(){
     // 5) Comparación y precio en Finanzas (solo si no hay un ticket más reciente de ese insumo)
     const conIns = t.items.filter(x=> x.insumo_id);
     const lineas = conIns.map(x=>{ const i = cmpInsumo(x.insumo_id); return `<div><b>${escHtml(i.nombre)}</b>: ${cmpComparar(x.importe / x.cantidad / x.contenido, i, { fecha: t.fecha })}</div>`; });
-    let actualizados = 0;
+    let actualizados = 0, impacto = null;
     if(conIns.length){
       const ids = [...new Set(conIns.map(x=> x.insumo_id))];
       const { data: nuevos } = await sb.from('compras_ticket_items').select('insumo_id,fecha').in('insumo_id', ids).gt('fecha', t.fecha);
       const hayNuevo = new Set((nuevos || []).map(r=> r.insumo_id));
-      for(const id of ids.filter(id=> !hayNuevo.has(id))){
+      const cambios = ids.filter(id=> !hayNuevo.has(id)).map(id=>{
         const x = conIns.filter(y=> y.insumo_id === id).pop(), i = cmpInsumo(id);
-        const upd = { cantidad: i.unidad === 'kg' ? x.contenido / 1000 : x.contenido, precio: Math.round(x.importe / x.cantidad * 100) / 100 };
-        const { error } = await sb.from('insumos').update(upd).eq('id', id);
-        if(!error){ Object.assign(i, upd); actualizados++; }
+        return { id, cantidad: i.unidad === 'kg' ? x.contenido / 1000 : x.contenido, precio: Math.round(x.importe / x.cantidad * 100) / 100 };
+      });
+      // Antes de cambiar los precios: cómo quedan los márgenes de los productos con el precio nuevo
+      try { impacto = await cmpImpactoMargen(cambios); } catch(e){ impacto = null; }
+      for(const c of cambios){
+        const { error } = await sb.from('insumos').update({ cantidad: c.cantidad, precio: c.precio }).eq('id', c.id);
+        if(!error){ Object.assign(cmpInsumo(c.id), { cantidad: c.cantidad, precio: c.precio }); actualizados++; }
       }
-      if(actualizados && typeof finCargado !== 'undefined') finCargado = false;
     }
     filas.forEach(cmpHistTicket);   // ya cuenta para el precio más alto del mes
-    cmp.tkResultado = `<b>Ticket guardado: ${fmtDinero(t.total)}${tienda ? ' en ' + escHtml(tienda.nombre) : ''}.</b>${actualizados ? `<div>Se actualizó el precio de ${actualizados} ${actualizados === 1 ? 'insumo' : 'insumos'} en Finanzas.</div>` : ''}${lineas.join('')}`;
+    cmp.tkResultado = `<b>Ticket guardado: ${fmtDinero(t.total)}${tienda ? ' en ' + escHtml(tienda.nombre) : ''}.</b>${actualizados ? `<div>Se actualizó el precio de ${actualizados} ${actualizados === 1 ? 'insumo' : 'insumos'} en Finanzas.</div>` : ''}${lineas.join('')}${impactoHtml(impacto)}`;
     cmp.tk = null;
     cmp.tkMes = t.fecha.slice(0, 7);
     await cargarTicketsMes();
@@ -697,4 +700,33 @@ async function borrarTicketCompras(id){
   cmp.hist = cmp.hist.filter(h=> h.ticket_id !== id);
   cmp.tkAbierto = null;
   await cargarTicketsMes();
+}
+
+// ---------- Alertas de ganancia ----------
+// Con los precios nuevos de un ticket, recalcula los productos de Finanzas y regresa los que pierden margen.
+async function cmpImpactoMargen(cambios){
+  if(!cambios.length || typeof resumenProducto !== 'function') return null;
+  if(!finCargado) await cargarFinanzas();
+  if(!finCargado) return null;
+  const prods = fin.recetas.filter(r=> r.tipo === 'producto');
+  const calcular = ()=>{ _memo.clear(); const m = {}; prods.forEach(p=>{ const r = resumenProducto(p); if(r.utilidad != null && !r.faltan.length) m[p.id] = r; }); return m; };
+  const antes = calcular();
+  cambios.forEach(c=>{ const i = insPorId(c.id); if(i) Object.assign(i, { cantidad: c.cantidad, precio: c.precio }); });
+  const despues = calcular();
+  _memo.clear();
+  const comp = prods.filter(p=> antes[p.id] && despues[p.id]).map(p=> ({ p, a: antes[p.id], d: despues[p.id] }));
+  return {
+    bajan: comp.filter(x=> x.d.utilidad < x.a.utilidad - 0.005).sort((x, y)=> (x.d.pctUtil - x.a.pctUtil) - (y.d.pctUtil - y.a.pctUtil)),
+    suben: comp.filter(x=> x.d.utilidad > x.a.utilidad + 0.005).length
+  };
+}
+function impactoHtml(imp){
+  if(!imp || (!imp.bajan.length && !imp.suben)) return '';
+  const nombre = p=> escHtml(p.nombre) + (p.tamano ? ' ' + escHtml(finTamano(p.tamano).toLowerCase()) : '');
+  // Solo se enlistan los que bajan al menos 0.1 puntos de ganancia; los demás se cuentan
+  const notables = imp.bajan.filter(x=> x.a.pctUtil - x.d.pctUtil >= 0.001 || x.d.utilidad < 0);
+  const max = 12, lista = notables.slice(0, max), resto = imp.bajan.length - lista.length;
+  const filas = lista.map(({ p, a, d })=> `<li>${d.utilidad < 0 ? '<b class="cmp-sube">Ya no deja ganancia:</b> ' : ''}<b>${nombre(p)}</b>: ganancia ${finPct(a.pctUtil)} → <b>${finPct(d.pctUtil)}</b> (${fin2(d.utilidad - a.utilidad)} por pieza)</li>`).join('');
+  return `<div class="cmp-impacto">${imp.bajan.length ? `<b>▼ ${imp.bajan.length} ${imp.bajan.length === 1 ? 'producto gana' : 'productos ganan'} menos con estos precios:</b><ul>${filas}</ul>${resto ? `<div>${lista.length ? 'Y' : 'Bajan muy poco:'} ${resto} ${resto === 1 ? 'producto' : 'productos'} más${lista.length ? ' con cambios más chicos' : ''} (velos en Finanzas → Productos y márgenes).</div>` : ''}` : ''}
+    ${imp.suben ? `<div>▲ ${imp.suben} ${imp.suben === 1 ? 'producto gana' : 'productos ganan'} más.</div>` : ''}</div>`;
 }

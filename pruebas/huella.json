@@ -1628,7 +1628,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "264",
-        "grupo": "faaff1a4-c3e4-4d41-bdd0-b3685e82b8db",
+        "grupo": "39e8f13e-1970-4aea-ad4c-c3e3d0597973",
         "grupo_parte": 1,
         "grupo_total": 2,
         "folio": 101
@@ -1656,7 +1656,7 @@
         "decorado": false,
         "decorado_descripcion": null,
         "anticipo": "36",
-        "grupo": "faaff1a4-c3e4-4d41-bdd0-b3685e82b8db",
+        "grupo": "39e8f13e-1970-4aea-ad4c-c3e3d0597973",
         "grupo_parte": 2,
         "grupo_total": 2,
         "folio": 101
@@ -3077,18 +3077,6 @@
         1006
        ]
       }
-     ],
-     [
-      "update",
-      "fin_costos_fijos",
-      {
-       "datos": {
-        "costo_mensual": 18000
-       },
-       "filas": [
-        1006
-       ]
-      }
      ]
     ],
     "dialogos": [],
@@ -4166,7 +4154,7 @@
    {
     "paso": "compras ticket guardar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nVer",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\n▲ 35 productos ganan más.\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nVer",
     "modales": [],
     "log": [
      [
@@ -4335,7 +4323,7 @@
    {
     "paso": "compras ticket ver",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · Sin precio anterior para comparar.\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto 1\nVer foto 2\nBorrar ticket",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $6,038 en Lizárraga.\nSe actualizó el precio de 2 insumos en Finanzas.\nAzúcar morena: ▼ Bajó 46.6% · $20.50/kg · precio de Finanzas: $38.36/kg\nLechera: ▲ Subió 4.8% · $70.67/kg · precio de Finanzas: $67.44/kg\n▲ 35 productos ganan más.\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$6,038\n1 ticket\nPOR TIENDA\nLizárraga $6,038\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · Sin precio anterior para comparar.\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto 1\nVer foto 2\nBorrar ticket",
     "modales": [],
     "log": [],
     "dialogos": [],
@@ -4385,7 +4373,7 @@
    {
     "paso": "compras ticket segundo guardar",
     "vista": "view-compras",
-    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $1,300 en Lizárraga.\nSe actualizó el precio de 1 insumo en Finanzas.\nLechera: ▲ Subió 2.2% · $72.22/kg · precio más alto de octubre: $70.67/kg\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$7,338\n2 tickets\nPOR TIENDA\nLizárraga $7,338\nLizárraga\nmié 28 de oct\n$1,300\nVer\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · ▼ Bajó 2.2% · $70.67/kg · precio más alto de octubre: $72.22/kg\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto 1\nVer foto 2\nBorrar ticket",
+    "texto": "Inventario\nComprar\nTickets y gastos\nAjustes\nCompra terminada\nTicket guardado: $1,300 en Lizárraga.\nSe actualizó el precio de 1 insumo en Finanzas.\nLechera: ▲ Subió 2.2% · $72.22/kg · precio más alto de octubre: $70.67/kg\n▼ 27 productos ganan menos con estos precios:\nChocolate mediano: ganancia 32.0% → 31.8% (−$1.70 por pieza)\nChocolate chico: ganancia 32.0% → 31.9% (−$1.03 por pieza)\nChocolate grande: ganancia 35.7% → 35.6% (−$2.05 por pieza)\nBi-Cajeta chico: ganancia 38.1% → 37.9% (−$0.81 por pieza)\nEspecial mediano: ganancia 41.4% → 41.2% (−$1.11 por pieza)\nBi-Cajeta mediano: ganancia 41.7% → 41.6% (−$1.05 por pieza)\nEspecial chico: ganancia 40.8% → 40.7% (−$0.66 por pieza)\nEspecial grande: ganancia 45.3% → 45.2% (−$1.32 por pieza)\nY 19 productos más con cambios más chicos (velos en Finanzas → Productos y márgenes).\nCerrar\nSubir ticket\nToma foto al ticket (o sube el PDF de la factura). Se lee solo; tú lo revisas y se guarda como gasto, con el precio de cada insumo.\nTomar foto o elegir archivo\nGastos de octubre de 2026\nTOTAL DEL MES\n$7,338\n2 tickets\nPOR TIENDA\nLizárraga $7,338\nLizárraga\nmié 28 de oct\n$1,300\nVer\nLizárraga\nmar 27 de oct · folio B74185 · Efectivo\n$6,038\nOcultar\nAZUCAR ZULKA 10/KG\nAzúcar morena · Sin precio anterior para comparar.\n3 · $615\nLECHERA 48/375GR\nLechera · ▼ Bajó 2.2% · $70.67/kg · precio más alto de octubre: $72.22/kg\n4 · $5,088\nBOLSAS CAMISETA\nNo es insumo\n1 · $335\nVer foto 1\nVer foto 2\nBorrar ticket",
     "modales": [],
     "log": [
      [
@@ -4534,10 +4522,10 @@
         "tabla": "pagina",
         "producto": "portada",
         "orden": 0,
-        "ruta": "pagina/portada/1793215800000-f37en.jpg",
-        "url": "https://fotos.prueba/pagina/portada/1793215800000-f37en.jpg",
-        "ruta_original": "pagina/portada/1793215800000-f37en-original.png",
-        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-f37en-original.png"
+        "ruta": "pagina/portada/1793215800000-unny4.jpg",
+        "url": "https://fotos.prueba/pagina/portada/1793215800000-unny4.jpg",
+        "ruta_original": "pagina/portada/1793215800000-unny4-original.png",
+        "url_original": "https://fotos.prueba/pagina/portada/1793215800000-unny4-original.png"
        }
       ]
      ]
@@ -4865,10 +4853,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 0,
-        "ruta": "sabores_cupcakes/limon/1793215800000-1cb4b.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-1cb4b.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-1cb4b-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-1cb4b-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-vxugu.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-vxugu.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-vxugu-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-vxugu-original.png"
        }
       ]
      ],
@@ -4896,10 +4884,10 @@
         "tabla": "sabores_cupcakes",
         "producto": "limon",
         "orden": 1,
-        "ruta": "sabores_cupcakes/limon/1793215800000-rkwir.jpg",
-        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-rkwir.jpg",
-        "ruta_original": "sabores_cupcakes/limon/1793215800000-rkwir-original.png",
-        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-rkwir-original.png"
+        "ruta": "sabores_cupcakes/limon/1793215800000-gkthc.jpg",
+        "url": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-gkthc.jpg",
+        "ruta_original": "sabores_cupcakes/limon/1793215800000-gkthc-original.png",
+        "url_original": "https://fotos.prueba/sabores_cupcakes/limon/1793215800000-gkthc-original.png"
        }
       ]
      ]

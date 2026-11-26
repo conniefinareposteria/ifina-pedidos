@@ -385,3 +385,5 @@ main:has(#view-finanzas.active){max-width:1180px;}
 .cmp-foto b{display:block; font-size:12.5px; margin-top:4px;}
 .cmp-foto .ins-quitar{position:absolute; top:5px; right:5px; background:#fff;}
 .cmp-agregar-foto{display:inline-block; cursor:pointer; margin:0;}
+.cmp-impacto{margin-top:10px; padding-top:10px; border-top:1px solid rgba(36,67,47,.2);}
+.cmp-impacto ul{margin:6px 0 4px; padding-left:20px;} .cmp-impacto li{margin-bottom:3px;}
